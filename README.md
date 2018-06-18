@@ -20,36 +20,21 @@ These instructions will get you a copy of the project up and running on your loc
 **Retrieving feature flags for your project**
 
 **For full documentation visit [https://docs.bullet-train.io](https://docs.bullet-train.io)**
-```javascript
-var bulletTrain = require("bullet-train-nodejs");
+```ruby
+require "bullet-train-ruby-client"
 
-bulletTrain.init({
-	environmentID:"<YOUR_ENVIRONMENT_KEY>"
-});
+bt = BulletTrain.new(<<Your API KEY>>")
 
+if bt.getValue("font_size")
+  #    Do something awesome with the font size
+end
 
-bulletTrain.hasFeature("header", '<My User Id>')
-.then((featureEnabled) => {
-	if (featureEnabled) {
-		//Show my awesome cool new feature to this one user
-	}
-});
-bulletTrain.hasFeature("header")
-.then((featureEnabled) => {
-	if (featureEnabled) {
-		//Show my awesome cool new feature to the world
-	}
-});
+if bt.hasFeature("does_not_exist")
+  #do something
+else
+  #do nothing, or something else
+end
 
-bulletTrain.getValue("header", '<My User Id>')
-.then((value) => {
-	//Show some unique value to this user
-});
-
-bulletTrain.getValue("header")
-.then((value) => {
-	//Show a value to the world
-});
 ```
 **Available Options**
 
