@@ -1,10 +1,6 @@
 <img width="100%" src="https://raw.githubusercontent.com/SolidStateGroup/bullet-train-frontend/master/hero.png"/>
 
 # Bullet Train Client
-[![Gitter](https://img.shields.io/gitter/room/gitterHQ/gitter.svg)](https://gitter.im/SolidStateGroup/bullettrain?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![npm version](https://badge.fury.io/js/bullet-train-nodejs.svg)](https://badge.fury.io/js/bullet-train-nodejs)
-[![](https://data.jsdelivr.com/v1/package/npm/bullet-train-nodejs/badge)](https://www.jsdelivr.com/package/npm/bullet-train-nodejs)
-
 The SDK clients for Ruby [https://bullet-train.io/](https://www.bullet-train.io/). Bullet Train allows you to manage feature flags and remote config across multiple projects, environments and organisations.
 
 ## Getting Started
