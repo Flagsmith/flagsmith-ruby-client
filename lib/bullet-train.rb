@@ -2,7 +2,7 @@
 require "open-uri"
 require "json"
 
-class BulletTrain
+class BulletTrainClient
   @@apiUrl = ""
   @@environmentKey = ""
 

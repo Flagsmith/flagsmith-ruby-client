@@ -1,5 +1,5 @@
 Gem::Specification.new do |spec|
-  spec.name = "bullet-train"
+  spec.name = "bullet-train-client"
   spec.version = "0.0.1"
   spec.authors = ["Tom Stuart"]
   spec.email = ["tom@solidstategroup.com"]

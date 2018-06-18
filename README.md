@@ -10,7 +10,7 @@ These instructions will get you a copy of the project up and running on your loc
 ## Installing
 
 ### VIA gem
-```gem install bullet-train```
+```gem install bullet-train-client```
 	
 ## Usage
 **Retrieving feature flags for your project**
