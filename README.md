@@ -19,7 +19,7 @@ These instructions will get you a copy of the project up and running on your loc
 ```ruby
 require "bullet-train-ruby-client"
 
-bt = BulletTrain.new(<<Your API KEY>>")
+bt = BulletTrain.new("<<Your API KEY>>")
 
 if bt.getValue("font_size")
   #    Do something awesome with the font size

@@ -25,8 +25,6 @@ class BulletTrainClient
       enabled = feature["enabled"]
       state = feature["feature_state_value"]
       flags[featureName] = {"enabled" => enabled, "value" => state}
-
-      return flags
     end
 
     return flags
@@ -37,7 +35,7 @@ class BulletTrainClient
   end
 
   def getFlags()
-    processFlags(getJSON("flags"))
+    processFlags(getJSON("flags/"))
   end
 
   def getValue(key, userId = nil)
@@ -69,8 +67,3 @@ class BulletTrainClient
     end
   end
 end
-
-# bt = BulletTrain.new("QjgYur4LQTwe5HpvbvhpzK")
-# print bt.getFlags()
-# print bt.getValue("font_size")
-# print bt.hasFeature("font_size")

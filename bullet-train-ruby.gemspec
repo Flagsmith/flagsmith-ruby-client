@@ -1,6 +1,6 @@
 Gem::Specification.new do |spec|
   spec.name = "bullet-train-client"
-  spec.version = "0.0.1"
+  spec.version = "1.0.0"
   spec.authors = ["Tom Stuart"]
   spec.email = ["tom@solidstategroup.com"]
   spec.files = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
