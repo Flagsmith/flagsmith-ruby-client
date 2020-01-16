@@ -11,7 +11,7 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### VIA gem
 ```gem install bullet-train-client```
-	
+
 ## Usage
 **Retrieving feature flags for your project**
 
@@ -36,22 +36,20 @@ end
 
 | Property        | Description           | Required  | Default Value  |
 | ------------- |:-------------:| -----:| -----:|
-| ```environmentID```     | Defines which project environment you wish to get flags for. *example ACME Project - Staging.* | **YES** | null
-| ```onError```     | Callback function on failure to retrieve flags. ``` (error)=>{...} ``` |  **NO** | null
-| ```defaultFlags```     | Defines the default flags if there are any | **NO** | null
-| ```api```     | Use this property to define where you're getting feature flags from, e.g. if you're self hosting. |  **NO** | https://bullet-train-api.dokku1.solidstategroup.com/api/v1/
+| ```api_key```     | Defines which project environment you wish to get flags for. *example ACME Project - Staging.* | **YES** | null
+| ```url```     | Use this property to define where you're getting feature flags from, e.g. if you're self hosting. |  **NO** | https://bullet-train-api.dokku1.solidstategroup.com/api/v1/
 
 **Available Functions**
 
-| Property        | Description |         
+| Property        | Description |
 | ------------- |:-------------:|
 | ```init```     | Initialise the sdk against a particular environment
-| ```hasFeature(key)```     | Get the value of a particular feature e.g. ```bulletTrain.hasFeature("powerUserFeature") // true```
-| ```hasFeature(key, userId)```     | Get the value of a particular feature for a user e.g. ```bulletTrain.hasFeature("powerUserFeature", 1234) // true```
-| ```getValue(key)```     | Get the value of a particular feature e.g. ```bulletTrain.getValue("font_size") // 10```
-| ```getValue(keym userId)```     | Get the value of a particular feature for a specificed user e.g. ```bulletTrain.getValue("font_size", 1234) // 15```
-| ```getFlags()```     | Trigger a manual fetch of the environment features, if a user is identified it will fetch their features
-| ```getFlagsForUser(1234)```     | Trigger a manual fetch of the environment features with a given user id
+| ```feature_enabled?(key)```     | Get the value of a particular feature e.g. ```bulletTrain.feature_enabled?("powerUserFeature") // true```
+| ```feature_enabled?(key, user_id, default = false)```     | Get the value of a particular feature for a user e.g. ```bulletTrain.feature_enabled?("powerUserFeature", 1234) // true```
+| ```get_value(key)```     | Get the value of a particular feature e.g. ```bulletTrain.get_value("font_size") // 10```
+| ```get_value(key, user_id, default = nil)```     | Get the value of a particular feature for a specificed user e.g. ```bulletTrain.get_value("font_size", 1234) // 15```
+| ```get_flags()```     | Trigger a manual fetch of the environment features, if a user is identified it will fetch their features
+| ```get_flags(user_id)```     | Trigger a manual fetch of the environment features with a given user id
 
 
 **Identifying users**
@@ -66,7 +64,7 @@ Please read [CONTRIBUTING.md](https://gist.github.com/kyle-ssg/c36a03aebe492e45c
 
 ## Getting Help
 
-If you encounter a bug or feature request we would like to hear about it. Before you submit an issue please search existing issues in order to prevent duplicates. 
+If you encounter a bug or feature request we would like to hear about it. Before you submit an issue please search existing issues in order to prevent duplicates.
 
 ## Get in touch
 
