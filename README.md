@@ -21,11 +21,11 @@ require "bullet-train-ruby-client"
 
 bt = BulletTrain.new("<<Your API KEY>>")
 
-if bt.getValue("font_size")
+if bt.get_value("font_size")
   #    Do something awesome with the font size
 end
 
-if bt.hasFeature("does_not_exist")
+if bt.feature_enabled?("does_not_exist")
   #do something
 else
   #do nothing, or something else
