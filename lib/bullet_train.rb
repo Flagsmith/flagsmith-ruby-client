@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'faraday'
+require 'faraday_middleware'
 
 # Ruby client for bullet-train.io
 class BulletTrain
