@@ -8,4 +8,9 @@ Gem::Specification.new do |spec|
   spec.summary = "Bullet Train - Ship features with confidence"
   spec.description = "Ruby Client for Bullet-Train. Ship features with confidence using feature flags and remote config. Host yourself or use our hosted version at https://bullet-train.io"
   spec.homepage = "https://bullet-train.io"
+
+  spec.add_development_dependency 'bundler'
+  spec.add_development_dependency 'rake'
+  spec.add_development_dependency 'rspec'
+  spec.add_dependency 'faraday'
 end
