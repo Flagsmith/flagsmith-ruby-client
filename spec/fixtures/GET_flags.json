@@ -1,0 +1,74 @@
+[
+  {
+    "id": 8590,
+    "feature": {
+      "id": 2093,
+      "name": "feature_one",
+      "created_date": "2020-01-09T01:15:22.103956Z",
+      "initial_value": null,
+      "description": "feature one",
+      "default_enabled": false,
+      "type": "FLAG",
+      "project": 927
+    },
+    "feature_state_value": null,
+    "enabled": false,
+    "environment": 2310,
+    "identity": null,
+    "feature_segment": null
+  },
+  {
+    "id": 8712,
+    "feature": {
+      "id": 2114,
+      "name": "feature_two",
+      "created_date": "2020-01-09T18:48:57.163901Z",
+      "initial_value": null,
+      "description": null,
+      "default_enabled": true,
+      "type": "FLAG",
+      "project": 927
+    },
+    "feature_state_value": 42,
+    "enabled": true,
+    "environment": 2310,
+    "identity": null,
+    "feature_segment": null
+  },
+  {
+    "id": 8724,
+    "feature": {
+      "id": 2116,
+      "name": "feature_three",
+      "created_date": "2020-01-09T22:39:48.177362Z",
+      "initial_value": null,
+      "description": null,
+      "default_enabled": true,
+      "type": "FLAG",
+      "project": 927
+    },
+    "feature_state_value": null,
+    "enabled": false,
+    "environment": 2310,
+    "identity": null,
+    "feature_segment": null
+  },
+  {
+    "id": 8766,
+    "feature": {
+      "id": 2116,
+      "name": "feature_three",
+      "created_date": "2020-01-09T22:39:48.177362Z",
+      "initial_value": null,
+      "description": null,
+      "default_enabled": true,
+      "type": "FLAG",
+      "project": 927
+    },
+    "feature_state_value": 7,
+    "enabled": true,
+    "environment": 2310,
+    "identity": null,
+    "feature_segment": 335
+  }
+]
