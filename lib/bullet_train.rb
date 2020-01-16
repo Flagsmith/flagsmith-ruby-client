@@ -15,7 +15,8 @@ class BulletTrain
       faraday.headers['Content-Type'] = 'application/json'
       faraday.headers['x-environment-key'] = @opts[:api_key]
       faraday.response :json
-      # TODO: add timeout adjustment here
+      faraday.use FaradayMiddleware::Caching, @opts[:cache], @opts[:cache_opts] if @opts[:cache]
+      yield faraday if block_given?
       faraday.adapter Faraday.default_adapter
     end
   end
@@ -106,8 +107,13 @@ class BulletTrain
     opts = { api_key: opts } if opts.is_a? String
 
     {
-      api_key: opts[:api_key] || self.class.api_key,
-      url: opts[:url] || self.class.api_url
+      api_key:    opts[:api_key] || self.class.api_key,
+      url:        opts[:url] || self.class.api_url,
+      cache:      opts[:cache],
+      cache_opts: {
+        expires_in:         30,
+        race_condition_ttl: 3
+      }.merge(opts[:cache_opts] || {})
     }
   end
 
