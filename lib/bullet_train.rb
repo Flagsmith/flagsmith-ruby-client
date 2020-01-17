@@ -1,14 +1,14 @@
 # frozen_string_literal: true
-require 'faraday'
 
+require 'faraday'
+require 'faraday_middleware'
+
+# Ruby client for bullet-train.io
 class BulletTrain
   attr_reader :bt_api
 
   def initialize(opts = {})
-    @opts = {
-      api_key: opts[:api_key] || self.class.api_key,
-      url: opts[:url] || self.class.api_url
-    }
+    @opts = determine_opts(opts)
 
     @bt_api = Faraday.new(url: @opts[:url]) do |faraday|
       faraday.headers['Accept'] = 'application/json'
@@ -48,7 +48,12 @@ class BulletTrain
   def set_trait(user_id, trait, value)
     raise StandardError, 'user_id cannot be nil' if user_id.nil?
 
-    res = @bt_api.post('traits/', { identity: { identifier: user_id }, trait_key: normalize_key(trait), trait_value: value }.to_json)
+    trait = {
+      identity:    { identifier: user_id },
+      trait_key:   normalize_key(trait),
+      trait_value: value
+    }
+    res = @bt_api.post('traits/', trait.to_json)
     res.body
   end
 
@@ -86,7 +91,10 @@ class BulletTrain
 
   def traits_to_hash(user_flags)
     result = {}
-    user_flags['traits']&.each { |t| result[normalize_key(t['trait_key'])] = t['trait_value'] }
+    user_flags['traits']&.each do |t|
+      key = normalize_key(t['trait_key'])
+      result[key] = t['trait_value']
+    end
     result
   end
 
@@ -94,10 +102,19 @@ class BulletTrain
     key.to_s.downcase
   end
 
-  alias :hasFeature :feature_enabled?
-  alias :getValue :get_value
-  alias :getFlags :get_flags
-  alias :getFlagsForUser :get_flags
+  def determine_opts(opts)
+    opts = { api_key: opts } if opts.is_a? String
+
+    {
+      api_key: opts[:api_key] || self.class.api_key,
+      url: opts[:url] || self.class.api_url
+    }
+  end
+
+  alias hasFeature feature_enabled?
+  alias getValue get_value
+  alias getFlags get_flags
+  alias getFlagsForUser get_flags
 
   def self.api_key
     ENV['BULLETTRAIN_API_KEY']
