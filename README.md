@@ -47,9 +47,11 @@ end
 | ```feature_enabled?(key)```     | Get the value of a particular feature e.g. ```bulletTrain.feature_enabled?("powerUserFeature") // true```
 | ```feature_enabled?(key, user_id, default = false)```     | Get the value of a particular feature for a user e.g. ```bulletTrain.feature_enabled?("powerUserFeature", 1234) // true```
 | ```get_value(key)```     | Get the value of a particular feature e.g. ```bulletTrain.get_value("font_size") // 10```
-| ```get_value(key, user_id, default = nil)```     | Get the value of a particular feature for a specificed user e.g. ```bulletTrain.get_value("font_size", 1234) // 15```
+| ```get_value(key, user_id, default = nil)```     | Get the value of a particular feature for a specified user e.g. ```bulletTrain.get_value("font_size", 1234) // 15```
 | ```get_flags()```     | Trigger a manual fetch of the environment features, if a user is identified it will fetch their features
 | ```get_flags(user_id)```     | Trigger a manual fetch of the environment features with a given user id
+| ```get_traits(user_id)```     | Get the traits for a specified user as a Hash e.g. ```{ 'roles' => ['admin', 'staff'] }```
+| ```set_trait(user_id, trait, value)```     | Set a trait for a specified user
 
 
 **Identifying users**
