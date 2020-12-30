@@ -1,6 +1,8 @@
-source "https://rubygems.org"
+# frozen_string_literal: true
 
-git_source(:github) {|repo_name| "https://github.com/SolidStateGroup/bullet-train-ruby-client" }
+source 'https://rubygems.org'
 
-# Specify your gem's dependencies in bullet-train-ruby.gemspec
+git_source(:github) { |_repo_name| 'https://github.com/Flagsmith/flagsmith-ruby-client' }
+
+# Specify your gem's dependencies in flagsmith.gemspec
 gemspec
