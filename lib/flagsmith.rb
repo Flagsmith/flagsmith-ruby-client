@@ -3,14 +3,14 @@
 require 'faraday'
 require 'faraday_middleware'
 
-# Ruby client for bullet-train.io
-class BulletTrain
-  attr_reader :bt_api
+# Ruby client for flagsmith.com
+class Flagsmith
+  attr_reader :flagsmith_api
 
   def initialize(opts = {})
     @opts = determine_opts(opts)
 
-    @bt_api = Faraday.new(url: @opts[:url]) do |faraday|
+    @flagsmith_api = Faraday.new(url: @opts[:url]) do |faraday|
       faraday.headers['Accept'] = 'application/json'
       faraday.headers['Content-Type'] = 'application/json'
       faraday.headers['x-environment-key'] = @opts[:api_key]
@@ -22,11 +22,11 @@ class BulletTrain
 
   def get_flags(user_id = nil)
     if user_id.nil?
-      res = @bt_api.get('flags/')
+      res = @flagsmith_api.get('flags/')
       flags = transform_flags(res.body).select { |flag| flag[:segment].nil? }
       flags_to_hash(flags)
     else
-      res = @bt_api.get("identities/?identifier=#{user_id}")
+      res = @flagsmith_api.get("identities/?identifier=#{user_id}")
       flags_to_hash(transform_flags(res.body['flags']))
     end
   end
@@ -49,33 +49,33 @@ class BulletTrain
     raise StandardError, 'user_id cannot be nil' if user_id.nil?
 
     trait = {
-      identity:    { identifier: user_id },
-      trait_key:   normalize_key(trait),
-      trait_value: value
+         identity:    { identifier: user_id },
+        trait_key:    normalize_key(trait),
+      trait_value:    value
     }
-    res = @bt_api.post('traits/', trait.to_json)
+    res = @flagsmith_api.post('traits/', trait.to_json)
     res.body
   end
 
   def get_traits(user_id)
     return {} if user_id.nil?
 
-    res = @bt_api.get("identities/?identifier=#{user_id}")
+    res = @flagsmith_api.get("identities/?identifier=#{user_id}")
     traits_to_hash(res.body)
   end
 
   # def remove_trait(user_id, trait_id)
-  #   # Request URL: https://api.bullet-train.io/api/v1/environments/API_KEY/identities/12345/traits/54321/
+  #   # Request URL: https://api.flagsmith.com/api/v1/environments/API_KEY/identities/12345/traits/54321/
   #   # Request Method: DELETE
   # end
 
   def transform_flags(flags)
     flags.map do |flag|
       {
-        name:    flag['feature']['name'],
-        enabled: flag['enabled'],
-        value:   flag['feature_state_value'],
-        segment: flag['feature_segment']
+           name:    flag['feature']['name'],
+        enabled:    flag['enabled'],
+          value:    flag['feature_state_value'],
+        segment:    flag['feature_segment']
       }
     end
   end
@@ -107,20 +107,15 @@ class BulletTrain
 
     {
       api_key: opts[:api_key] || self.class.api_key,
-      url: opts[:url] || self.class.api_url
+          url: opts[:url] || self.class.api_url
     }
   end
 
-  alias hasFeature feature_enabled?
-  alias getValue get_value
-  alias getFlags get_flags
-  alias getFlagsForUser get_flags
-
   def self.api_key
-    ENV['BULLETTRAIN_API_KEY']
+    ENV['FLAGSMITH_API_KEY']
   end
 
   def self.api_url
-    ENV.fetch('BULLETTRAIN_URL') { 'https://api.bullet-train.io/api/v1/' }
+    ENV.fetch('FLAGSMITH_URL', 'https://api.flagsmith.com/api/v1/')
   end
 end

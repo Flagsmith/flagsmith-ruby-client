@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-require_relative '../lib/bullet_train'
+require_relative '../lib/flagsmith'
 require 'ostruct'
 require 'json'
 
-describe BulletTrain do
+describe Flagsmith do
   let(:mock_faraday) { double(Faraday) }
   let(:mock_api_key) { 'ASDFIEVNQWEPARJ' }
-  let(:mock_api_url) { 'http://mock.bullet-train.io/api/' }
+  let(:mock_api_url) { 'http://mock.flagsmith.com/api/' }
   let(:user_id) { 'user@email.none' }
   let(:api_flags_response) { File.read('spec/fixtures/GET_flags.json') }
   let(:api_identities_response) { File.read('spec/fixtures/GET_identities_user.json') }
@@ -19,7 +19,7 @@ describe BulletTrain do
     allow(mock_faraday).to receive(:get).with('flags/').and_return(flags_response)
     allow(mock_faraday).to receive(:get).with("identities/?identifier=#{user_id}").and_return(identities_response)
   end
-  subject { BulletTrain.new(api_key: mock_api_key, url: mock_api_url) }
+  subject { Flagsmith.new(api_key: mock_api_key, url: mock_api_url) }
 
   describe '#get_flags' do
     it 'should return all flags without a segment' do
@@ -75,8 +75,8 @@ describe BulletTrain do
     let(:trait_value) { 'bar' }
     let(:post_body) do
       {
-        identity: { identifier: user_id },
-        trait_key: subject.normalize_key(trait_key),
+           identity: { identifier: user_id },
+          trait_key: subject.normalize_key(trait_key),
         trait_value: trait_value
       }.to_json
     end
@@ -114,24 +114,6 @@ describe BulletTrain do
 
     it 'returns lower case string given a mixed case string' do
       expect(subject.normalize_key('KEY_VaLuE')).to eq('key_value')
-    end
-  end
-
-  describe 'maintain backward compatibility with non-idiomatic ruby' do
-    it 'aliases hasFeature' do
-      expect(subject.method(:hasFeature)).to eq(subject.method(:feature_enabled?))
-    end
-
-    it 'aliases getValue' do
-      expect(subject.method(:getValue)).to eq(subject.method(:get_value))
-    end
-
-    it 'aliases getFlags'do
-      expect(subject.method(:getFlags)).to eq(subject.method(:get_flags))
-    end
-
-    it 'aliases getFlagsForUser'do
-      expect(subject.method(:getFlagsForUser)).to eq(subject.method(:get_flags))
     end
   end
 end
