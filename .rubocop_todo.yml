@@ -19,7 +19,17 @@ Metrics/BlockLength:
 # AllowedMethods: respond_to_missing?
 Style/OptionalBooleanParameter:
   Exclude:
-    - 'lib/flagsmith_engine/public_methods.rb'
+    - 'lib/flagsmith.rb'
+
+Metrics/ClassLength:
+  Exclude:
+    - 'lib/flagsmith.rb'
+Metrics/AbcSize:
+  Exclude:
+    - 'lib/flagsmith_engine.rb'
+Metrics/MethodLength:
+  Exclude:
+    - 'lib/flagsmith_engine.rb'
 
 # Offense count: 1
 # Cop supports --auto-correct.

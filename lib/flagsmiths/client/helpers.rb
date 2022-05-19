@@ -15,6 +15,24 @@ module Flagsmiths
     def delay(miliseconds)
       sleep miliseconds
     end
+
+    # @return [Thread] return loop thread reference
+    # rubocop:disable Naming/AccessorMethodName
+    def set_interval(delay)
+      Thread.new do
+        loop do
+          puts "SET INTERVAL #{delay}"
+          sleep delay
+          yield if block_given?
+        end
+      end
+    end
+    # rubocop:enable Naming/AccessorMethodName
+
+    def clear_interval(thread)
+      puts "CLEAR INTERVAL #{thread}"
+      thread.kill
+    end
   end
 end
 

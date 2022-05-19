@@ -17,8 +17,9 @@ module Flagsmiths
     def initialize(data)
       # @analytics_endpoint = "#{data[:base_api_url]}#{ENDPOINT}"
       # @environment_key = data[:environment_key]
-      @last_flushed = Time.current
+      @last_flushed = Time.now
       @analytics_data = {}
+      @api_client = data.fetch(:api_client)
       @timeout = data.fetch(:timeout, 3)
     end
 
@@ -26,15 +27,15 @@ module Flagsmiths
     def flush
       return if @analytics_data.empty?
 
-      api_client.post(ENDPOINT, body: @analytics_data)
+      @api_client.post(ENDPOINT, body: @analytics_data)
 
       @analytic_data = {}
-      @last_flushed = Time.current
+      @last_flushed = Time.now
     end
 
     def track_feature(feature_id)
       @analytic_data[feature_id] = @analytics_data.fetch(feature_id, 0) + 1
-      flush if (Time.current - @last_flushed) > TIMER * 1000
+      flush if (Time.now - @last_flushed) > TIMER * 1000
     end
   end
 end

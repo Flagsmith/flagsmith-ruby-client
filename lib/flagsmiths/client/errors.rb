@@ -4,4 +4,6 @@ module Flagsmiths
   class ClientError < StandardError; end
 
   class APIError < StandardError; end
+
+  class FeatureStateNotFound < StandardError; end
 end

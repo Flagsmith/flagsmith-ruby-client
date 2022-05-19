@@ -6,7 +6,7 @@ module Flagsmiths
     DEFAULT_API_URL = 'https://api.flagsmith.com/api/v1/'
     OPTIONS = %i[
       environment_key api_url custom_headers request_timeout_seconds enable_local_evaluation
-      environment_refresh_interval_seconds retries enable_analytics default_flag_handler
+      environment_refresh_interval_seconds retries enable_analytics default_flag_handler logger
     ].freeze
 
     # Available Configs
@@ -31,6 +31,7 @@ module Flagsmiths
     #   +default_flag_handler+                 - ruby block which will be used in the case where
     #                                            flags cannot be retrieved from the API or
     #                                            a non existent feature is requested
+    #   +logger+                               - Pass your logger, default is Logger.new($stdout)
     #
     attr_reader(*OPTIONS)
 
@@ -62,6 +63,7 @@ module Flagsmiths
 
     private
 
+    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def build_config(options)
       opts = options.is_a?(String) ? { environment_key: options } : options
 
@@ -74,7 +76,9 @@ module Flagsmiths
       @environment_refresh_interval_seconds = opts.fetch(:environment_refresh_interval_seconds, 60)
       @enable_analytics = opts.fetch(:enable_analytics, false)
       @default_flag_handler = opts[:default_flag_handler]
+      @logger = options.fetch(:logger, Logger.new($stdout).tap { |l| l.level = :debug })
     end
+    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
     class << self
       def environment_key

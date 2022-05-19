@@ -6,3 +6,5 @@ Layout/HashAlignment:
 AllCops:
   NewCops: enable
   SuggestExtensions: false
+  Exlude:
+    - ./spec/**/*_spec.rb

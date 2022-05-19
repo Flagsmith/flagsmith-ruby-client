@@ -1,8 +1,12 @@
 # frozen_string_literal: true
 
+require_relative 'flagsmiths/engine/segments/evaluator'
+
 # Flags engine methods
 module FlagsmithEngine
-  def get_identity_feature_states_dict(environment:, identity:, override_traits: [])
+  include Flagsmiths::Engine::Segments::Evaluator
+
+  def get_identity_feature_states_dict(environment, identity, override_traits = [])
     # Get feature states from the environment
     feature_states = {}
     environment.feature_states.each do |fs|
@@ -27,17 +31,17 @@ module FlagsmithEngine
     feature_states
   end
 
-  def get_identity_feature_state(environment:, identity:, feature_name: string, override_traits: [])
+  def get_identity_feature_state(environment, identity, feature_name, override_traits = [])
     feature_states = get_identity_feature_states_dict(environment, identity, override_traits)
 
     matching_feature = feature_states.select { |f| f.feature.name == feature_name }
 
-    raise FeatureStateNotFound, 'Feature State Not Found' if matching_feature.length.zero?
+    raise Flagsmiths::FeatureStateNotFound, 'Feature State Not Found' if matching_feature.length.zero?
 
     matching_feature[0]
   end
 
-  def get_identity_feature_states(environment:, identity:, override_traits: [])
+  def get_identity_feature_states(environment, identity, override_traits = [])
     feature_states = get_identity_feature_states_dict(environment, identity, override_traits)
 
     return feature_states.select(&:enabled) if environment.project.hide_disabled_flags
@@ -45,15 +49,15 @@ module FlagsmithEngine
     feature_states
   end
 
-  def get_environment_feature_state(environment:, feature_name:)
+  def get_environment_feature_state(environment, feature_name)
     features_states = environment.feature_states.select { |f| f.feature.name == feature_name }
 
-    raise FeatureStateNotFound, 'Feature State Not Found' if features_states.length.zero?
+    raise Flagsmiths::FeatureStateNotFound, 'Feature State Not Found' if features_states.length.zero?
 
     features_states[0]
   end
 
-  def get_environment_feature_states(environment:)
+  def get_environment_feature_states(environment)
     return environment.feature_states.select(&:enabled) if environment.project.hide_disabled_flags
 
     environment.feature_states

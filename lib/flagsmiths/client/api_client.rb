@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'logger'
+
 module Flagsmiths
   # Ruby client for flagsmith.com
   class ApiClient
@@ -17,6 +19,7 @@ module Flagsmiths
         f.adapter Faraday.default_adapter
 
         f.options.timeout = @config.request_timeout_seconds
+        configure_logger(f)
         configure_retries(f)
       end
 
@@ -42,6 +45,10 @@ module Flagsmiths
       faraday.headers['Content-Type'] = 'application/json'
       faraday.headers['X-Environment-Key'] = @config.environment_key
       faraday.headers.merge(@config.custom_headers)
+    end
+
+    def configure_logger(faraday)
+      faraday.response :logger, @config.logger, body: true, bodies: { request: true, response: true }
     end
 
     def configure_retries(faraday)

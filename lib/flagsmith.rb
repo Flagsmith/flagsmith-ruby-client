@@ -1,16 +1,23 @@
 # frozen_string_literal: true
 
+require 'semantic'
 require 'faraday'
 require 'faraday_middleware'
+require 'securerandom'
+require 'pry'
 
-require_relative 'flagsmiths/analytics'
-require_relative 'flagsmiths/errors'
-require_relative 'flagsmiths/models/flag'
-require_relative 'flagsmiths/models/flags/collection'
-require_relative 'flagsmiths/pooling_manager'
-require_relative 'flagsmiths/api_client'
-require_relative 'flagsmiths/config'
-require_relative 'flagsmiths/helpers'
+# require_relative 'flagsmiths/analytics'
+# require_relative 'flagsmiths/errors'
+# require_relative 'flagsmiths/models/flag'
+# require_relative 'flagsmiths/models/flags/collection'
+# require_relative 'flagsmiths/pooling_manager'
+# require_relative 'flagsmiths/api_client'
+# require_relative 'flagsmiths/config'
+# require_relative 'flagsmiths/helpers'
+
+Dir.glob('./lib/flagsmiths/client/**/*.rb').sort.each { |file| require file }
+Dir.glob('./lib/flagsmiths/engine/**/*.rb').sort.each { |file| require file }
+
 require_relative 'flagsmith_engine'
 
 # Ruby client for flagsmith.com
@@ -56,9 +63,8 @@ class Flagsmith
     return nil unless @config.enable_analytics?
 
     @analytics_processor ||=
-      AnalyticsProcessor.new(
-        environment_key: environment_key,
-        base_api_url: api_url,
+      Flagsmiths::AnalyticsProcessor.new(
+        api_client: api_client,
         timeout: request_timeout_seconds
       )
   end
@@ -66,9 +72,10 @@ class Flagsmith
   def environment_data_polling_manager
     return nil unless @config.local_evaluation?
 
-    @environment_data_polling_manager ||= EnvironmentDataPollingManager.new(
+    @environment_data_polling_manager ||= Flagsmiths::EnvironmentDataPollingManager.new(
       self, environment_refresh_interval_seconds
     ).tap(&:start)
+    update_environment
   end
 
   # Get all the default for flags for the current environment.
@@ -101,23 +108,10 @@ class Flagsmith
     @environment = environment_from_api
   end
 
-  #     const data = await retryFetch(
-  #         url,
-  #         {
-  #             method: method,
-  #             timeout: @request_timeout_seconds || undefined,
-  #             body: JSON.stringify(body),
-  #             headers: headers
-  #         },
-  #         @retries,
-  #         1000,
-  #         (@request_timeout_seconds || 10) * 1000
-  #     )
-
   def environment_from_api
     api_client.get(@config.environment_url).body
-    # environment_data = api_client.get(@config.environment_url).body
-    # build_environment_model(environment_data)
+    environment_data = api_client.get(@config.environment_url).body
+    Flagsmiths::Engine::Environment.build(environment_data)
   end
 
   def environment_flags_from_document
