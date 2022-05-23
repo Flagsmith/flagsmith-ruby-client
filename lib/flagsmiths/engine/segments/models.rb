@@ -17,7 +17,12 @@ module Flagsmiths
       end
 
       class << self
-        def build; end
+        def build(json)
+          feature_states = json['feature_states'].map { |fs| Flagsmiths::Engine::Features::State.build(fs) }
+          rules = json['rules'].map { |rule| Flagsmiths::Engine::Segments::Rule.build(rule) }
+
+          new(id: json['id'], name: json['name'], feature_states: feature_states, rules: rules)
+        end
       end
     end
 
@@ -69,6 +74,12 @@ module Flagsmiths
           }[input.class.to_s]
         end
         # rubocop:enable Metrics/AbcSize
+
+        class << self
+          def build(json)
+            new(operator: json['operator'], value: json['value'], property: json['property_'])
+          end
+        end
       end
 
       # SegmentRuleModel
@@ -90,6 +101,16 @@ module Flagsmiths
 
         def matching_function
           MATCHING_FUNCTIONS[type]
+        end
+
+        class << self
+          def build(json)
+            rules = json.fetch('rules', []).map { |r| Flagsmiths::Engine::Segments::Rule.build(r) }
+            conditions = json.fetch('conditions', []).map { |c| Flagsmiths::Engine::Segments::Condition.build(c) }
+            new(
+              type: json['type'], rules: rules, conditions: conditions
+            )
+          end
         end
       end
     end

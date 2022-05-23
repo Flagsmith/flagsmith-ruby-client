@@ -1,10 +1,8 @@
 # frozen_string_literal: true
 
-require_relative '../lib/flagsmith'
-require 'ostruct'
-require 'json'
+require 'spec_helper'
 
-describe Flagsmith do
+RSpec.describe Flagsmith do
   let(:mock_api_client) { double(Flagsmiths::ApiClient) }
   let(:mock_config) { double(Flagsmiths::Config) }
   let(:mock_api_key) { 'ASDFIEVNQWEPARJ' }

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative '../utils/hash_func'
+
 module Flagsmiths
   module Engine
     # FeatureModel
@@ -13,7 +15,9 @@ module Flagsmiths
       end
 
       def ==(other)
-        other.present? && id == other.id
+        return false if other.nil?
+
+        id == other.id
       end
 
       class << self
@@ -38,7 +42,7 @@ module Flagsmiths
         end
 
         class << self
-          def build(json = {})
+          def build(json)
             new(
               value: json['value'],
               id: json['id']
@@ -51,7 +55,7 @@ module Flagsmiths
       class MultivariateStateValue
         attr_reader :id, :multivariate_feature_option, :percentage_allocation, :mv_fs_value_uuid
 
-        def inititalize(id:, multivariate_feature_option:, percentage_allocation:, mv_fs_value_uuid: SecureRandom.uuid)
+        def initialize(id:, multivariate_feature_option:, percentage_allocation:, mv_fs_value_uuid: SecureRandom.uuid)
           @id = id
           @percentage_allocation = percentage_allocation
           @multivariate_feature_option = multivariate_feature_option
@@ -59,7 +63,9 @@ module Flagsmiths
         end
 
         def <=>(other)
-          if id.present? && other.id.present?
+          return false if other.nil?
+
+          if !id.nil? && !other.id.nil?
             id - other.id
           else
             mv_fs_value_uuid <=> other.mv_fs_value_uuid
@@ -69,7 +75,7 @@ module Flagsmiths
         class << self
           def build(json)
             new(
-              id: json['id'], percentage_value: json['percentage_value'],
+              id: json['id'], percentage_allocation: json['percentage_allocation'],
               multivariate_feature_option: MultivariateOption.build(json['multivariate_feature_option'])
             )
           end
@@ -78,6 +84,8 @@ module Flagsmiths
 
       # FeatureStateModel
       class State
+        include Flagsmiths::Engine::Utils::HashFunc
+
         attr_reader :feature, :enabled, :django_id, :uuid
         attr_accessor :multivariate_feature_state_values
 
@@ -93,24 +101,26 @@ module Flagsmiths
         attr_writer :value
 
         def value(identity_id = nil)
-          if identity_id.present? && multivariate_feature_state_values.length.positive?
-            return multivariate_value(identity_id)
-          end
+          return multivariate_value(identity_id) if identity_id && multivariate_feature_state_values.length.positive?
 
           @value
         end
 
         alias feature_state_value value
+        alias get_value value
+        alias set_value value=
         alias feature_state_uuid uuid
+        alias enabled? enabled
 
         def multivariate_value(identity_id)
-          percentage_value = hashed_percentate_for_obj_ids(django_id || uuid, identity_id)
+          percentage_value = hashed_percentage_for_object_ids([django_id || uuid, identity_id])
 
           start_percentage = 0
-          multivariate_feature_state_values.sort.each do |my_value|
-            limit = my_value.percentage_allocation + start_percentage
+          multivariate_feature_state_values.sort.each do |multi_fs_value|
+            limit = multi_fs_value.percentage_allocation + start_percentage
+
             if start_percentage <= percentage_value && percentage_value < limit
-              return my_value.multivariate_feature_option.value
+              return multi_fs_value.multivariate_feature_option.value
             end
 
             start_percentage = limit
@@ -124,7 +134,7 @@ module Flagsmiths
               uuid: json['uuid'],
               enabled: json['enabled'],
               django_id: json['django_id'],
-              feature_state_value: json['feature_state_value'],
+              value: json['feature_state_value'],
               feature: Flagsmiths::Engine::Feature.build(json['feature'])
             ).tap do |model|
               model.multivariate_feature_state_values =

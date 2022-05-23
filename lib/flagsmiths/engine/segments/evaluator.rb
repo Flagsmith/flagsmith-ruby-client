@@ -40,6 +40,7 @@ module Flagsmiths
           matching_block = lambda { |condition|
             traits_match_segment_condition(identity_traits, condition, segment_id, identity_id)
           }
+
           matches_conditions =
             if rule.conditions&.length&.positive?
               rule.conditions.send(rule.matching_function, &matching_block)
@@ -52,12 +53,12 @@ module Flagsmiths
 
         def traits_match_segment_condition(identity_traits, condition, segment_id, identity_id)
           if condition.operator == PERCENTAGE_SPLIT
-            return get_hashed_percentage_for_object_ids([segment_id, identity_id]) <= condition.value.to_f
+            return hashed_percentage_for_object_ids([segment_id, identity_id]) <= condition.value.to_f
           end
 
           trait = identity_traits.find { |t| t.key == condition.property }
 
-          return condition.matches_trait_value(trait.value) if trait
+          return condition.match_trait_value?(trait.value) if trait
 
           false
         end

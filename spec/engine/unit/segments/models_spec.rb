@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative '../../../../lib/flagsmith'
+require 'spec_helper'
 
 TEST_CASES = [
   ['EQUAL', 'bar', 'bar', true],
@@ -76,7 +76,7 @@ TEST_CASES = [
   ['LESS_THAN_INCLUSIVE', '1.0.1', '1.0.0:semver', false]
 ].freeze
 
-describe Flagsmiths::Engine::Segments::Condition do
+RSpec.describe Flagsmiths::Engine::Segments::Condition do
   TEST_CASES.each do |(operator, trait_value, condition_value, expected_result)|
     it "#{operator}, #{condition_value} #match_trait_value #{trait_value}" do
       segment_condition = Flagsmiths::Engine::Segments::Condition.new(
@@ -87,7 +87,7 @@ describe Flagsmiths::Engine::Segments::Condition do
   end
 end
 
-describe Flagsmiths::Engine::Segment do
+RSpec.describe Flagsmiths::Engine::Segment do
   it 'test_segment_schema_engine_model_object_to_dict(project)' do
     # Given
     segment = Flagsmiths::Engine::Segment.new(

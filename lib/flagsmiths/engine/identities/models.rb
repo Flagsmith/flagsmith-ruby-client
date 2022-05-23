@@ -4,21 +4,21 @@ module Flagsmiths
   module Engine
     # IdentityModel
     class Identity
-      attr_reader :identifier, :environmet_api_key, :created_date, :identity_features,
+      attr_reader :identifier, :environment_api_key, :created_date, :identity_features,
                   :identity_traits, :identity_uuid, :django_id
 
       def initialize(params)
         @identity_uuid = params.fetch(:identity_uuid, SecureRandom.uuid)
-        @created_date = Date.parse(params[:created_date]) || Time.now
+        @created_date = params[:created_date].is_a?(String) ? Date.parse(params[:created_date]) : params[:created_date]
         @identity_traits = params.fetch(:identity_traits, [])
         @identity_features = params.fetch(:identity_features, Flagsmiths::Engine::Identities::FeaturesList.new)
-        @environmet_api_key = params.fetch(:environmet_api_key)
+        @environment_api_key = params.fetch(:environment_api_key)
         @identifier = params.fetch(:identifier)
         @django_id = params.fetch(:django_id, nil)
       end
 
       def composite_key
-        Identity.generate_composite_key(@environmet_api_key, @identifier)
+        Identity.generate_composite_key(@environment_api_key, @identifier)
       end
 
       def update_traits(traits)
@@ -26,10 +26,10 @@ module Flagsmiths
         @identity_traits.each { |trait| existing_traits[trait.key] = trait }
 
         traits.each do |trait|
-          if trait.value.present?
-            existing_traits[trait.key] = trait
-          else
+          if trait.value.nil?
             existing_traits.delete(trait.key)
+          else
+            existing_traits[trait.key] = trait
           end
         end
 
@@ -53,49 +53,59 @@ module Flagsmiths
           )
         end
       end
+    end
 
-      module Identities
-        # TraitModel
-        class Trait
-          attr_reader :key, :value
+    module Identities
+      # TraitModel
+      class Trait
+        attr_reader :trait_value, :trait_key
 
-          def initialize(key:, value:)
-            @key = key
-            @value = value
-          end
-
-          alias trait_key key
-          alias trait_value value
+        def initialize(trait_key:, trait_value:)
+          @trait_key = trait_key
+          @trait_value = trait_value
         end
 
-        class NotInuiqueFeatureState < StandardError; end
+        alias key trait_key
+        alias value trait_value
 
-        # IdentityFeaturesList
-        class FeaturesList
-          include Enumerable
-
-          def inititalize(list = [])
-            @list = []
-            list.each { |item| @list << item }
+        class << self
+          def build(json)
+            new(trait_key: json['trait_key'], trait_value: json['trait_value'])
           end
+        end
+      end
 
-          def <<(item)
-            @list.each do |v|
-              next unless v.django_id == item.django_id
+      class NotInuiqueFeatureState < StandardError; end
 
-              raise NotInuiqueFeatureState, "Feature state for this feature already exists, django_id: #{django_id}"
-            end
-            @list << item
+      # IdentityFeaturesList
+      class FeaturesList
+        include Enumerable
+
+        def initialize(list = [])
+          @list = []
+          list.each { |item| @list << item }
+        end
+
+        def <<(item)
+          @list.each do |v|
+            next unless v.django_id == item.django_id
+
+            raise NotInuiqueFeatureState, "Feature state for this feature already exists, django_id: #{django_id}"
           end
+          @list << item
+        end
 
-          class << self
-            def build(identity_features)
-              return [] unless identity_features.present?
+        def each(&block)
+          @list.each { |item| block&.call(item) || item }
+        end
 
-              new(
-                identity_features.map { |f| Flagsmiths::Engine::Features::State.build(f) }
-              )
-            end
+        class << self
+          def build(identity_features)
+            return new unless identity_features.any?
+
+            new(
+              identity_features.map { |f| Flagsmiths::Engine::Features::State.build(f) }
+            )
           end
         end
       end

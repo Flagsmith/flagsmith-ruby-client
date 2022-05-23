@@ -5,7 +5,7 @@ require_relative 'helpers'
 module Flagsmiths
   # Manager to asynchronously fetch the environment
   class EnvironmentDataPollingManager
-    include Flagsmiths::Helpers
+    include Flagsmiths::SDK::Helpers
 
     def initialize(main, refresh_interval_seconds)
       @main = main

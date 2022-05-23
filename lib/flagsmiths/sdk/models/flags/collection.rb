@@ -58,7 +58,10 @@ module Flagsmiths
         raise Flagsmiths::Flags::NotFound,
               "Feature does not exist: #{key}, implement default_flag_handler to handle this case."
       end
-      alias [] get_flag
+
+      def [](key)
+        key.is_a?(Integer) ? to_a[key] : get_flag(key)
+      end
 
       def length
         to_a.length
