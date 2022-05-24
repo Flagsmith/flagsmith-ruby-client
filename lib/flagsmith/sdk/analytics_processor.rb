@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-module Flagsmiths
+module Flagsmith
   # Used to control how often we send data(in seconds)
   class AnalyticsProcessor
     ENDPOINT = 'analytics/flags/'
     TIMER = 10
-    attr_reader :analytics_endpoint, :environment_key, :last_flushed, :timeout, :analytics_data
+    attr_reader :last_flushed, :timeout, :analytics_data
 
     # AnalyticsProcessor is used to track how often individual Flags are evaluated within
     # the Flagsmith SDK. Docs: https://docs.flagsmith.com/advanced-use/flag-analytics.
@@ -15,8 +15,6 @@ module Flagsmiths
     # data[:timeout] used to tell requests to stop waiting for a response after a
     #                given number of seconds
     def initialize(data)
-      # @analytics_endpoint = "#{data[:base_api_url]}#{ENDPOINT}"
-      # @environment_key = data[:environment_key]
       @last_flushed = Time.now
       @analytics_data = {}
       @api_client = data.fetch(:api_client)

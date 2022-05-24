@@ -2,7 +2,7 @@
 
 require_relative '../utils/hash_func'
 
-module Flagsmiths
+module Flagsmith
   module Engine
     # FeatureModel
     class Feature
@@ -84,7 +84,7 @@ module Flagsmiths
 
       # FeatureStateModel
       class State
-        include Flagsmiths::Engine::Utils::HashFunc
+        include Flagsmith::Engine::Utils::HashFunc
 
         attr_reader :feature, :enabled, :django_id, :uuid
         attr_accessor :multivariate_feature_state_values
@@ -135,7 +135,7 @@ module Flagsmiths
               enabled: json['enabled'],
               django_id: json['django_id'],
               value: json['feature_state_value'],
-              feature: Flagsmiths::Engine::Feature.build(json['feature'])
+              feature: Flagsmith::Engine::Feature.build(json['feature'])
             ).tap do |model|
               model.multivariate_feature_state_values =
                 build_multivariate_feature_state_values(json['multivariate_feature_state_values'])

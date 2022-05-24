@@ -76,10 +76,10 @@ TEST_CASES = [
   ['LESS_THAN_INCLUSIVE', '1.0.1', '1.0.0:semver', false]
 ].freeze
 
-RSpec.describe Flagsmiths::Engine::Segments::Condition do
+RSpec.describe Flagsmith::Engine::Segments::Condition do
   TEST_CASES.each do |(operator, trait_value, condition_value, expected_result)|
     it "#{operator}, #{condition_value} #match_trait_value #{trait_value}" do
-      segment_condition = Flagsmiths::Engine::Segments::Condition.new(
+      segment_condition = Flagsmith::Engine::Segments::Condition.new(
         operator: operator, property: 'foo', value: condition_value
       )
       expect(segment_condition.match_trait_value?(trait_value)).to eq(expected_result)
@@ -87,24 +87,24 @@ RSpec.describe Flagsmiths::Engine::Segments::Condition do
   end
 end
 
-RSpec.describe Flagsmiths::Engine::Segment do
+RSpec.describe Flagsmith::Engine::Segment do
   it 'test_segment_schema_engine_model_object_to_dict(project)' do
     # Given
-    segment = Flagsmiths::Engine::Segment.new(
+    segment = Flagsmith::Engine::Segment.new(
       id: 1,
       name: 'Segment',
       rules: [
-        Flagsmiths::Engine::Segments::Rule.new(
+        Flagsmith::Engine::Segments::Rule.new(
           type: 'ALL_RULE',
           conditions: [
-            Flagsmiths::Engine::Segments::Condition.new(operator: 'EQUAL', property: 'foo', value: 'bar')
+            Flagsmith::Engine::Segments::Condition.new(operator: 'EQUAL', property: 'foo', value: 'bar')
           ]
         )
       ],
       feature_states: [
-        Flagsmiths::Engine::Features::State.new(
+        Flagsmith::Engine::Features::State.new(
           django_id: 1,
-          feature: Flagsmiths::Engine::Feature.new(
+          feature: Flagsmith::Engine::Feature.new(
             id: 1,
             name: 'my_feature',
             type: 'STANDARD'

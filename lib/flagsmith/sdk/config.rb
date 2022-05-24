@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Flagsmiths
+module Flagsmith
   # Config options shared around Engine
   class Config
     DEFAULT_API_URL = 'https://api.flagsmith.com/api/v1/'
@@ -16,7 +16,7 @@ module Flagsmiths
     #   +environment_key+                      - The environment key obtained from Flagsmith
     #                                            interface
     #   +api_url+                              - Override the URL of the Flagsmith API to communicate with
-    #   +customer_headrrs+                     - Additional headers to add to requests made
+    #   +customer_headers+                     - Additional headers to add to requests made
     #                                            to the Flagsmith API
     #   +request_timeout_seconds+              - Number of seconds to wait for a request to
     #                                            complete before terminating the request
@@ -67,8 +67,8 @@ module Flagsmiths
     def build_config(options)
       opts = options.is_a?(String) ? { environment_key: options } : options
 
-      @environment_key = opts.fetch(:environment_key, Flagsmiths::Config.environment_key)
-      @api_url = opts.fetch(:api_url, Flagsmiths::Config::DEFAULT_API_URL)
+      @environment_key = opts.fetch(:environment_key, Flagsmith::Config.environment_key)
+      @api_url = opts.fetch(:api_url, Flagsmith::Config::DEFAULT_API_URL)
       @custom_headers = opts.fetch(:custom_headers, {})
       @request_timeout_seconds = opts[:request_timeout_seconds]
       @retries = opts[:retries]

@@ -12,11 +12,11 @@ require_relative 'segments/evaluator'
 require_relative 'segments/models'
 require_relative 'utils/hash_func'
 
-module Flagsmiths
+module Flagsmith
   module Engine
     # Flags engine methods
     module Core
-      include Flagsmiths::Engine::Segments::Evaluator
+      include Flagsmith::Engine::Segments::Evaluator
 
       def get_identity_feature_states_dict(environment, identity, override_traits = nil)
         # Get feature states from the environment
@@ -48,7 +48,7 @@ module Flagsmiths
 
         feature_state = feature_states.find { |f| f.feature.name == feature_name }
 
-        raise Flagsmiths::FeatureStateNotFound, 'Feature State Not Found' if feature_state.nil?
+        raise Flagsmith::FeatureStateNotFound, 'Feature State Not Found' if feature_state.nil?
 
         feature_state
       end
@@ -64,7 +64,7 @@ module Flagsmiths
       def get_environment_feature_state(environment, feature_name)
         features_state = environment.feature_states.find { |f| f.feature.name == feature_name }
 
-        raise Flagsmiths::FeatureStateNotFound, 'Feature State Not Found' if features_state.nil?
+        raise Flagsmith::FeatureStateNotFound, 'Feature State Not Found' if features_state.nil?
 
         features_state
       end

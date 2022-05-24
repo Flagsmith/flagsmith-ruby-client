@@ -26,10 +26,10 @@ Metrics/ClassLength:
     - 'lib/flagsmith.rb'
 Metrics/AbcSize:
   Exclude:
-    - 'lib/flagsmiths/engine/core.rb'
+    - 'lib/flagsmith/engine/core.rb'
 Metrics/MethodLength:
   Exclude:
-    - 'lib/flagsmiths/engine/core.rb'
+    - 'lib/flagsmith/engine/core.rb'
 
 # Offense count: 1
 # Cop supports --auto-correct.

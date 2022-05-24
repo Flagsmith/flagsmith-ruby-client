@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Flagsmiths
+module Flagsmith
   module Engine
     module Segments
       module Constants

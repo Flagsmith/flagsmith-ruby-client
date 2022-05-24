@@ -3,8 +3,8 @@
 require 'spec_helper'
 
 RSpec.describe Flagsmith do
-  let(:mock_api_client) { double(Flagsmiths::ApiClient) }
-  let(:mock_config) { double(Flagsmiths::Config) }
+  let(:mock_api_client) { double(Flagsmith::ApiClient) }
+  let(:mock_config) { double(Flagsmith::Config) }
   let(:mock_api_key) { 'ASDFIEVNQWEPARJ' }
   let(:mock_api_url) { 'http://mock.flagsmith.com/api/' }
   let(:user_id) { 'user@email.none' }
@@ -14,21 +14,21 @@ RSpec.describe Flagsmith do
   let(:identities_response) { OpenStruct.new(body: JSON.parse(api_identities_response)) }
 
   before do
-    allow(Flagsmiths::Config).to receive(:new).with(api_url: mock_api_url, environment_key: mock_api_key)
+    allow(Flagsmith::Config).to receive(:new).with(api_url: mock_api_url, environment_key: mock_api_key)
                                               .and_return(mock_config)
     allow(mock_config).to receive(:enable_analytics?).and_return(false)
     allow(mock_config).to receive(:local_evaluation?).and_return(false)
     allow(mock_config).to receive(:default_flag_handler).and_return(nil)
     allow(mock_config).to receive(:identities_url).and_return('identities/')
     allow(mock_config).to receive(:environment_flags_url).and_return('flags/')
-    allow(Flagsmiths::ApiClient).to receive(:new).with(mock_config)
+    allow(Flagsmith::ApiClient).to receive(:new).with(mock_config)
                                                  .and_return(mock_api_client)
     allow(mock_api_client).to receive(:get).with('flags/').and_return(flags_response)
     allow(mock_api_client).to receive(:post).with(
       'identities/', { identifier: user_id, traits: [] }.to_json
     ).and_return(identities_response)
   end
-  subject { Flagsmith.new(environment_key: mock_api_key, api_url: mock_api_url) }
+  subject { Flagsmith::Client.new(environment_key: mock_api_key, api_url: mock_api_url) }
 
   describe '#get_flags' do
     it 'should return all flags without a segment' do
@@ -89,7 +89,7 @@ RSpec.describe Flagsmith do
   #   let(:post_body) do
   #     {
   #       identity: { identifier: user_id },
-  #       trait_key: Flagsmiths::Flags::Collection.normalize_key(trait_key),
+  #       trait_key: Flagsmith::Flags::Collection.normalize_key(trait_key),
   #       trait_value: trait_value
   #     }.to_json
   #   end
@@ -118,15 +118,15 @@ RSpec.describe Flagsmith do
 
   describe '#normalize_key' do
     it 'returns an empty string given nil' do
-      expect(Flagsmiths::Flags::Collection.normalize_key(nil)).to eq('')
+      expect(Flagsmith::Flags::Collection.normalize_key(nil)).to eq('')
     end
 
     it 'returns lower case string given a symbol' do
-      expect(Flagsmiths::Flags::Collection.normalize_key(:key_value)).to eq('key_value')
+      expect(Flagsmith::Flags::Collection.normalize_key(:key_value)).to eq('key_value')
     end
 
     it 'returns lower case string given a mixed case string' do
-      expect(Flagsmiths::Flags::Collection.normalize_key('KEY_VaLuE')).to eq('key_value')
+      expect(Flagsmith::Flags::Collection.normalize_key('KEY_VaLuE')).to eq('key_value')
     end
   end
 end

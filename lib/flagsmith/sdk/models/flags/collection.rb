@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Flagsmiths
+module Flagsmith
   module Flags
     class NotFound < StandardError; end
 
@@ -8,7 +8,7 @@ module Flagsmiths
     class Collection
       include Enumerable
 
-      attr_reader :flags, :default_flag_handler, :analytic_processor
+      attr_reader :flags, :default_flag_handler, :analytics_processor
 
       def initialize(flags = {}, analytics_processor: nil, default_flag_handler: nil)
         @flags = flags
@@ -48,14 +48,14 @@ module Flagsmiths
       # :return: BaseFlag object.
       # :raises FlagsmithClientError: if feature doesn't exist
       def get_flag(feature_name)
-        key = Flagsmiths::Flags::Collection.normalize_key(feature_name)
+        key = Flagsmith::Flags::Collection.normalize_key(feature_name)
         flag = flags.fetch(key)
-        @analytic_processor.track_feature(flag.feature_id) if @analytic_processor && flag.feature_id
+        @analytics_processor.track_feature(flag.feature_id) if @analytics_processor && flag.feature_id
         flag
       rescue KeyError
         return @default_flag_handler.call(feature_name) if @default_flag_handler
 
-        raise Flagsmiths::Flags::NotFound,
+        raise Flagsmith::Flags::NotFound,
               "Feature does not exist: #{key}, implement default_flag_handler to handle this case."
       end
 
@@ -67,11 +67,15 @@ module Flagsmiths
         to_a.length
       end
 
+      def inspect
+        "<##{self.class}:#{object_id.to_s(8)} flags=#{@flags}>"
+      end
+
       class << self
         def from_api(json_data, **args)
           to_flag_object = lambda { |json_flag, acc|
             acc[normalize_key(json_flag.dig('feature', 'name'))] =
-              Flagsmiths::Flag.from_api(json_flag)
+              Flagsmith::Flag.from_api(json_flag)
           }
 
           new(
@@ -83,7 +87,7 @@ module Flagsmiths
         def from_feature_state_models(feature_states, identity_id: nil, **args)
           to_flag_object = lambda { |feature_state, acc|
             acc[normalize_key(feature_state.feature.name)] =
-              Flagsmiths::Flag.from_feature_state_model(feature_state, identity_id)
+              Flagsmith::Flag.from_feature_state_model(feature_state, identity_id)
           }
 
           new(

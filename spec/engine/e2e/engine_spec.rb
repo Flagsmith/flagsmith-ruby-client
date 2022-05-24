@@ -2,14 +2,14 @@
 
 require 'spec_helper'
 
-# require File.join(APP_ROOT, 'lib/flagsmiths/engine/core')
+# require File.join(APP_ROOT, 'lib/flagsmith/engine/core')
 
 def load_test_cases(filepath)
   data = JSON.parse(File.open(filepath).read, symbolize_names: false)
-  environment = Flagsmiths::Engine::Environment.build(data['environment'])
+  environment = Flagsmith::Engine::Environment.build(data['environment'])
 
   data['identities_and_responses'].map do |test_case|
-    identity = Flagsmiths::Engine::Identity.build(test_case['identity'])
+    identity = Flagsmith::Engine::Identity.build(test_case['identity'])
     {
       'environment' => environment,
       'identity' => identity,
@@ -18,11 +18,11 @@ def load_test_cases(filepath)
   end
 end
 
-RSpec.describe Flagsmiths::Engine::Core do
+RSpec.describe Flagsmith::Engine::Core do
   load_test_cases(
     File.join(APP_ROOT, 'spec/engine-test-data/data/environment_n9fbf9h3v4fFgH3U3ngWhb.json')
   ).each do |test_case|
-    engine = Class.new { extend Flagsmiths::Engine::Core }
+    engine = Class.new { extend Flagsmith::Engine::Core }
     json_flags = test_case.dig('response', 'flags').sort_by { |json| json.dig('feature', 'name') }
     feature_states = engine.get_identity_feature_states(test_case['environment'], test_case['identity']).sort_by { |fs| fs.feature.name }
 

@@ -1,17 +1,16 @@
 # frozen_string_literal: true
 
-module Flagsmiths
+module Flagsmith
   module SDK
     # Available Flagsmith Functions
     module InstanceMethods
       # Get all the default for flags for the current environment.
       # @returns Flags object holding all the flags for the current environment.
-      def environment_flags
+      def get_environment_flags # rubocop:disable Naming/AccessorMethodName
         return environment_flags_from_document if @config.local_evaluation?
 
         environment_flags_from_api
       end
-      alias get_environment_flags environment_flags
 
       # Get all the flags for the current environment for a given identity. Will also
       # upsert all traits to the Flagsmith API for future evaluations. Providing a
@@ -22,12 +21,11 @@ module Flagsmiths
       # traits { key => value } is a dictionary of traits to add / update on the identity in
       # Flagsmith, e.g. { "num_orders": 10 }
       # returns Flags object holding all the flags for the given identity.
-      def identity_flags(identifier, **traits)
+      def get_identity_flags(identifier, **traits)
         return get_identity_flags_from_document(identifier, traits) if environment
 
         get_identity_flags_from_api(identifier, traits)
       end
-      alias get_identity_flags identity_flags
 
       def feature_enabled?(feature_name, default: false)
         flag = environment_flags[feature_name]
@@ -43,18 +41,17 @@ module Flagsmiths
         flag.enabled?
       end
 
-      def feature_value(feature_name, user_id = nil, default: nil)
+      def get_value(feature_name, user_id = nil, default: nil)
         flag = identity_flags(user_id)[feature_name]
         return default if flag.nil?
 
         flag.value
       end
-      alias get_value feature_value
 
       private
 
       def environment_flags_from_document
-        Flagsmiths::Flags::Collection.from_feature_state_models(
+        Flagsmith::Flags::Collection.from_feature_state_models(
           get_environment_feature_states(environment),
           analytics_processor: analytics_processor,
           default_flag_handler: default_flag_handler
@@ -64,7 +61,7 @@ module Flagsmiths
       def get_identity_flags_from_document(identifier, traits = {})
         identity_model = build_identity_model(identifier, traits)
 
-        Flagsmiths::Flags::Collection.from_feature_state_models(
+        Flagsmith::Flags::Collection.from_feature_state_models(
           get_identity_feature_states(environment, identity_model),
           analytics_processor: analytics_processor,
           default_flag_handler: default_flag_handler
@@ -75,7 +72,7 @@ module Flagsmiths
         rescue_with_default_handler do
           api_flags = api_client.get(@config.environment_flags_url).body
           api_flags = api_flags.select { |flag| flag['feature_segment'].nil? }
-          Flagsmiths::Flags::Collection.from_api(
+          Flagsmith::Flags::Collection.from_api(
             api_flags,
             analytics_processor: analytics_processor,
             default_flag_handler: default_flag_handler
@@ -87,7 +84,7 @@ module Flagsmiths
         rescue_with_default_handler do
           data = generate_identities_data(identifier, traits)
           json_response = api_client.post(@config.identities_url, data.to_json).body
-          Flagsmiths::Flags::Collection.from_api(
+          Flagsmith::Flags::Collection.from_api(
             json_response['flags'],
             analytics_processor: analytics_processor,
             default_flag_handler: default_flag_handler
@@ -99,7 +96,7 @@ module Flagsmiths
         yield
       rescue StandardError
         if default_flag_handler
-          return Flagsmiths::Flags::Collection.new(
+          return Flagsmith::Flags::Collection.new(
             {},
             default_flag_handler: default_flag_handler
           )
@@ -109,16 +106,23 @@ module Flagsmiths
 
       def build_identity_model(identifier, traits = {})
         unless environment
-          raise Flagsmiths::ClientError,
+          raise Flagsmith::ClientError,
                 'Unable to build identity model when no local environment present.'
         end
 
         trait_models = traits.map do |key, value|
-          Flagsmiths::Engine::Identities::Trait.new(trait_key: key, trait_value: value)
+          Flagsmith::Engine::Identities::Trait.new(trait_key: key, trait_value: value)
         end
-        Flagsmiths::Engine::Identity.new(
+        Flagsmith::Engine::Identity.new(
           identity_traits: trait_models, environment_api_key: environment_key, identifier: identifier
         )
+      end
+
+      def generate_identities_data(identifier, traits = {})
+        {
+          identifier: identifier,
+          traits: traits.map { |key, value| { trait_key: key, trait_value: value } }
+        }
       end
     end
   end

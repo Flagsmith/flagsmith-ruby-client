@@ -2,7 +2,7 @@
 
 require_relative 'constants'
 
-module Flagsmiths
+module Flagsmith
   module Engine
     # SegmentModel
     class Segment
@@ -18,8 +18,8 @@ module Flagsmiths
 
       class << self
         def build(json)
-          feature_states = json['feature_states'].map { |fs| Flagsmiths::Engine::Features::State.build(fs) }
-          rules = json['rules'].map { |rule| Flagsmiths::Engine::Segments::Rule.build(rule) }
+          feature_states = json['feature_states'].map { |fs| Flagsmith::Engine::Features::State.build(fs) }
+          rules = json['rules'].map { |rule| Flagsmith::Engine::Segments::Rule.build(rule) }
 
           new(id: json['id'], name: json['name'], feature_states: feature_states, rules: rules)
         end
@@ -105,8 +105,8 @@ module Flagsmiths
 
         class << self
           def build(json)
-            rules = json.fetch('rules', []).map { |r| Flagsmiths::Engine::Segments::Rule.build(r) }
-            conditions = json.fetch('conditions', []).map { |c| Flagsmiths::Engine::Segments::Condition.build(c) }
+            rules = json.fetch('rules', []).map { |r| Flagsmith::Engine::Segments::Rule.build(r) }
+            conditions = json.fetch('conditions', []).map { |c| Flagsmith::Engine::Segments::Condition.build(c) }
             new(
               type: json['type'], rules: rules, conditions: conditions
             )

@@ -2,7 +2,7 @@
 
 require 'digest'
 
-module Flagsmiths
+module Flagsmith
   module Engine
     module Utils
       # HashFunction

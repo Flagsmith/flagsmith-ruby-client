@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Flagsmiths
+module Flagsmith
   module Engine
     # ProjectModel
     class Project
@@ -17,11 +17,11 @@ module Flagsmiths
 
       class << self
         def build(json)
-          segments = json.fetch('segments', []).map { |s| Flagsmiths::Engine::Segment.build(s) }
+          segments = json.fetch('segments', []).map { |s| Flagsmith::Engine::Segment.build(s) }
 
           new(
             id: json['id'], name: json['name'], hide_disabled_flags: json['hide_disabled_flags'],
-            organisation: Flagsmiths::Engine::Organisation.build(json['organisation']),
+            organisation: Flagsmith::Engine::Organisation.build(json['organisation']),
             segments: segments
           )
         end

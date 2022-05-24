@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require_relative 'helpers'
+require_relative 'intervals'
 
-module Flagsmiths
+module Flagsmith
   # Manager to asynchronously fetch the environment
   class EnvironmentDataPollingManager
-    include Flagsmiths::SDK::Helpers
+    include Flagsmith::SDK::Intervals
 
     def initialize(main, refresh_interval_seconds)
       @main = main

@@ -1,22 +1,9 @@
 # frozen_string_literal: true
 
-module Flagsmiths
+module Flagsmith
   module SDK
     # Util functions
-    module Helpers
-      def generate_identities_data(identifier, traits = {})
-        {
-          identifier: identifier,
-          traits: traits.map do |key, value|
-            { trait_key: key, trait_value: value }
-          end
-        }
-      end
-
-      def delay(miliseconds)
-        sleep miliseconds
-      end
-
+    module Intervals
       # @return [Thread] return loop thread reference
       # rubocop:disable Naming/AccessorMethodName
       def set_interval(delay)

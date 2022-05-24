@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Flagsmiths
+module Flagsmith
   module Engine
     # EnvironmentModel
     class Environment
@@ -17,9 +17,9 @@ module Flagsmiths
 
       class << self
         def build(json)
-          project = Flagsmiths::Engine::Project.build(json['project'])
+          project = Flagsmith::Engine::Project.build(json['project'])
           feature_states = json['feature_states'].map do |fs|
-            Flagsmiths::Engine::Features::State.build(fs)
+            Flagsmith::Engine::Features::State.build(fs)
           end
 
           new(

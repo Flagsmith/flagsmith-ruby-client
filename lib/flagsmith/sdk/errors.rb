@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Flagsmiths
+module Flagsmith
   class ClientError < StandardError; end
 
   class APIError < StandardError; end

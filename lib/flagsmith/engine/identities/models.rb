@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module Flagsmiths
+module Flagsmith
   module Engine
     # IdentityModel
     class Identity
@@ -11,7 +11,7 @@ module Flagsmiths
         @identity_uuid = params.fetch(:identity_uuid, SecureRandom.uuid)
         @created_date = params[:created_date].is_a?(String) ? Date.parse(params[:created_date]) : params[:created_date]
         @identity_traits = params.fetch(:identity_traits, [])
-        @identity_features = params.fetch(:identity_features, Flagsmiths::Engine::Identities::FeaturesList.new)
+        @identity_features = params.fetch(:identity_features, Flagsmith::Engine::Identities::FeaturesList.new)
         @environment_api_key = params.fetch(:environment_api_key)
         @identifier = params.fetch(:identifier)
         @django_id = params.fetch(:django_id, nil)
@@ -42,8 +42,8 @@ module Flagsmiths
         end
 
         def build(json)
-          identity_features = Flagsmiths::Engine::Identities::FeaturesList.build(json['identity_features'])
-          identity_traits = json['identity_traits']&.map { |t| Flagsmiths::Engine::Identities::Trait.build(t) }
+          identity_features = Flagsmith::Engine::Identities::FeaturesList.build(json['identity_features'])
+          identity_traits = json['identity_traits']&.map { |t| Flagsmith::Engine::Identities::Trait.build(t) }
 
           Identity.new(
             identifier: json['identifier'], identity_uuid: json['identity_uuid'],
@@ -104,7 +104,7 @@ module Flagsmiths
             return new unless identity_features.any?
 
             new(
-              identity_features.map { |f| Flagsmiths::Engine::Features::State.build(f) }
+              identity_features.map { |f| Flagsmith::Engine::Features::State.build(f) }
             )
           end
         end

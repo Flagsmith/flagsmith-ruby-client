@@ -3,13 +3,13 @@
 require_relative 'constants'
 require_relative '../utils/hash_func'
 
-module Flagsmiths
+module Flagsmith
   module Engine
     module Segments
       # Evaluator methods
       module Evaluator
-        include Flagsmiths::Engine::Segments::Constants
-        include Flagsmiths::Engine::Utils::HashFunc
+        include Flagsmith::Engine::Segments::Constants
+        include Flagsmith::Engine::Utils::HashFunc
 
         def get_identity_segments(environment, identity, override_traits = nil)
           environment.project.segments.select do |s|
