@@ -47,8 +47,8 @@ module Flagsmith
                                 .map { |t| Flagsmith::Engine::Identities::Trait.build(t) }
 
           Identity.new(
-            json.slice(:identifier, :identity_uuid, :environment_api_key, :created_date, :django_id)
-                .merge(identity_features: identity_features, identity_traits: identity_traits)
+            **json.slice(:identifier, :identity_uuid, :environment_api_key, :created_date, :django_id)
+                  .merge(identity_features: identity_features, identity_traits: identity_traits)
           )
         end
       end
@@ -69,7 +69,7 @@ module Flagsmith
 
         class << self
           def build(json)
-            new(json.slice(:trait_key, :trait_value))
+            new(**json.slice(:trait_key, :trait_value))
           end
         end
       end
@@ -93,6 +93,8 @@ module Flagsmith
           end
           @list << item
         end
+
+        alias push <<
 
         def each(&block)
           @list.each { |item| block&.call(item) || item }

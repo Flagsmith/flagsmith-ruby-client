@@ -22,7 +22,7 @@ module Flagsmith
 
       class << self
         def build(json)
-          new(json.slice(:id, :name, :type))
+          new(**json.slice(:id, :name, :type))
         end
       end
     end
@@ -39,7 +39,7 @@ module Flagsmith
 
         class << self
           def build(json)
-            new(json.slice(:id, :value))
+            new(**json.slice(:id, :value))
           end
         end
       end
@@ -68,8 +68,8 @@ module Flagsmith
         class << self
           def build(json)
             new(
-              json.slice(:id, :percentage_allocation, :mv_fs_value_uuid)
-                  .merge(multivariate_feature_option: MultivariateOption.build(json[:multivariate_feature_option]))
+              **json.slice(:id, :percentage_allocation, :mv_fs_value_uuid)
+                    .merge(multivariate_feature_option: MultivariateOption.build(json[:multivariate_feature_option]))
             )
           end
         end
@@ -123,9 +123,9 @@ module Flagsmith
           def build(json)
             multivariate_feature_state_values = build_multivariate_values(json[:multivariate_feature_state_values])
             new(
-              json.slice(:uuid, :enabled, :django_id, :feature_state_value)
-                  .merge(feature: Flagsmith::Engine::Feature.build(json[:feature]))
-                  .merge(multivariate_feature_state_values: multivariate_feature_state_values)
+              **json.slice(:uuid, :enabled, :django_id, :feature_state_value)
+                    .merge(feature: Flagsmith::Engine::Feature.build(json[:feature]))
+                    .merge(multivariate_feature_state_values: multivariate_feature_state_values)
             )
           end
 

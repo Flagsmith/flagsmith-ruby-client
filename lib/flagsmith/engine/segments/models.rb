@@ -22,8 +22,8 @@ module Flagsmith
           rules = json.fetch(:rules, []).map { |rule| Flagsmith::Engine::Segments::Rule.build(rule) }
 
           new(
-            json.slice(:id, :name)
-                .merge(feature_states: feature_states, rules: rules)
+            **json.slice(:id, :name)
+                  .merge(feature_states: feature_states, rules: rules)
           )
         end
       end
@@ -80,7 +80,7 @@ module Flagsmith
 
         class << self
           def build(json)
-            new(json.slice(:operator, :value).merge(property: json[:property_]))
+            new(**json.slice(:operator, :value).merge(property: json[:property_]))
           end
         end
       end

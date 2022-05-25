@@ -20,7 +20,7 @@ module Flagsmith
 
       class << self
         def build(json)
-          new(json.slice(:id, :name, :feature_analitycs, :stop_serving_flags, :persist_trait_data))
+          new(**json.slice(:id, :name, :feature_analitycs, :stop_serving_flags, :persist_trait_data))
         end
       end
     end

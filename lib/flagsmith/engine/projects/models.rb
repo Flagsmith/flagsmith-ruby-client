@@ -20,9 +20,9 @@ module Flagsmith
           segments = json.fetch(:segments, []).map { |s| Flagsmith::Engine::Segment.build(s) }
 
           new(
-            json.slice(:id, :name, :hide_disabled_flags)
-                .merge(organisation: Flagsmith::Engine::Organisation.build(json[:organisation]))
-                .merge(segments: segments)
+            **json.slice(:id, :name, :hide_disabled_flags)
+                  .merge(organisation: Flagsmith::Engine::Organisation.build(json[:organisation]))
+                  .merge(segments: segments)
           )
         end
       end

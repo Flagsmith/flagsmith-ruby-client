@@ -22,7 +22,7 @@ module Flagsmith
             Flagsmith::Engine::Features::State.build(fs)
           end
 
-          new(json.slice(:id, :api_key).merge(project: project, feature_states: feature_states))
+          new(**json.slice(:id, :api_key).merge(project: project, feature_states: feature_states))
         end
       end
     end
@@ -52,7 +52,7 @@ module Flagsmith
             attributes = json.slice(:id, :key, :name, :client_api_key, :active)
             attributes = attributes.merge(expires_at: Date.parse(json[:created_at])) unless json[:created_at].nil?
             attributes = attributes.merge(expires_at: Date.parse(json[:expires_at])) unless json[:expires_at].nil?
-            new(attributes)
+            new(**attributes)
           end
         end
       end
