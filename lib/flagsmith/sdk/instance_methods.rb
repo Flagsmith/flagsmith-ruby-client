@@ -28,21 +28,28 @@ module Flagsmith
       end
 
       def feature_enabled?(feature_name, default: false)
-        flag = environment_flags[feature_name]
+        flag = get_environment_flags[feature_name]
         return default if flag.nil?
 
         flag.enabled?
       end
 
       def feature_enabled_for_identity?(feature_name, user_id, default: false)
-        flag = identity_flags(user_id)[feature_name]
+        flag = get_identity_flags(user_id)[feature_name]
         return default if flag.nil?
 
         flag.enabled?
       end
 
-      def get_value(feature_name, user_id = nil, default: nil)
-        flag = identity_flags(user_id)[feature_name]
+      def get_value(feature_name, default: nil)
+        flag = get_environment_flags[feature_name]
+        return default if flag.nil?
+
+        flag.value
+      end
+
+      def get_value_for_identity(feature_name, user_id = nil, default: nil)
+        flag = get_identity_flags(user_id)[feature_name]
         return default if flag.nil?
 
         flag.value
@@ -71,7 +78,7 @@ module Flagsmith
       def environment_flags_from_api
         rescue_with_default_handler do
           api_flags = api_client.get(@config.environment_flags_url).body
-          api_flags = api_flags.select { |flag| flag['feature_segment'].nil? }
+          api_flags = api_flags.select { |flag| flag[:feature_segment].nil? }
           Flagsmith::Flags::Collection.from_api(
             api_flags,
             analytics_processor: analytics_processor,
@@ -84,8 +91,9 @@ module Flagsmith
         rescue_with_default_handler do
           data = generate_identities_data(identifier, traits)
           json_response = api_client.post(@config.identities_url, data.to_json).body
+
           Flagsmith::Flags::Collection.from_api(
-            json_response['flags'],
+            json_response[:flags],
             analytics_processor: analytics_processor,
             default_flag_handler: default_flag_handler
           )

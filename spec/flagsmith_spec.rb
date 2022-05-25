@@ -10,8 +10,8 @@ RSpec.describe Flagsmith do
   let(:user_id) { 'user@email.none' }
   let(:api_flags_response) { File.read('spec/fixtures/GET_flags.json') }
   let(:api_identities_response) { File.read('spec/fixtures/GET_identities_user.json') }
-  let(:flags_response) { OpenStruct.new(body: JSON.parse(api_flags_response)) }
-  let(:identities_response) { OpenStruct.new(body: JSON.parse(api_identities_response)) }
+  let(:flags_response) { OpenStruct.new(body: JSON.parse(api_flags_response, symbolize_names: true)) }
+  let(:identities_response) { OpenStruct.new(body: JSON.parse(api_identities_response, symbolize_names: true)) }
 
   before do
     allow(Flagsmith::Config).to receive(:new).with(api_url: mock_api_url, environment_key: mock_api_key)

@@ -14,7 +14,7 @@ module Flagsmith
     def initialize(config)
       @conn = Faraday.new(url: config.api_url) do |f|
         build_headers(f, config)
-        f.response :json
+        f.response :json, parser_options: { symbolize_names: true }
         f.adapter Faraday.default_adapter
 
         f.options.timeout = config.request_timeout_seconds

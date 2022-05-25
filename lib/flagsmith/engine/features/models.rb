@@ -22,11 +22,7 @@ module Flagsmith
 
       class << self
         def build(json)
-          new(
-            id: json['id'],
-            name: json['name'],
-            type: json['type']
-          )
+          new(json.slice(:id, :name, :type))
         end
       end
     end
@@ -43,10 +39,7 @@ module Flagsmith
 
         class << self
           def build(json)
-            new(
-              value: json['value'],
-              id: json['id']
-            )
+            new(json.slice(:id, :value))
           end
         end
       end
@@ -75,8 +68,8 @@ module Flagsmith
         class << self
           def build(json)
             new(
-              id: json['id'], percentage_allocation: json['percentage_allocation'],
-              multivariate_feature_option: MultivariateOption.build(json['multivariate_feature_option'])
+              json.slice(:id, :percentage_allocation, :mv_fs_value_uuid)
+                  .merge(multivariate_feature_option: MultivariateOption.build(json[:multivariate_feature_option]))
             )
           end
         end
@@ -92,23 +85,21 @@ module Flagsmith
         def initialize(params = {})
           @feature = params.fetch(:feature)
           @enabled = params.fetch(:enabled)
-          @django_id = params.fetch(:django_id)
-          @value = params.fetch(:value, nil)
+          @django_id = params.fetch(:django_id, nil)
+          @feature_state_value = params.fetch(:feature_state_value, nil)
           @uuid = params.fetch(:uuid, SecureRandom.uuid)
           @multivariate_feature_state_values = params.fetch(:multivariate_feature_state_values, [])
         end
 
-        attr_writer :value
+        attr_writer :feature_state_value
 
-        def value(identity_id = nil)
+        def get_value(identity_id = nil)
           return multivariate_value(identity_id) if identity_id && multivariate_feature_state_values.length.positive?
 
-          @value
+          @feature_state_value
         end
 
-        alias feature_state_value value
-        alias get_value value
-        alias set_value value=
+        alias set_value feature_state_value=
         alias feature_state_uuid uuid
         alias enabled? enabled
 
@@ -125,24 +116,20 @@ module Flagsmith
 
             start_percentage = limit
           end
-          @value
+          @feature_state_value
         end
 
         class << self
           def build(json)
+            multivariate_feature_state_values = build_multivariate_values(json[:multivariate_feature_state_values])
             new(
-              uuid: json['uuid'],
-              enabled: json['enabled'],
-              django_id: json['django_id'],
-              value: json['feature_state_value'],
-              feature: Flagsmith::Engine::Feature.build(json['feature'])
-            ).tap do |model|
-              model.multivariate_feature_state_values =
-                build_multivariate_feature_state_values(json['multivariate_feature_state_values'])
-            end
+              json.slice(:uuid, :enabled, :django_id, :feature_state_value)
+                  .merge(feature: Flagsmith::Engine::Feature.build(json[:feature]))
+                  .merge(multivariate_feature_state_values: multivariate_feature_state_values)
+            )
           end
 
-          def build_multivariate_feature_state_values(multivariate_feature_state_values)
+          def build_multivariate_values(multivariate_feature_state_values)
             return [] unless multivariate_feature_state_values&.any?
 
             multivariate_feature_state_values.map do |fsv|

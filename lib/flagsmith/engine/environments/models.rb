@@ -17,15 +17,12 @@ module Flagsmith
 
       class << self
         def build(json)
-          project = Flagsmith::Engine::Project.build(json['project'])
-          feature_states = json['feature_states'].map do |fs|
+          project = Flagsmith::Engine::Project.build(json[:project])
+          feature_states = json[:feature_states].map do |fs|
             Flagsmith::Engine::Features::State.build(fs)
           end
 
-          new(
-            id: json['id'], api_key: json['api_key'],
-            project: project, feature_states: feature_states
-          )
+          new(json.slice(:id, :api_key).merge(project: project, feature_states: feature_states))
         end
       end
     end
@@ -41,8 +38,8 @@ module Flagsmith
           @key = params.fetch(:key)
           @name = params.fetch(:name)
           @client_api_key = params.fetch(:client_api_key)
-          @created_at = params.fetch(:created_at)
-          @expires_at = params.fetch(:expires_at)
+          @created_at = params.fetch(:created_at, Time.now)
+          @expires_at = params.fetch(:expires_at, nil)
           @active = params.fetch(:active, true)
         end
 
@@ -52,13 +49,10 @@ module Flagsmith
 
         class << self
           def build(json)
-            new(
-              id: json['id'],
-              key: json['key'],
-              name: json['name'],
-              client_api_key: json['client_api_key'],
-              created_at: Date.parse(json['created_at'])
-            )
+            attributes = json.slice(:id, :key, :name, :client_api_key, :active)
+            attributes = attributes.merge(expires_at: Date.parse(json[:created_at])) unless json[:created_at].nil?
+            attributes = attributes.merge(expires_at: Date.parse(json[:expires_at])) unless json[:expires_at].nil?
+            new(attributes)
           end
         end
       end

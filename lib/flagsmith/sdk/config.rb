@@ -30,7 +30,8 @@ module Flagsmith
     #                                            API to power flag analytics charts
     #   +default_flag_handler+                 - ruby block which will be used in the case where
     #                                            flags cannot be retrieved from the API or
-    #                                            a non existent feature is requested
+    #                                            a non existent feature is requested.
+    #                                            The searched feature#name will be passed to the block as an argument.
     #   +logger+                               - Pass your logger, default is Logger.new($stdout)
     #
     attr_reader(*OPTIONS)

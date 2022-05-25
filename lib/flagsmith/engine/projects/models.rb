@@ -17,12 +17,12 @@ module Flagsmith
 
       class << self
         def build(json)
-          segments = json.fetch('segments', []).map { |s| Flagsmith::Engine::Segment.build(s) }
+          segments = json.fetch(:segments, []).map { |s| Flagsmith::Engine::Segment.build(s) }
 
           new(
-            id: json['id'], name: json['name'], hide_disabled_flags: json['hide_disabled_flags'],
-            organisation: Flagsmith::Engine::Organisation.build(json['organisation']),
-            segments: segments
+            json.slice(:id, :name, :hide_disabled_flags)
+                .merge(organisation: Flagsmith::Engine::Organisation.build(json[:organisation]))
+                .merge(segments: segments)
           )
         end
       end

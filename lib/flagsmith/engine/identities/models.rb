@@ -42,14 +42,13 @@ module Flagsmith
         end
 
         def build(json)
-          identity_features = Flagsmith::Engine::Identities::FeaturesList.build(json['identity_features'])
-          identity_traits = json['identity_traits']&.map { |t| Flagsmith::Engine::Identities::Trait.build(t) }
+          identity_features = Flagsmith::Engine::Identities::FeaturesList.build(json[:identity_features])
+          identity_traits = json.fetch(:identity_traits, [])
+                                .map { |t| Flagsmith::Engine::Identities::Trait.build(t) }
 
           Identity.new(
-            identifier: json['identifier'], identity_uuid: json['identity_uuid'],
-            environment_api_key: json['environment_api_key'], django_id: json['django_id'],
-            created_date: json['created_date'],
-            identity_features: identity_features, identity_traits: identity_traits || []
+            json.slice(:identifier, :identity_uuid, :environment_api_key, :created_date, :django_id)
+                .merge(identity_features: identity_features, identity_traits: identity_traits)
           )
         end
       end
@@ -70,7 +69,7 @@ module Flagsmith
 
         class << self
           def build(json)
-            new(trait_key: json['trait_key'], trait_value: json['trait_value'])
+            new(json.slice(:trait_key, :trait_value))
           end
         end
       end
@@ -101,7 +100,7 @@ module Flagsmith
 
         class << self
           def build(identity_features)
-            return new unless identity_features.any?
+            return new unless identity_features&.any?
 
             new(
               identity_features.map { |f| Flagsmith::Engine::Features::State.build(f) }

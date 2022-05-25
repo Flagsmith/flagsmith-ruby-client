@@ -4,6 +4,10 @@ require 'faraday'
 require 'faraday/retry'
 require 'faraday_middleware'
 
+# Hash#slice was added in ruby version 2.5
+# This is the patch to use slice in earler versions
+require 'flagsmith/hash_slice'
+
 require 'flagsmith/sdk/analytics_processor'
 require 'flagsmith/sdk/api_client'
 require 'flagsmith/sdk/config'
@@ -28,10 +32,14 @@ module Flagsmith
     # Basic Usage::
     #
     # flagsmith = Flagsmith::Client.new(environment_key: '<your API key>')
+    #
     # environment_flags = flagsmith.get_environment_flags
     # feature_enabled = environment_flags.is_feature_enabled('foo')
+    # feature_value = identity_flags.get_feature_value('foo')
+    #
     # identity_flags = flagsmith.get_identity_flags('identifier', 'foo': 'bar')
     # feature_enabled_for_identity = identity_flags.is_feature_enabled('foo')
+    # feature_value_for_identity = identity_flags.get_feature_value('foo')
 
     # Available Configs.
     #

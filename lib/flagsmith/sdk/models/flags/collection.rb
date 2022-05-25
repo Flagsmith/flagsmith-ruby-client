@@ -74,7 +74,7 @@ module Flagsmith
       class << self
         def from_api(json_data, **args)
           to_flag_object = lambda { |json_flag, acc|
-            acc[normalize_key(json_flag.dig('feature', 'name'))] =
+            acc[normalize_key(json_flag.dig(:feature, :name))] =
               Flagsmith::Flag.from_api(json_flag)
           }
 

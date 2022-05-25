@@ -9,7 +9,7 @@ module Flagsmith
       attr_reader :id, :name
       attr_accessor :rules, :feature_states
 
-      def initialize(id:, name:, rules: nil, feature_states: nil)
+      def initialize(id:, name:, rules: [], feature_states: [])
         @id = id
         @name = name
         @rules = rules
@@ -18,10 +18,13 @@ module Flagsmith
 
       class << self
         def build(json)
-          feature_states = json['feature_states'].map { |fs| Flagsmith::Engine::Features::State.build(fs) }
-          rules = json['rules'].map { |rule| Flagsmith::Engine::Segments::Rule.build(rule) }
+          feature_states = json.fetch(:feature_states, []).map { |fs| Flagsmith::Engine::Features::State.build(fs) }
+          rules = json.fetch(:rules, []).map { |rule| Flagsmith::Engine::Segments::Rule.build(rule) }
 
-          new(id: json['id'], name: json['name'], feature_states: feature_states, rules: rules)
+          new(
+            json.slice(:id, :name)
+                .merge(feature_states: feature_states, rules: rules)
+          )
         end
       end
     end
@@ -77,7 +80,7 @@ module Flagsmith
 
         class << self
           def build(json)
-            new(operator: json['operator'], value: json['value'], property: json['property_'])
+            new(json.slice(:operator, :value).merge(property: json[:property_]))
           end
         end
       end
@@ -105,10 +108,10 @@ module Flagsmith
 
         class << self
           def build(json)
-            rules = json.fetch('rules', []).map { |r| Flagsmith::Engine::Segments::Rule.build(r) }
-            conditions = json.fetch('conditions', []).map { |c| Flagsmith::Engine::Segments::Condition.build(c) }
+            rules = json.fetch(:rules, nil)&.map { |r| Flagsmith::Engine::Segments::Rule.build(r) }
+            conditions = json.fetch(:conditions, nil)&.map { |c| Flagsmith::Engine::Segments::Condition.build(c) }
             new(
-              type: json['type'], rules: rules, conditions: conditions
+              type: json[:type], rules: rules, conditions: conditions
             )
           end
         end
