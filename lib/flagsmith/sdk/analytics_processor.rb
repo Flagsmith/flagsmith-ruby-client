@@ -25,14 +25,14 @@ module Flagsmith
     def flush
       return if @analytics_data.empty?
 
-      @api_client.post(ENDPOINT, body: @analytics_data)
+      @api_client.post(ENDPOINT, @analytics_data.to_json)
 
-      @analytic_data = {}
+      @analytics_data = {}
       @last_flushed = Time.now
     end
 
     def track_feature(feature_id)
-      @analytic_data[feature_id] = @analytics_data.fetch(feature_id, 0) + 1
+      @analytics_data[feature_id] = @analytics_data.fetch(feature_id, 0) + 1
       flush if (Time.now - @last_flushed) > TIMER * 1000
     end
   end
