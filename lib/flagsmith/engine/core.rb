@@ -18,6 +18,7 @@ module Flagsmith
     module Core
       include Flagsmith::Engine::Segments::Evaluator
 
+      # rubocop:disable Metrics/CyclomaticComplexity
       def get_identity_feature_states_dict(environment, identity, override_traits = nil)
         # Get feature states from the environment
         feature_states = {}
@@ -29,9 +30,13 @@ module Flagsmith
         identity_segments = get_identity_segments(environment, identity, override_traits)
         identity_segments.each do |matching_segment|
           matching_segment.feature_states.each do |feature_state|
-            # NOTE: that feature states are stored on the segment in descending priority
-            # order so we only care that the last one is added
-            # TODO: can we optimise this?
+            if feature_states.key?(feature_state.feature.id) &&
+               feature_states[feature_state.feature.id].is_higher_segment_priority(
+                 feature_state
+               )
+              next
+            end
+
             feature_states[feature_state.feature.id] = feature_state
           end
         end
@@ -42,6 +47,7 @@ module Flagsmith
         end
         feature_states
       end
+      # rubocop:enable Metrics/CyclomaticComplexity
 
       def get_identity_feature_state(environment, identity, feature_name, override_traits = nil)
         feature_states = get_identity_feature_states_dict(environment, identity, override_traits).values

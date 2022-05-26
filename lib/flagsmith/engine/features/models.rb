@@ -75,16 +75,26 @@ module Flagsmith
         end
       end
 
+      # FeatureSegment
+      class Segment
+        attr_reader :priority
+
+        def initialize(params = {})
+          @priority = params.fetch(:priority, nil).to_i
+        end
+      end
+
       # FeatureStateModel
       class State
         include Flagsmith::Engine::Utils::HashFunc
 
-        attr_reader :feature, :enabled, :django_id, :uuid
+        attr_reader :feature, :enabled, :django_id, :uuid, :feature_segment
         attr_accessor :multivariate_feature_state_values
 
         def initialize(params = {})
           @feature = params.fetch(:feature)
           @enabled = params.fetch(:enabled)
+          @feature_segment = params.fetch(:feature_segment, nil)
           @django_id = params.fetch(:django_id, nil)
           @feature_state_value = params.fetch(:feature_state_value, nil)
           @uuid = params.fetch(:uuid, SecureRandom.uuid)
@@ -119,14 +129,33 @@ module Flagsmith
           @feature_state_value
         end
 
+        # Returns `true` if `self` is higher segment priority than `other`
+        # (i.e. has lower value for feature_segment.priority)
+        # NOTE:
+        #     A segment will be considered higher priority only if:
+        #     1. `other` does not have a feature segment
+        #        (i.e: it is an environment feature state or it's a
+        #        feature state with feature segment but from an old document
+        #        that does not have `feature_segment.priority`)
+        #        but `self` does.
+        #     2. `other` have a feature segment with high priority
+        def higher_segment_priority?(other)
+          feature_segment.priority < other.feature_segment.priority
+        rescue TypeError, NoMethodError
+          false
+        end
+        alias is_higher_segment_priority higher_segment_priority?
+
         class << self
           def build(json)
             multivariate_feature_state_values = build_multivariate_values(json[:multivariate_feature_state_values])
-            new(
-              **json.slice(:uuid, :enabled, :django_id, :feature_state_value)
-                    .merge(feature: Flagsmith::Engine::Feature.build(json[:feature]))
-                    .merge(multivariate_feature_state_values: multivariate_feature_state_values)
-            )
+            attributes = json.slice(:uuid, :enabled, :django_id, :feature_state_value)
+                             .merge(feature: Flagsmith::Engine::Feature.build(json[:feature]))
+                             .merge(multivariate_feature_state_values: multivariate_feature_state_values)
+            if json.key?(:feature_segment)
+              attributes = attributes.merge(feature_segment: Segment.new(json[:feature_segment]))
+            end
+            new(**attributes)
           end
 
           def build_multivariate_values(multivariate_feature_state_values)

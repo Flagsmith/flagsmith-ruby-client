@@ -8,8 +8,8 @@ RSpec.describe Flagsmith do
   let(:mock_api_key) { 'ASDFIEVNQWEPARJ' }
   let(:mock_api_url) { 'http://mock.flagsmith.com/api/' }
   let(:user_id) { 'user@email.none' }
-  let(:api_flags_response) { File.read('spec/fixtures/GET_flags.json') }
-  let(:api_identities_response) { File.read('spec/fixtures/GET_identities_user.json') }
+  let(:api_flags_response) { File.read('spec/sdk/fixtures/flags.json') }
+  let(:api_identities_response) { File.read('spec/sdk/fixtures/identities.json') }
   let(:flags_response) { OpenStruct.new(body: JSON.parse(api_flags_response, symbolize_names: true)) }
   let(:identities_response) { OpenStruct.new(body: JSON.parse(api_identities_response, symbolize_names: true)) }
 
