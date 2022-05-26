@@ -10,6 +10,9 @@ require 'flagsmith'
 
 require 'ostruct'
 require 'json'
+require 'pry'
+
+Dir[File.join(APP_ROOT, 'spec/support/**/*.rb')].each { |f| require f }
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
@@ -21,4 +24,6 @@ RSpec.configure do |config|
   config.expect_with :rspec do |c|
     c.syntax = :expect
   end
+
+  config.include Engine::Builders, type: :model
 end

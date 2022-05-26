@@ -4,8 +4,8 @@ module Flagsmith
   module Engine
     # ProjectModel
     class Project
-      attr_reader :id, :name, :organisation, :hide_disabled_flags
-      attr_accessor :segments
+      attr_reader :id, :name, :organisation
+      attr_accessor :segments, :hide_disabled_flags
 
       def initialize(id:, name:, organisation:, hide_disabled_flags:, segments: [])
         @id = id

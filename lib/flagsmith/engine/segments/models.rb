@@ -96,7 +96,7 @@ module Flagsmith
 
         attr_accessor :type, :rules, :conditions
 
-        def initialize(type: nil, rules: nil, conditions: nil)
+        def initialize(type: nil, rules: [], conditions: [])
           @type = type
           @rules = rules
           @conditions = conditions
@@ -108,8 +108,8 @@ module Flagsmith
 
         class << self
           def build(json)
-            rules = json.fetch(:rules, nil)&.map { |r| Flagsmith::Engine::Segments::Rule.build(r) }
-            conditions = json.fetch(:conditions, nil)&.map { |c| Flagsmith::Engine::Segments::Condition.build(c) }
+            rules = json.fetch(:rules, []).map { |r| Flagsmith::Engine::Segments::Rule.build(r) }
+            conditions = json.fetch(:conditions, []).map { |c| Flagsmith::Engine::Segments::Condition.build(c) }
             new(
               type: json[:type], rules: rules, conditions: conditions
             )

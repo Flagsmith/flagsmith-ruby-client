@@ -70,7 +70,7 @@ module Flagsmith
       end
 
       def get_environment_feature_states(environment)
-        return environment.feature_states.select(&:enabled?) unless environment.project.hide_disabled_flags
+        return environment.feature_states.select(&:enabled?) if environment.project.hide_disabled_flags
 
         environment.feature_states
       end
