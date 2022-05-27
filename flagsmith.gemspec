@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
+require File.expand_path('lib/flagsmith/version', __dir__)
+
 Gem::Specification.new do |spec|
   spec.required_ruby_version = '>= 2.4.0'
   spec.name = 'flagsmith'
-  spec.version = '2.0.0'
+  spec.version = Flagsmith::VERSION
   spec.authors = ['Tom Stuart', 'Brian Moelk']
   spec.email = ['tom@solidstategroup.com', 'bmoelk@gmail.com']
   # Specify which files should be added to the gem when it is released.
