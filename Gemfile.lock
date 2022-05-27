@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    flagsmith (2.0.0)
+    flagsmith (3.0.0)
       faraday
       faraday-retry
       faraday_middleware

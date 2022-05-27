@@ -10,7 +10,6 @@ require 'flagsmith'
 
 require 'ostruct'
 require 'json'
-require 'pry'
 
 Dir[File.join(APP_ROOT, 'spec/support/**/*.rb')].each { |f| require f }
 
