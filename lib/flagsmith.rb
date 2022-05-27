@@ -20,6 +20,7 @@ require 'flagsmith/sdk/instance_methods'
 
 require 'flagsmith/engine/core'
 
+# no-doc
 module Flagsmith
   # Ruby client for flagsmith.com
   class Client
@@ -52,6 +53,7 @@ module Flagsmith
     delegate Flagsmith::Config::OPTIONS => :@config
 
     def initialize(config)
+      @_mutex = Mutex.new
       @config = Flagsmith::Config.new(config)
 
       api_client
@@ -86,11 +88,10 @@ module Flagsmith
     # Updates the environment state for local flag evaluation.
     # You only need to call this if you wish to bypass environment_refresh_interval_seconds.
     def update_environment
-      @environment = environment_from_api
+      @_mutex.synchronize { @environment = environment_from_api }
     end
 
     def environment_from_api
-      api_client.get(@config.environment_url).body
       environment_data = api_client.get(@config.environment_url).body
       Flagsmith::Engine::Environment.build(environment_data)
     end

@@ -152,7 +152,7 @@ module Flagsmith
             attributes = json.slice(:uuid, :enabled, :django_id, :feature_state_value)
                              .merge(feature: Flagsmith::Engine::Feature.build(json[:feature]))
                              .merge(multivariate_feature_state_values: multivariate_feature_state_values)
-            if json.key?(:feature_segment)
+            if json.key?(:feature_segment) && !json[:feature_segment].nil?
               attributes = attributes.merge(feature_segment: Segment.new(json[:feature_segment]))
             end
             new(**attributes)

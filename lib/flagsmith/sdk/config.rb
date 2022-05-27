@@ -20,6 +20,7 @@ module Flagsmith
     #                                            to the Flagsmith API
     #   +request_timeout_seconds+              - Number of seconds to wait for a request to
     #                                            complete before terminating the request
+    #                                            Defaults to 10 seconds
     #   +enable_local_evaluation+              - Enables local evaluation of flags
     #   +environment_refresh_interval_seconds+ - If using local evaluation,
     #                                            specify the interval period between
@@ -71,7 +72,7 @@ module Flagsmith
       @environment_key = opts.fetch(:environment_key, Flagsmith::Config.environment_key)
       @api_url = opts.fetch(:api_url, Flagsmith::Config::DEFAULT_API_URL)
       @custom_headers = opts.fetch(:custom_headers, {})
-      @request_timeout_seconds = opts[:request_timeout_seconds]
+      @request_timeout_seconds = opts.fetch(:request_timeout_seconds, 10)
       @retries = opts[:retries]
       @enable_local_evaluation = opts.fetch(:enable_local_evaluation, false)
       @environment_refresh_interval_seconds = opts.fetch(:environment_refresh_interval_seconds, 60)

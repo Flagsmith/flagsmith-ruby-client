@@ -14,7 +14,7 @@ module Flagsmith
 
     def start
       update_environment = lambda {
-        clear_interval(@interval) if @interval
+        stop
         @interval = set_interval(@refresh_interval_seconds) { @main.update_environment }
       }
 
