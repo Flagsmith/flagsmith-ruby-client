@@ -18,7 +18,7 @@ module Flagsmith
 
       class << self
         def build(json)
-          feature_states = json.fetch(:feature_states, []).map { |fs| Flagsmith::Engine::Features::State.build(fs) }
+          feature_states = json.fetch(:feature_states, []).map { |fs| Flagsmith::Engine::FeatureState.build(fs) }
           rules = json.fetch(:rules, []).map { |rule| Flagsmith::Engine::Segments::Rule.build(rule) }
 
           new(

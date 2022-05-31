@@ -11,7 +11,7 @@ RSpec.describe Flagsmith::Engine::Feature do
   end
 
   it 'feature state generates default #uuid' do
-    fs = Flagsmith::Engine::Features::State.new(feature: {}, enabled: true, django_id: 1)
+    fs = Flagsmith::Engine::FeatureState.new(feature: {}, enabled: true, django_id: 1)
     expect(fs.feature_state_uuid).to_not be_nil
   end
 
@@ -26,7 +26,7 @@ RSpec.describe Flagsmith::Engine::Feature do
 
   it '#get_value returns no multivariate values' do
     value = 'foo'
-    feature_state =  Flagsmith::Engine::Features::State.new(feature: {}, enabled: true, django_id: 1)
+    feature_state =  Flagsmith::Engine::FeatureState.new(feature: {}, enabled: true, django_id: 1)
 
     feature_state.set_value(value)
 
@@ -56,7 +56,7 @@ RSpec.describe Flagsmith::Engine::Feature do
         multivariate_feature_option: mv_feature_option_2, percentage_allocation: test_case[0], id: 2
       )
 
-      mv_feature_state = Flagsmith::Engine::Features::State.new(feature: feature, enabled: true, django_id: 1)
+      mv_feature_state = Flagsmith::Engine::FeatureState.new(feature: feature, enabled: true, django_id: 1)
       mv_feature_state.multivariate_feature_state_values = [
           mv_feature_state_value_1,
           mv_feature_state_value_2

@@ -60,8 +60,8 @@ module Engine
       env = Flagsmith::Engine::Environment.new(id: 1, api_key: 'api-key', project: project)
 
       env.feature_states = [
-        Flagsmith::Engine::Features::State.new(feature: feature1, enabled: true, django_id: 1),
-        Flagsmith::Engine::Features::State.new(feature: feature2, enabled: false, django_id: 2)
+        Flagsmith::Engine::FeatureState.new(feature: feature1, enabled: true, django_id: 1),
+        Flagsmith::Engine::FeatureState.new(feature: feature2, enabled: false, django_id: 2)
       ]
 
       env
@@ -90,7 +90,7 @@ module Engine
     end
 
     def segment_override_fs
-      fs = Flagsmith::Engine::Features::State.new(feature: feature1, enabled: false, django_id: 4)
+      fs = Flagsmith::Engine::FeatureState.new(feature: feature1, enabled: false, django_id: 4)
       fs.set_value(SEGMENT_OVERRIDE_FEATURE_STATE_VALUE)
       fs
     end

@@ -79,7 +79,7 @@ module Flagsmith
 
       def higher_segment_priority?(collection, feature_state)
         collection.key?(feature_state.feature.id) &&
-          collection[feature_state.feature.id].is_higher_segment_priority(
+          collection[feature_state.feature.id].higher_segment_priority?(
             feature_state
           )
       end

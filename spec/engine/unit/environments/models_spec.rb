@@ -76,8 +76,8 @@ RSpec.describe Flagsmith::Engine::Environment do
       expect(subject.feature_states.length).to eq(3)
     end
 
-    it 'are instances of Flagsmith::Engine::Features::State' do
-      expect(subject.feature_states).to all(be_an(Flagsmith::Engine::Features::State))
+    it 'are instances of Flagsmith::Engine::FeatureState' do
+      expect(subject.feature_states).to all(be_an(Flagsmith::Engine::FeatureState))
     end
 
     it 'has valid #value' do

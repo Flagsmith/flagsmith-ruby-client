@@ -26,11 +26,11 @@ RSpec.describe Flagsmith::Engine::Core, type: :model do
       id: 3, name: 'overridden_feature', type: 'STANDARD'
     )
 
-    env.feature_states << Flagsmith::Engine::Features::State.new(
+    env.feature_states << Flagsmith::Engine::FeatureState.new(
       feature: overridden_feature, enabled: false, django_id: 3
     )
 
-    ident.identity_features << Flagsmith::Engine::Features::State.new(
+    ident.identity_features << Flagsmith::Engine::FeatureState.new(
       feature: overridden_feature, enabled: true, id: 4
     )
 

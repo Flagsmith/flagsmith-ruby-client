@@ -19,7 +19,7 @@ module Flagsmith
         def build(json)
           project = Flagsmith::Engine::Project.build(json[:project])
           feature_states = json[:feature_states].map do |fs|
-            Flagsmith::Engine::Features::State.build(fs)
+            Flagsmith::Engine::FeatureState.build(fs)
           end
 
           new(**json.slice(:id, :api_key).merge(project: project, feature_states: feature_states))

@@ -105,7 +105,7 @@ module Flagsmith
             return new unless identity_features&.any?
 
             new(
-              identity_features.map { |f| Flagsmith::Engine::Features::State.build(f) }
+              identity_features.map { |f| Flagsmith::Engine::FeatureState.build(f) }
             )
           end
         end

@@ -71,7 +71,7 @@ RSpec.describe Flagsmith::Engine::Identity do
     end
 
     it 'identity_features' do
-      expect(engine_identity.identity_features).to all(be_an(Flagsmith::Engine::Features::State))
+      expect(engine_identity.identity_features).to all(be_an(Flagsmith::Engine::FeatureState))
     end
   end
 
@@ -126,7 +126,7 @@ RSpec.describe Flagsmith::Engine::Identity do
   end
 
   it 'test_append_feature_state' do
-    fs1 = Flagsmith::Engine::Features::State.new(feature: {}, enabled: true, django_id: 1)
+    fs1 = Flagsmith::Engine::FeatureState.new(feature: {}, enabled: true, django_id: 1)
     identity.identity_features.push(fs1)
 
     expect(identity.identity_features).to include(fs1)
