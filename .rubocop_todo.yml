@@ -12,7 +12,6 @@
 Metrics/BlockLength:
   Exclude:
     - '**/*.gemspec'
-    - 'spec/flagsmith_spec.rb'
 
 # Offense count: 1
 # Configuration parameters: AllowedMethods.
@@ -20,16 +19,6 @@ Metrics/BlockLength:
 Style/OptionalBooleanParameter:
   Exclude:
     - 'lib/flagsmith.rb'
-
-Metrics/ClassLength:
-  Exclude:
-    - 'lib/flagsmith.rb'
-Metrics/AbcSize:
-  Exclude:
-    - 'lib/flagsmith/engine/core.rb'
-Metrics/MethodLength:
-  Exclude:
-    - 'lib/flagsmith/engine/core.rb'
 
 # Offense count: 1
 # Cop supports --auto-correct.

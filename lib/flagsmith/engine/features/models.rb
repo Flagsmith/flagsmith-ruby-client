@@ -80,7 +80,7 @@ module Flagsmith
         attr_reader :priority
 
         def initialize(params = {})
-          @priority = params.fetch(:priority, nil).to_i
+          @priority = params[:priority].nil? ? nil : params[:priority].to_i
         end
       end
 
@@ -140,7 +140,7 @@ module Flagsmith
         #        but `self` does.
         #     2. `other` have a feature segment with high priority
         def higher_segment_priority?(other)
-          feature_segment.priority < other.feature_segment.priority
+          feature_segment.priority.to_i < (other&.feature_segment&.priority || Float::INFINITY)
         rescue TypeError, NoMethodError
           false
         end

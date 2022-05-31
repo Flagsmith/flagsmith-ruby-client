@@ -18,37 +18,6 @@ module Flagsmith
     module Core
       include Flagsmith::Engine::Segments::Evaluator
 
-      # rubocop:disable Metrics/CyclomaticComplexity
-      def get_identity_feature_states_dict(environment, identity, override_traits = nil)
-        # Get feature states from the environment
-        feature_states = {}
-        environment.feature_states.each do |fs|
-          feature_states[fs.feature.id] = fs
-        end
-
-        # Override with any feature states defined by matching segments
-        identity_segments = get_identity_segments(environment, identity, override_traits)
-        identity_segments.each do |matching_segment|
-          matching_segment.feature_states.each do |feature_state|
-            if feature_states.key?(feature_state.feature.id) &&
-               feature_states[feature_state.feature.id].is_higher_segment_priority(
-                 feature_state
-               )
-              next
-            end
-
-            feature_states[feature_state.feature.id] = feature_state
-          end
-        end
-
-        # Override with any feature states defined directly the identity
-        identity.identity_features.each do |fs|
-          feature_states[fs.feature.id] = fs if feature_states[fs.feature.id]
-        end
-        feature_states
-      end
-      # rubocop:enable Metrics/CyclomaticComplexity
-
       def get_identity_feature_state(environment, identity, feature_name, override_traits = nil)
         feature_states = get_identity_feature_states_dict(environment, identity, override_traits).values
 
@@ -79,6 +48,40 @@ module Flagsmith
         return environment.feature_states.select(&:enabled?) if environment.project.hide_disabled_flags
 
         environment.feature_states
+      end
+
+      private
+
+      def get_identity_feature_states_dict(environment, identity, override_traits = nil)
+        # Get feature states from the environment
+        feature_states = {}
+        override = ->(fs) { feature_states[fs.feature.id] = fs }
+        environment.feature_states.each(&override)
+
+        override_by_matching_segments(environment, identity, override_traits) do |fs|
+          override.call(fs) unless higher_segment_priority?(feature_states, fs)
+        end
+
+        # Override with any feature states defined directly the identity
+        identity.identity_features.each(&override)
+        feature_states
+      end
+
+      # Override with any feature states defined by matching segments
+      def override_by_matching_segments(environment, identity, override_traits)
+        identity_segments = get_identity_segments(environment, identity, override_traits)
+        identity_segments.each do |matching_segment|
+          matching_segment.feature_states.each do |feature_state|
+            yield feature_state if block_given?
+          end
+        end
+      end
+
+      def higher_segment_priority?(collection, feature_state)
+        collection.key?(feature_state.feature.id) &&
+          collection[feature_state.feature.id].is_higher_segment_priority(
+            feature_state
+          )
       end
     end
   end

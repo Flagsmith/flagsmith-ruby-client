@@ -74,7 +74,7 @@ module Flagsmith
         end
       end
 
-      class NotInuiqueFeatureState < StandardError; end
+      class NotUniqueFeatureState < StandardError; end
 
       # IdentityFeaturesList
       class FeaturesList
@@ -89,7 +89,7 @@ module Flagsmith
           @list.each do |v|
             next unless v.django_id == item.django_id
 
-            raise NotInuiqueFeatureState, "Feature state for this feature already exists, django_id: #{django_id}"
+            raise NotUniqueFeatureState, "Feature state for this feature already exists, django_id: #{django_id}"
           end
           @list << item
         end
