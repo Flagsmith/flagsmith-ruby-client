@@ -5,7 +5,7 @@ module Web
         include Web::View
 
         def form
-          form_for '', '/', method: :get do
+          form_for :flagsmith, '/', method: :get do
             h3 'Identify as a User'
             div style: 'margin-bottom: 1em;' do
               label :identifier
