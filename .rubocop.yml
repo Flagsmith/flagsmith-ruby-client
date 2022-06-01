@@ -8,3 +8,4 @@ AllCops:
   SuggestExtensions: false
   Exclude:
     - 'spec/**/*'
+    - 'example/**/*'

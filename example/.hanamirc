@@ -1,0 +1,3 @@
+project=example
+test=rspec
+template=slim
