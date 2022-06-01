@@ -3,7 +3,7 @@
 module Flagsmith
   # Config options shared around Engine
   class Config
-    DEFAULT_API_URL = 'https://api.flagsmith.com/api/v1/'
+    DEFAULT_API_URL = 'https://edge.api.flagsmith.com/api/v1/'
     OPTIONS = %i[
       environment_key api_url custom_headers request_timeout_seconds enable_local_evaluation
       environment_refresh_interval_seconds retries enable_analytics default_flag_handler logger
