@@ -2,7 +2,10 @@ inherit_from: .rubocop_todo.yml
 
 Layout/HashAlignment:
   AllowMultipleStyles: true
-  EnforcedColonStyle: separator
+  EnforcedColonStyle: key
 AllCops:
   NewCops: enable
   SuggestExtensions: false
+  Exclude:
+    - 'spec/**/*'
+    - 'example/**/*'

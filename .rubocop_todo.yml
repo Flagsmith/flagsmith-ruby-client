@@ -12,7 +12,6 @@
 Metrics/BlockLength:
   Exclude:
     - '**/*.gemspec'
-    - 'spec/flagsmith_spec.rb'
 
 # Offense count: 1
 # Configuration parameters: AllowedMethods.
