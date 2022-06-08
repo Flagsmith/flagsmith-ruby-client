@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative 'base_flag'
+require './base_flag'
 
 module Flagsmith
   # Flag object
