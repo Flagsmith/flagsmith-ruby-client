@@ -2,24 +2,15 @@
 
 module Flagsmith
   # Flag object
-  class Flag
-    include Comparable
+  class Flag < BaseFlag
 
-    attr_reader :enabled, :value, :default, :feature_name, :feature_id
+    attr_reader :feature_name, :feature_id
 
-    def initialize(feature_name:, enabled:, value:, feature_id:, default: false)
+    def initialize(feature_name:, enabled:, value:, feature_id:)
+      super(enabled: enabled, value: value, default: false)
       @feature_name = feature_name
       @feature_id = feature_id
-      @enabled = enabled
-      @value = value
-      @default = default
     end
-
-    def enabled?
-      @enabled
-    end
-
-    alias is_default default
 
     def <=>(other)
       feature_name <=> other.feature_name
