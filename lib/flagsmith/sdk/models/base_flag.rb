@@ -11,5 +11,11 @@ module Flagsmith
       @value = value
       @default = default
     end
+
+    def enabled?
+      enabled
+    end
     
     alias is_default default
+  end
+end
