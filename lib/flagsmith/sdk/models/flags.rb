@@ -4,7 +4,79 @@ module Flagsmith
   module Flags
     class NotFound < StandardError; end
 
-    # Flag Collection
+    class BaseFlag
+      include Comparable
+
+      attr_reader :enabled, :value, :default
+      
+      def initialize(enabled:, value:, default:)
+        @enabled = enabled
+        @value = value
+        @default = default
+      end
+  
+      def enabled?
+        enabled
+      end
+      
+      alias is_default default
+    end
+
+    class DefaultFlag < BaseFlag
+      def initialize(enabled:, value:)
+        super(enabled: enabled, value: value, default: true)
+      end
+    end
+
+    class Flag < BaseFlag
+
+      attr_reader :feature_name, :feature_id
+
+      def initialize(feature_name:, enabled:, value:, feature_id:)
+        super(enabled: enabled, value: value, default: false)
+        @feature_name = feature_name
+        @feature_id = feature_id
+      end
+
+      def <=>(other)
+        feature_name <=> other.feature_name
+      end
+
+      def [](key)
+        to_h[key]
+      end
+
+      def to_h
+        {
+          feature_id: feature_id,
+          feature_name: feature_name,
+          value: value,
+          enabled: enabled,
+          default: default
+        }
+      end
+
+      class << self
+        def from_feature_state_model(feature_state_model, identity_id)
+          new(
+            enabled: feature_state_model.enabled,
+            value: feature_state_model.get_value(identity_id),
+            feature_name: feature_state_model.feature.name,
+            feature_id: feature_state_model.feature.id
+          )
+        end
+
+        def from_api(json_flag_data)
+          new(
+            enabled: json_flag_data[:enabled],
+            value: json_flag_data[:feature_state_value] || json_flag_data[:value],
+            feature_name: json_flag_data.dig(:feature, :name),
+            feature_id: json_flag_data.dig(:feature, :id)
+          )
+        end
+      end
+    end
+
     class Collection
       include Enumerable
 
@@ -75,7 +147,7 @@ module Flagsmith
         def from_api(json_data, **args)
           to_flag_object = lambda { |json_flag, acc|
             acc[normalize_key(json_flag.dig(:feature, :name))] =
-              Flagsmith::Flag.from_api(json_flag)
+              Flagsmith::Flags::Flag.from_api(json_flag)
           }
 
           new(
@@ -87,7 +159,7 @@ module Flagsmith
         def from_feature_state_models(feature_states, identity_id: nil, **args)
           to_flag_object = lambda { |feature_state, acc|
             acc[normalize_key(feature_state.feature.name)] =
-              Flagsmith::Flag.from_feature_state_model(feature_state, identity_id)
+            Flagsmith::Flags::Flag.from_feature_state_model(feature_state, identity_id)
           }
 
           new(
