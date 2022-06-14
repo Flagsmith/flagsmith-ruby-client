@@ -6,7 +6,7 @@ The SDK clients for Ruby [https://www.flagsmith.com/](https://www.flagsmith.com/
 
 ## Adding to your project
 
-For full documentation visit [https://docs.flagsmith.com/clients/ruby/](https://docs.flagsmith.com/clients/ruby/)
+For full documentation visit [https://docs.flagsmith.com/clients/server-side](https://docs.flagsmith.com/clients/server-side).
 
 ## Contributing
 
