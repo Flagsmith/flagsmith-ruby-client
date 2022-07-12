@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    flagsmith (3.0.1)
+    flagsmith (3.0.2)
       faraday
       faraday-retry
       faraday_middleware
@@ -40,7 +40,7 @@ GEM
       faraday (~> 1.0)
     gem-release (2.2.0)
     method_source (1.0.0)
-    multipart-post (2.2.0)
+    multipart-post (2.2.3)
     parallel (1.20.1)
     parser (3.0.0.0)
       ast (~> 2.4.1)
