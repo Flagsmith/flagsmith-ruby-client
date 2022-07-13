@@ -122,7 +122,7 @@ module Flagsmith
       def get_flag(feature_name)
         key = Flagsmith::Flags::Collection.normalize_key(feature_name)
         flag = flags.fetch(key)
-        @analytics_processor.track_feature(flag.feature_id) if @analytics_processor && flag.feature_id
+        @analytics_processor.track_feature(flag.feature_name) if @analytics_processor && flag.feature_id
         flag
       rescue KeyError
         return @default_flag_handler.call(feature_name) if @default_flag_handler
