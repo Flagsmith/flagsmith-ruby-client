@@ -24,8 +24,8 @@ module Flagsmith
   # Ruby client for flagsmith.com
   class Client
     extend Forwardable
-    include Flagsmith::SDK::InstanceMethods
     include Flagsmith::Engine::Core
+    include Flagsmith::SDK::InstanceMethods
     # A Flagsmith client.
     #
     # Provides an interface for interacting with the Flagsmith http API.

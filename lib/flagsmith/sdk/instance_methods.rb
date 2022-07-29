@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative 'models/segments'
+
 module Flagsmith
   module SDK
     # Available Flagsmith Functions
@@ -53,6 +55,17 @@ module Flagsmith
         return default if flag.nil?
 
         flag.value
+      end
+
+      def get_identity_segments_(identifier, traits = {})
+        unless environment
+          raise Flagsmith::ClientError, 
+            'Local evaluation required to obtain identity segments.'
+        end
+
+        identity_model = build_identity_model(identifier, traits)
+        segment_models = get_identity_segments(environment, identity_model)
+        return segment_models.map { |sm| Flagsmith::Segments::Segment.new(id: sm.id, name: sm.name) }.compact
       end
 
       private
