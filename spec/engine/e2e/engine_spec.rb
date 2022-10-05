@@ -16,11 +16,11 @@ def load_test_cases(filepath)
   end
 end
 
-RSpec.describe Flagsmith::Engine::Core do
+RSpec.describe Flagsmith::Engine do
   load_test_cases(
     File.join(APP_ROOT, 'spec/engine-test-data/data/environment_n9fbf9h3v4fFgH3U3ngWhb.json')
   ).each do |test_case|
-    engine = Class.new { extend Flagsmith::Engine::Core }
+    engine = Flagsmith::Engine::Engine.new
     json_flags = test_case.dig(:response, :flags).sort_by { |json| json.dig(:feature, :name) }
     feature_states = engine.get_identity_feature_states(test_case[:environment], test_case[:identity]).sort_by { |fs| fs.feature.name }
 
