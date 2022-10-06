@@ -15,7 +15,7 @@ require 'flagsmith/sdk/errors'
 require 'flagsmith/sdk/intervals'
 require 'flagsmith/sdk/pooling_manager'
 require 'flagsmith/sdk/models/flags'
-require 'flagsmith/sdk/instance_methods'
+require 'flagsmith/sdk/models/segments'
 
 require 'flagsmith/engine/core'
 
@@ -24,7 +24,6 @@ module Flagsmith
   # Ruby client for flagsmith.com
   class Client
     extend Forwardable
-    include Flagsmith::SDK::InstanceMethods
     # A Flagsmith client.
     #
     # Provides an interface for interacting with the Flagsmith http API.
@@ -36,9 +35,11 @@ module Flagsmith
     # feature_enabled = environment_flags.is_feature_enabled('foo')
     # feature_value = identity_flags.get_feature_value('foo')
     #
-    # identity_flags = flagsmith.get_identity_flags('identifier', 'foo': 'bar')
+    # identity_flags = flagsmith.get_identity_flags('identifier', {'foo': 'bar'})
     # feature_enabled_for_identity = identity_flags.is_feature_enabled('foo')
     # feature_value_for_identity = identity_flags.get_feature_value('foo')
+    #
+    # identity_segments = flagsmith.get_identity_segments('identifier', {'foo': 'bar'})
 
     # Available Configs.
     #
