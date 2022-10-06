@@ -56,11 +56,14 @@ module Flagsmith
             return hashed_percentage_for_object_ids([segment_id, identity_id]) <= condition.value.to_f
           end
 
-          trait = identity_traits.find { |t| t.key == condition.property }
+          trait = identity_traits.find { |t| t.key.to_s == condition.property }
 
-          return condition.match_trait_value?(trait.value) if trait
-
-          false
+          case condition.operator
+          when IS_SET, IS_NOT_SET
+            (!trait.nil? && condition.operator == IS_SET) || (trait.nil? && condition.operator == IS_NOT_SET)
+          else
+            condition.match_trait_value?(trait.value)
+          end
         end
       end
     end
