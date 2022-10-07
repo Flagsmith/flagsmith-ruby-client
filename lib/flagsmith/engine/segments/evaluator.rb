@@ -67,8 +67,12 @@ module Flagsmith
           false
         end
 
+        private
+
         def handle_trait_existence_conditions(matching_trait, operator)
-          (matching_trait.nil? && operator == IS_NOT_SET) || (!matching_trait.nil? && operator == IS_SET)
+          return operator == IS_NOT_SET if matching_trait.nil?
+
+          operator == IS_SET
         end
       end
     end
