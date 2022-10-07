@@ -45,8 +45,7 @@ module Flagsmith
           CONTAINS => ->(other_value, self_value) { other_value.include? self_value },
 
           NOT_CONTAINS => ->(other_value, self_value) { !other_value.include? self_value },
-          REGEX => ->(other_value, self_value) { other_value.match? self_value },
-          MODULO => ->(other_value, self_value) { other_value % self_value.split('|')[0] == self_value.split('|')[1] }
+          REGEX => ->(other_value, self_value) { other_value.match? self_value }
         }.freeze
 
         def initialize(operator:, value:, property: nil)
