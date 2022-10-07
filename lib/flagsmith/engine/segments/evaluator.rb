@@ -51,7 +51,6 @@ module Flagsmith
             rule.rules.all? { |r| traits_match_segment_rule(identity_traits, r, segment_id, identity_id) }
         end
 
-        # rubocop:disable Metrics/AbcSize
         def traits_match_segment_condition(identity_traits, condition, segment_id, identity_id)
           if condition.operator == PERCENTAGE_SPLIT
             return hashed_percentage_for_object_ids([segment_id, identity_id]) <= condition.value.to_f
@@ -59,9 +58,17 @@ module Flagsmith
 
           trait = identity_traits.find { |t| t.key.to_s == condition.property }
 
-          return trait.nil? if condition.operator == IS_NOT_SET
+          if [IS_SET, IS_NOT_SET].include?(condition.operator)
+            return handle_trait_existence_conditions(trait, condition.operator)
+          end
 
-          !trait.nil? && (condition.operator == IS_SET || condition.match_trait_value?(trait.value))
+          return condition.match_trait_value?(trait.trait_value) if trait
+
+          false
+        end
+
+        def handle_trait_existence_conditions(matching_trait, operator)
+          (matching_trait.nil? && operator == IS_NOT_SET) || (!matching_trait.nil? && operator == IS_SET)
         end
       end
     end
