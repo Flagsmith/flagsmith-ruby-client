@@ -110,7 +110,7 @@ RSpec.describe Flagsmith do
   end
 
   describe '#get_identity_segments' do
-    it 'returns an empty list given an identity with no traits' do
+    it 'returns an empty list given an identity which matches no segment conditions' do
       polling_manager = Flagsmith::EnvironmentDataPollingManager.new(subject, 60)
       subject.update_environment()
       expect(subject.get_identity_segments("identifier")).to eq([])
