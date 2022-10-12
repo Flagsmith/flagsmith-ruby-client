@@ -58,9 +58,21 @@ module Flagsmith
 
           trait = identity_traits.find { |t| t.key.to_s == condition.property }
 
-          return condition.match_trait_value?(trait.value) if trait
+          if [IS_SET, IS_NOT_SET].include?(condition.operator)
+            return handle_trait_existence_conditions(trait, condition.operator)
+          end
+
+          return condition.match_trait_value?(trait.trait_value) if trait
 
           false
+        end
+
+        private
+
+        def handle_trait_existence_conditions(matching_trait, operator)
+          return operator == IS_NOT_SET if matching_trait.nil?
+
+          operator == IS_SET
         end
       end
     end
