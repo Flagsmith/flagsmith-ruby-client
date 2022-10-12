@@ -15,7 +15,7 @@ require_relative 'utils/hash_func'
 module Flagsmith
   module Engine
     # Flags engine methods
-    module Core
+    class Engine
       include Flagsmith::Engine::Segments::Evaluator
 
       def get_identity_feature_state(environment, identity, feature_name, override_traits = nil)

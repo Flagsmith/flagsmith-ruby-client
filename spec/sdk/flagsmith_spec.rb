@@ -108,4 +108,18 @@ RSpec.describe Flagsmith do
       expect(Flagsmith::Flags::Collection.normalize_key('KEY_VaLuE')).to eq('key_value')
     end
   end
+
+  describe '#get_identity_segments' do
+    it 'returns an empty list given an identity with no traits' do
+      polling_manager = Flagsmith::EnvironmentDataPollingManager.new(subject, 60)
+      subject.update_environment()
+      expect(subject.get_identity_segments("identifier")).to eq([])
+    end
+
+    it 'returns the relevant segment given an identity with matching traits' do
+      polling_manager = Flagsmith::EnvironmentDataPollingManager.new(subject, 60)
+      subject.update_environment()
+      expect(subject.get_identity_segments("identifier", {"age": 39}).length).to eq(1)
+    end
+  end
 end
