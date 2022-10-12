@@ -55,9 +55,12 @@ module Flagsmith
         end
 
         def match_trait_value?(trait_value)
+          # handle some exceptions
           if @value.is_a?(String) && @value.match?(/:semver$/)
             trait_value = Semantic::Version.new(trait_value.gsub(/:semver$/, ''))
           end
+
+          return match_modulo_value(trait_value) if @operator == MODULO
 
           type_as_trait_value = format_to_type_of(trait_value)
           formatted_value = type_as_trait_value ? type_as_trait_value.call(@value) : @value
@@ -77,6 +80,13 @@ module Flagsmith
           }[input.class.to_s]
         end
         # rubocop:enable Metrics/AbcSize
+
+        def match_modulo_value(trait_value)
+          divisor, remainder = @value.split('|')
+          trait_value.is_a?(Numeric) && trait_value % divisor.to_f == remainder.to_f
+        rescue StandardError
+          false
+        end
 
         class << self
           def build(json)
