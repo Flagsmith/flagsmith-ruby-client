@@ -73,7 +73,12 @@ TEST_CASES = [
   ['GREATER_THAN_INCLUSIVE', '1.0.1', '1.0.1:semver', true],
   ['LESS_THAN_INCLUSIVE', '1.0.0', '1.0.1:semver', true],
   ['LESS_THAN_INCLUSIVE', '1.0.0', '1.0.0:semver', true],
-  ['LESS_THAN_INCLUSIVE', '1.0.1', '1.0.0:semver', false]
+  ['LESS_THAN_INCLUSIVE', '1.0.1', '1.0.0:semver', false],
+  ['MODULO', 2, '2|0', true],
+  ['MODULO', 3, '2|0', false],
+  ['MODULO', 2.0, '2|0', true],
+  ['MODULO', 'foo', '2|0', false],
+  ['MODULO', 'foo', 'foo|bar', false],
 ].freeze
 
 RSpec.describe Flagsmith::Engine::Segments::Condition do

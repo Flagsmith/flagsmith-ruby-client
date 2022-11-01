@@ -22,6 +22,9 @@ module Flagsmith
         NOT_EQUAL = 'NOT_EQUAL'
         REGEX = 'REGEX'
         PERCENTAGE_SPLIT = 'PERCENTAGE_SPLIT'
+        IS_SET = 'IS_SET'
+        IS_NOT_SET = 'IS_NOT_SET'
+        MODULO = 'MODULO'
 
         CONDITION_OPERATORS = [
           EQUAL,
@@ -33,7 +36,8 @@ module Flagsmith
           NOT_CONTAINS,
           NOT_EQUAL,
           REGEX,
-          PERCENTAGE_SPLIT
+          PERCENTAGE_SPLIT,
+          MODULO
         ].freeze
       end
     end

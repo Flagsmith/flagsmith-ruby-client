@@ -12,9 +12,11 @@ RSpec.shared_context 'shared mocks', shared_context: :metadata do
 
   let(:api_flags_response) { File.read('spec/sdk/fixtures/flags.json') }
   let(:api_identities_response) { File.read('spec/sdk/fixtures/identities.json') }
+  let(:api_environment_document_response) { File.read('spec/sdk/fixtures/environment.json') }
 
   let(:flags_response) { OpenStruct.new(body: JSON.parse(api_flags_response, symbolize_names: true)) }
   let(:identities_response) { OpenStruct.new(body: JSON.parse(api_identities_response, symbolize_names: true)) }
+  let(:environment_document_response) { OpenStruct.new(body: JSON.parse(api_environment_document_response, symbolize_names: true)) }
 
   before do
     allow(mock_config).to receive(:new).with(api_url: mock_api_url, environment_key: mock_api_key)
@@ -30,6 +32,8 @@ RSpec.shared_context 'shared mocks', shared_context: :metadata do
     allow(mock_api_client).to receive(:post).with(
       'identities/', { identifier: user_id, traits: [] }.to_json
     ).and_return(identities_response)
+    allow(mock_api_client).to receive(:get).with('environment-document/')
+                                           .and_return(environment_document_response)
 
     allow(flagsmith).to receive(:api_client).and_return(mock_api_client)
   end

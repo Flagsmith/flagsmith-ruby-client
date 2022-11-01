@@ -2,8 +2,8 @@
 
 require 'spec_helper'
 
-RSpec.describe Flagsmith::Engine::Core, type: :model do
-  subject { Class.new { extend Flagsmith::Engine::Core } }
+RSpec.describe Flagsmith::Engine, type: :model do
+  subject { Flagsmith::Engine::Engine.new }
 
   it 'test_identity_get_feature_state_without_any_override' do
     feature_state = subject.get_identity_feature_state(
