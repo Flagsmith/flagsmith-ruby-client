@@ -20,13 +20,8 @@ jobs:
         with:
           ruby-version: .ruby-version
           bundler-cache: true
-      - name: Configure Git
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-      - name: Bump and Commit
-        run: |
-          git push --follow-tags
       - name: Buld and Push to rubygems.org
         run: |
+          bundle install
+          gem build flagsmith.gemspec
           rake release[remote]
