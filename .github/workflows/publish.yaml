@@ -2,10 +2,10 @@
 
 name: Push Ruby Gem
 
-on:
-  push:
-    tags:
-      - '*'
+# TODO: this workflow doesn't work, needs fixing but for now, I've just changed it so
+# it will only run if triggered manually. Instructions for releasing manually are here:
+# https://www.notion.so/flagsmith/SDKs-Deployment-Instructions-c1190a22238a45af9a51c7f0fea27f99
+on: workflow_dispatch
 
 jobs:
   release:
