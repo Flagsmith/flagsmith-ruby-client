@@ -33,7 +33,7 @@ module Flagsmith
 
     def track_feature(feature_name)
       @analytics_data[feature_name] = @analytics_data.fetch(feature_name, 0) + 1
-      flush if (Time.now - @last_flushed) > TIMER * 1000
+      flush if (Time.now - @last_flushed) > TIMER
     end
   end
 end
