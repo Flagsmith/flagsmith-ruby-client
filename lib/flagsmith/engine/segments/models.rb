@@ -73,8 +73,8 @@ module Flagsmith
           {
             'String' => ->(v) { v.to_s },
             'Semantic::Version' => ->(v) { Semantic::Version.new(v.to_s.gsub(/:semver$/, '')) },
-            'TrueClass' => ->(v) { ['True', 'true', 'TRUE', true, 1, '1'].include?(v) ? true : false },
-            'FalseClass' => ->(v) { ['False', 'false', 'FALSE', false, 0, '0'].include?(v) ? false : true },
+            'TrueClass' => ->(v) { ['True', 'true', 'TRUE', true, 1, '1'].include?(v) },
+            'FalseClass' => ->(v) { !['False', 'false', 'FALSE', false, 0, '0'].include?(v) },
             'Integer' => ->(v) { v.to_i },
             'Float' => ->(v) { v.to_f }
           }[input.class.to_s]
@@ -83,7 +83,7 @@ module Flagsmith
 
         def match_modulo_value(trait_value)
           divisor, remainder = @value.split('|')
-          trait_value.is_a?(Numeric) && trait_value % divisor.to_f == remainder.to_f
+          trait_value.is_a?(Numeric) && trait_value % divisor.to_f == remainder.to_f # rubocop:disable Lint/FloatComparison
         rescue StandardError
           false
         end

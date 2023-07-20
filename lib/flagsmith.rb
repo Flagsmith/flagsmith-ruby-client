@@ -22,7 +22,7 @@ require 'flagsmith/engine/core'
 # no-doc
 module Flagsmith
   # Ruby client for flagsmith.com
-  class Client
+  class Client # rubocop:disable Metrics/ClassLength
     extend Forwardable
     # A Flagsmith client.
     #
@@ -153,13 +153,13 @@ module Flagsmith
 
     def get_identity_segments(identifier, traits = {})
       unless environment
-        raise Flagsmith::ClientError, 
-          'Local evaluation required to obtain identity segments.'
+        raise Flagsmith::ClientError,
+              'Local evaluation required to obtain identity segments.'
       end
 
       identity_model = build_identity_model(identifier, traits)
       segment_models = engine.get_identity_segments(environment, identity_model)
-      return segment_models.map { |sm| Flagsmith::Segments::Segment.new(id: sm.id, name: sm.name) }.compact
+      segment_models.map { |sm| Flagsmith::Segments::Segment.new(id: sm.id, name: sm.name) }.compact
     end
 
     private
