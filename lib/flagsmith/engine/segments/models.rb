@@ -58,6 +58,7 @@ module Flagsmith
           # handle some exceptions
           trait_value = Semantic::Version.new(trait_value.gsub(/:semver$/, '')) if @value.is_a?(String) && @value.match?(/:semver$/)
 
+          return match_in_value(trait_value) if @operator == IN
           return match_modulo_value(trait_value) if @operator == MODULO
 
           type_as_trait_value = format_to_type_of(trait_value)
@@ -83,6 +84,12 @@ module Flagsmith
           divisor, remainder = @value.split('|')
           trait_value.is_a?(Numeric) && trait_value % divisor.to_f == remainder.to_f # rubocop:disable Lint/FloatComparison
         rescue StandardError
+          false
+        end
+
+        def match_in_value(trait_value)
+          return @value.split(',').include?(trait_value.to_s) if trait_value.is_a?(String) || trait_value.is_a?(Integer)
+
           false
         end
 

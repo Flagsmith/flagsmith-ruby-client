@@ -79,6 +79,18 @@ TEST_CASES = [
   ['MODULO', 2.0, '2|0', true],
   ['MODULO', 'foo', '2|0', false],
   ['MODULO', 'foo', 'foo|bar', false],
+  ['IN', 'foo', '', false],
+  ['IN', 'foo', 'foo,bar', true],
+  ['IN', 'bar', 'foo,bar', true],
+  ['IN', 'ba', 'foo,bar', false],
+  ['IN', 'foo', 'foo', true],
+  ['IN', 1, '1,2,3,4', true],
+  ['IN', 1, '', false],
+  ['IN', 1, '1', true],
+  # Flagsmith's engine does not evaluate `IN` condition for floats/doubles and booleans
+  # due to ambiguous serialization across supported platforms.
+  ['IN', 1.5, '1.5', false],
+  ['IN', false, 'false', false],
 ].freeze
 
 RSpec.describe Flagsmith::Engine::Segments::Condition do
