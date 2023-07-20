@@ -56,9 +56,7 @@ module Flagsmith
 
         def match_trait_value?(trait_value)
           # handle some exceptions
-          if @value.is_a?(String) && @value.match?(/:semver$/)
-            trait_value = Semantic::Version.new(trait_value.gsub(/:semver$/, ''))
-          end
+          trait_value = Semantic::Version.new(trait_value.gsub(/:semver$/, '')) if @value.is_a?(String) && @value.match?(/:semver$/)
 
           return match_modulo_value(trait_value) if @operator == MODULO
 

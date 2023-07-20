@@ -36,6 +36,7 @@ module Flagsmith
             end
         end
 
+        # rubocop:disable Metrics/MethodLength
         def traits_match_segment_rule(identity_traits, rule, segment_id, identity_id)
           matching_block = lambda { |condition|
             traits_match_segment_condition(identity_traits, condition, segment_id, identity_id)
@@ -44,23 +45,25 @@ module Flagsmith
           matches_conditions =
             if rule.conditions&.length&.positive?
               rule.conditions.send(rule.matching_function, &matching_block)
-            else true
+            else
+              true
             end
 
           matches_conditions &&
             rule.rules.all? { |r| traits_match_segment_rule(identity_traits, r, segment_id, identity_id) }
         end
+        # rubocop:enable Metrics/MethodLength
 
         def traits_match_segment_condition(identity_traits, condition, segment_id, identity_id)
           if condition.operator == PERCENTAGE_SPLIT
-            return hashed_percentage_for_object_ids([segment_id, identity_id]) <= condition.value.to_f
+            return hashed_percentage_for_object_ids([segment_id,
+                                                     identity_id]) <= condition.value.to_f
           end
 
           trait = identity_traits.find { |t| t.key.to_s == condition.property }
 
-          if [IS_SET, IS_NOT_SET].include?(condition.operator)
-            return handle_trait_existence_conditions(trait, condition.operator)
-          end
+          return handle_trait_existence_conditions(trait, condition.operator) if [IS_SET,
+                                                                                  IS_NOT_SET].include?(condition.operator)
 
           return condition.match_trait_value?(trait.trait_value) if trait
 

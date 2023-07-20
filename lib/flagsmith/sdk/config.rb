@@ -84,7 +84,7 @@ module Flagsmith
 
     class << self
       def environment_key
-        ENV['FLAGSMITH_ENVIRONMENT_KEY']
+        ENV.fetch('FLAGSMITH_ENVIRONMENT_KEY', nil)
       end
     end
   end
