@@ -40,9 +40,7 @@ module Flagsmith
         multivariate_feature_state_values.sort.each do |multi_fs_value|
           limit = multi_fs_value.percentage_allocation + start_percentage
 
-          if start_percentage <= percentage_value && percentage_value < limit
-            return multi_fs_value.multivariate_feature_option.value
-          end
+          return multi_fs_value.multivariate_feature_option.value if start_percentage <= percentage_value && percentage_value < limit
 
           start_percentage = limit
         end
@@ -165,7 +163,7 @@ module Flagsmith
         attr_reader :priority
 
         def initialize(params = {})
-          @priority = params[:priority].nil? ? nil : params[:priority].to_i
+          @priority = params[:priority]&.to_i
         end
       end
     end

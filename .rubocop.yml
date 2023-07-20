@@ -9,3 +9,4 @@ AllCops:
   Exclude:
     - 'spec/**/*'
     - 'example/**/*'
+    - 'vendor/**/*'

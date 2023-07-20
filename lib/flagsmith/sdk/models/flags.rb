@@ -4,32 +4,34 @@ module Flagsmith
   module Flags
     class NotFound < StandardError; end
 
+    # Base data class for the flag entity
     class BaseFlag
       include Comparable
 
       attr_reader :enabled, :value, :default
-      
+
       def initialize(enabled:, value:, default:)
         @enabled = enabled
         @value = value
         @default = default
       end
-  
+
       def enabled?
         enabled
       end
-      
+
       alias is_default default
     end
 
+    # Flag class to be used by default handler logic
     class DefaultFlag < BaseFlag
       def initialize(enabled:, value:)
         super(enabled: enabled, value: value, default: true)
       end
     end
 
+    # 'live' Flag class as returned by API or local evaluation
     class Flag < BaseFlag
-
       attr_reader :feature_name, :feature_id
 
       def initialize(feature_name:, enabled:, value:, feature_id:)
@@ -77,6 +79,8 @@ module Flagsmith
       end
     end
 
+    # Implementation of a class to hold a collection of flags.
+    # Implements methods for working with the list to avoid requesting flags for each feature evaluation.
     class Collection
       include Enumerable
 
@@ -159,7 +163,7 @@ module Flagsmith
         def from_feature_state_models(feature_states, identity_id: nil, **args)
           to_flag_object = lambda { |feature_state, acc|
             acc[normalize_key(feature_state.feature.name)] =
-            Flagsmith::Flags::Flag.from_feature_state_model(feature_state, identity_id)
+              Flagsmith::Flags::Flag.from_feature_state_model(feature_state, identity_id)
           }
 
           new(

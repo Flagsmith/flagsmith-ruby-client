@@ -35,4 +35,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'faraday_middleware'
   spec.add_dependency 'faraday-retry'
   spec.add_dependency 'semantic'
+  spec.metadata['rubygems_mfa_required'] = 'true'
 end
