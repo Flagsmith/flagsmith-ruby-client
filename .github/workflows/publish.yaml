@@ -24,4 +24,4 @@ jobs:
         run: |
           bundle install
           gem build flagsmith.gemspec
-          rake release[remote]
+          bundle exec rake release[remote]
