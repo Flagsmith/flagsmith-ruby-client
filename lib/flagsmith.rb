@@ -212,18 +212,18 @@ module Flagsmith
     def environment_flags_from_api
       if offline_handler
         begin
-          return _environment_flags_from_api
+          return process_environment_flags_from_api
         rescue
           return environment_flags_from_document
         end
       else
         rescue_with_default_handler do
-          return _environment_flags_from_api
+          return process_environment_flags_from_api
         end
       end
     end
 
-    def _environment_flags_from_api
+    def process_environment_flags_from_api
       api_flags = api_client.get(@config.environment_flags_url).body
       api_flags = api_flags.select { |flag| flag[:feature_segment].nil? }
       Flagsmith::Flags::Collection.from_api(
@@ -237,18 +237,18 @@ module Flagsmith
     def get_identity_flags_from_api(identifier, traits = {})
       if offline_handler
         begin
-          return _get_identity_flags_from_api(identifier, traits)
+          return process_identity_flags_from_api(identifier, traits)
         rescue
           return get_identity_flags_from_document(identifier, traits)
         end
       else
         rescue_with_default_handler do
-          return _get_identity_flags_from_api(identifier, traits)
+          return process_identity_flags_from_api(identifier, traits)
         end
       end
     end
 
-    def _get_identity_flags_from_api(identifier, traits = {})
+    def process_identity_flags_from_api(identifier, traits = {})
       data = generate_identities_data(identifier, traits)
       json_response = api_client.post(@config.identities_url, data.to_json).body
 
