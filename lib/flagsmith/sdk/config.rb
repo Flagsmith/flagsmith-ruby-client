@@ -6,7 +6,8 @@ module Flagsmith
     DEFAULT_API_URL = 'https://edge.api.flagsmith.com/api/v1/'
     OPTIONS = %i[
       environment_key api_url custom_headers request_timeout_seconds enable_local_evaluation
-      environment_refresh_interval_seconds retries enable_analytics default_flag_handler logger
+      environment_refresh_interval_seconds retries enable_analytics default_flag_handler
+      offline_mode offline_handler logger
     ].freeze
 
     # Available Configs
@@ -31,8 +32,12 @@ module Flagsmith
     #                                            API to power flag analytics charts
     #   +default_flag_handler+                 - ruby block which will be used in the case where
     #                                            flags cannot be retrieved from the API or
-    #                                            a non existent feature is requested.
+    #                                            a non-existent feature is requested.
     #                                            The searched feature#name will be passed to the block as an argument.
+    #   +offline_mode+                         - if enabled, uses a locally provided file and
+    #                                            bypasses requests to the api.
+    #   +offline_handler+                      - A file object that contains a JSON serialization of
+    #                                            the entire environment, project, flags, etc.
     #   +logger+                               - Pass your logger, default is Logger.new($stdout)
     #
     attr_reader(*OPTIONS)
@@ -49,6 +54,10 @@ module Flagsmith
 
     def enable_analytics?
       @enable_analytics
+    end
+
+    def offline_mode?
+      @offline_mode
     end
 
     def environment_flags_url
@@ -78,6 +87,8 @@ module Flagsmith
       @environment_refresh_interval_seconds = opts.fetch(:environment_refresh_interval_seconds, 60)
       @enable_analytics = opts.fetch(:enable_analytics, false)
       @default_flag_handler = opts[:default_flag_handler]
+      @offline_mode = opts.fetch(:offline_mode, false)
+      @offline_handler = opts[:offline_handler]
       @logger = options.fetch(:logger, Logger.new($stdout).tap { |l| l.level = :debug })
     end
     # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
