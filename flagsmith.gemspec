@@ -6,8 +6,8 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = '>= 2.4.0'
   spec.name = 'flagsmith'
   spec.version = Flagsmith::VERSION
-  spec.authors = ['Tom Stuart', 'Brian Moelk']
-  spec.email = ['tom@solidstategroup.com', 'bmoelk@gmail.com']
+  spec.authors = ['Tom Stuart', 'Brian Moelk', 'Zach Aysan']
+  spec.email = ['tom@solidstategroup.com', 'bmoelk@gmail.com', 'zachaysan@gmail.com']
   # Specify which files should be added to the gem when it is released.
   # The `git ls-files -z` loads the files in the RubyGem that have been added into git.
   spec.files = Dir.chdir(__dir__) do
@@ -31,7 +31,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rspec'
   spec.add_development_dependency 'rubocop'
 
-  spec.add_dependency 'faraday'
+  spec.add_dependency 'faraday', '>= 1.0.0'
   spec.add_dependency 'faraday_middleware'
   spec.add_dependency 'faraday-retry'
   spec.add_dependency 'semantic'
