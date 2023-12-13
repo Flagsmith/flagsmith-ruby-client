@@ -1,6 +1,7 @@
 # frozen_string_literal: true
-require "pry"
-require "pry-byebug"
+
+require 'pry'
+require 'pry-byebug'
 
 require 'faraday'
 require 'faraday/retry'
@@ -70,14 +71,14 @@ module Flagsmith
     end
 
     def validate_offline_mode!
-      if @config.offline_mode? and not @config.offline_handler
+      if @config.offline_mode? && !@config.offline_handler
         raise Flagsmith::ClientError,
               'The offline_mode config param requires a matching offline_handler.'
       end
-      if @config.offline_handler and @config.default_flag_handler
-        raise Flagsmith::ClientError,
-        'Cannot use offline_handler and default_flag_handler at the same time.'
-      end
+      return unless @config.offline_handler && @config.default_flag_handler
+
+      raise Flagsmith::ClientError,
+            'Cannot use offline_handler and default_flag_handler at the same time.'
     end
 
     def api_client
@@ -126,9 +127,7 @@ module Flagsmith
     # Get all the default for flags for the current environment.
     # @returns Flags object holding all the flags for the current environment.
     def get_environment_flags # rubocop:disable Naming/AccessorMethodName
-      if @config.local_evaluation? or @config.offline_mode
-        return environment_flags_from_document
-      end
+      return environment_flags_from_document if @config.local_evaluation? || @config.offline_mode
 
       environment_flags_from_api
     end
@@ -194,7 +193,7 @@ module Flagsmith
         engine.get_environment_feature_states(environment),
         analytics_processor: analytics_processor,
         default_flag_handler: default_flag_handler,
-        offline_handler: offline_handler,
+        offline_handler: offline_handler
       )
     end
 
@@ -205,16 +204,17 @@ module Flagsmith
         engine.get_identity_feature_states(environment, identity_model),
         analytics_processor: analytics_processor,
         default_flag_handler: default_flag_handler,
-        offline_handler: offline_handler,
+        offline_handler: offline_handler
       )
     end
 
+    # rubocop:disable Metrics/MethodLength
     def environment_flags_from_api
       if offline_handler
         begin
-          return process_environment_flags_from_api
-        rescue
-          return environment_flags_from_document
+          process_environment_flags_from_api
+        rescue StandardError
+          environment_flags_from_document
         end
       else
         rescue_with_default_handler do
@@ -222,6 +222,7 @@ module Flagsmith
         end
       end
     end
+    # rubocop:enable Metrics/MethodLength
 
     def process_environment_flags_from_api
       api_flags = api_client.get(@config.environment_flags_url).body
@@ -234,12 +235,13 @@ module Flagsmith
       )
     end
 
+    # rubocop:disable Metrics/MethodLength
     def get_identity_flags_from_api(identifier, traits = {})
       if offline_handler
         begin
-          return process_identity_flags_from_api(identifier, traits)
-        rescue
-          return get_identity_flags_from_document(identifier, traits)
+          process_identity_flags_from_api(identifier, traits)
+        rescue StandardError
+          get_identity_flags_from_document(identifier, traits)
         end
       else
         rescue_with_default_handler do
@@ -247,6 +249,7 @@ module Flagsmith
         end
       end
     end
+    # rubocop:enable Metrics/MethodLength
 
     def process_identity_flags_from_api(identifier, traits = {})
       data = generate_identities_data(identifier, traits)

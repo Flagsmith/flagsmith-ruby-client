@@ -120,6 +120,14 @@ module Flagsmith
       end
       alias get_feature_value feature_value
 
+      def get_flag_from_offline_handler(key)
+        @offline_handler.environment.feature_states.each do |feature_state|
+          return Flag.from_feature_state_model(feature_state, nil) if key == Flagsmith::Flags::Collection.normalize_key(feature_state.feature.name)
+        end
+        raise Flagsmith::Flags::NotFound,
+              "Feature does not exist: #{key}, offline_handler did not find a flag in this case."
+      end
+
       # Get a specific flag given the feature name.
       # :param feature_name: the name of the feature to retrieve the flag for.
       # :return: BaseFlag object.
@@ -131,16 +139,7 @@ module Flagsmith
         @analytics_processor.track_feature(flag.feature_name) if @analytics_processor && flag.feature_id
         flag
       rescue KeyError
-        if @offline_handler
-          @offline_handler.environment.feature_states.each do |feature_state|
-            if key == Flagsmith::Flags::Collection.normalize_key(feature_state.feature.name)
-              return Flag.from_feature_state_model(feature_state, nil)
-            end
-          end
-
-          raise Flagsmith::Flags::NotFound,
-                "Feature does not exist: #{key}, offline_handler did not find a flag in this case."
-        end
+        return get_flag_from_offline_handler(key) if @offline_handler
 
         return @default_flag_handler.call(feature_name) if @default_flag_handler
 
