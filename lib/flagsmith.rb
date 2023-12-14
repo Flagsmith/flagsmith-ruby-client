@@ -217,8 +217,16 @@ module Flagsmith
           environment_flags_from_document
         end
       else
-        rescue_with_default_handler do
-          return process_environment_flags_from_api
+        begin
+          process_environment_flags_from_api
+        rescue StandardError
+          if default_flag_handler
+            return Flagsmith::Flags::Collection.new(
+              {},
+              default_flag_handler: default_flag_handler
+            )
+          end
+          raise
         end
       end
     end
@@ -244,8 +252,16 @@ module Flagsmith
           get_identity_flags_from_document(identifier, traits)
         end
       else
-        rescue_with_default_handler do
-          return process_identity_flags_from_api(identifier, traits)
+        begin
+          process_identity_flags_from_api(identifier, traits)
+        rescue StandardError
+          if default_flag_handler
+            return Flagsmith::Flags::Collection.new(
+              {},
+              default_flag_handler: default_flag_handler
+            )
+          end
+          raise
         end
       end
     end
@@ -261,18 +277,6 @@ module Flagsmith
         default_flag_handler: default_flag_handler,
         offline_handler: offline_handler
       )
-    end
-
-    def rescue_with_default_handler
-      yield
-    rescue StandardError
-      if default_flag_handler
-        return Flagsmith::Flags::Collection.new(
-          {},
-          default_flag_handler: default_flag_handler
-        )
-      end
-      raise
     end
 
     def build_identity_model(identifier, traits = {})
