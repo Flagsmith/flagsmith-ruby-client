@@ -84,12 +84,13 @@ module Flagsmith
     class Collection
       include Enumerable
 
-      attr_reader :flags, :default_flag_handler, :analytics_processor
+      attr_reader :flags, :default_flag_handler, :analytics_processor, :offline_handler
 
-      def initialize(flags = {}, analytics_processor: nil, default_flag_handler: nil)
+      def initialize(flags = {}, analytics_processor: nil, default_flag_handler: nil, offline_handler: nil)
         @flags = flags
         @default_flag_handler = default_flag_handler
         @analytics_processor = analytics_processor
+        @offline_handler = offline_handler
       end
 
       def each(&block)
@@ -119,16 +120,27 @@ module Flagsmith
       end
       alias get_feature_value feature_value
 
+      def get_flag_from_offline_handler(key)
+        @offline_handler.environment.feature_states.each do |feature_state|
+          return Flag.from_feature_state_model(feature_state, nil) if key == Flagsmith::Flags::Collection.normalize_key(feature_state.feature.name)
+        end
+        raise Flagsmith::Flags::NotFound,
+              "Feature does not exist: #{key}, offline_handler did not find a flag in this case."
+      end
+
       # Get a specific flag given the feature name.
       # :param feature_name: the name of the feature to retrieve the flag for.
       # :return: BaseFlag object.
       # :raises FlagsmithClientError: if feature doesn't exist
       def get_flag(feature_name)
         key = Flagsmith::Flags::Collection.normalize_key(feature_name)
+
         flag = flags.fetch(key)
         @analytics_processor.track_feature(flag.feature_name) if @analytics_processor && flag.feature_id
         flag
       rescue KeyError
+        return get_flag_from_offline_handler(key) if @offline_handler
+
         return @default_flag_handler.call(feature_name) if @default_flag_handler
 
         raise Flagsmith::Flags::NotFound,

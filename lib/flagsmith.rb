@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require 'pry'
+require 'pry-byebug'
+
 require 'faraday'
 require 'faraday/retry'
 require 'faraday_middleware'
@@ -16,6 +19,7 @@ require 'flagsmith/sdk/intervals'
 require 'flagsmith/sdk/pooling_manager'
 require 'flagsmith/sdk/models/flags'
 require 'flagsmith/sdk/models/segments'
+require 'flagsmith/sdk/offline_handlers'
 
 require 'flagsmith/engine/core'
 
@@ -44,7 +48,9 @@ module Flagsmith
     # Available Configs.
     #
     # :environment_key, :api_url, :custom_headers, :request_timeout_seconds, :enable_local_evaluation,
-    # :environment_refresh_interval_seconds, :retries, :enable_analytics, :default_flag_handler
+    # :environment_refresh_interval_seconds, :retries, :enable_analytics, :default_flag_handler,
+    # :offline_mode, :offline_handler
+    #
     # You can see full description in the Flagsmith::Config
 
     attr_reader :config, :environment
@@ -55,10 +61,24 @@ module Flagsmith
       @_mutex = Mutex.new
       @config = Flagsmith::Config.new(config)
 
+      validate_offline_mode!
+
       api_client
       analytics_processor
       environment_data_polling_manager
       engine
+      load_offline_handler
+    end
+
+    def validate_offline_mode!
+      if @config.offline_mode? && !@config.offline_handler
+        raise Flagsmith::ClientError,
+              'The offline_mode config param requires a matching offline_handler.'
+      end
+      return unless @config.offline_handler && @config.default_flag_handler
+
+      raise Flagsmith::ClientError,
+            'Cannot use offline_handler and default_flag_handler at the same time.'
     end
 
     def api_client
@@ -77,6 +97,10 @@ module Flagsmith
           api_client: api_client,
           timeout: request_timeout_seconds
         )
+    end
+
+    def load_offline_handler
+      @environment = offline_handler.environment if offline_handler
     end
 
     def environment_data_polling_manager
@@ -103,7 +127,7 @@ module Flagsmith
     # Get all the default for flags for the current environment.
     # @returns Flags object holding all the flags for the current environment.
     def get_environment_flags # rubocop:disable Naming/AccessorMethodName
-      return environment_flags_from_document if @config.local_evaluation?
+      return environment_flags_from_document if @config.local_evaluation? || @config.offline_mode
 
       environment_flags_from_api
     end
@@ -154,7 +178,7 @@ module Flagsmith
     def get_identity_segments(identifier, traits = {})
       unless environment
         raise Flagsmith::ClientError,
-              'Local evaluation required to obtain identity segments.'
+              'Local evaluation or offline handler is required to obtain identity segments.'
       end
 
       identity_model = build_identity_model(identifier, traits)
@@ -168,7 +192,8 @@ module Flagsmith
       Flagsmith::Flags::Collection.from_feature_state_models(
         engine.get_environment_feature_states(environment),
         analytics_processor: analytics_processor,
-        default_flag_handler: default_flag_handler
+        default_flag_handler: default_flag_handler,
+        offline_handler: offline_handler
       )
     end
 
@@ -178,45 +203,80 @@ module Flagsmith
       Flagsmith::Flags::Collection.from_feature_state_models(
         engine.get_identity_feature_states(environment, identity_model),
         analytics_processor: analytics_processor,
-        default_flag_handler: default_flag_handler
+        default_flag_handler: default_flag_handler,
+        offline_handler: offline_handler
       )
     end
 
+    # rubocop:disable Metrics/MethodLength
     def environment_flags_from_api
-      rescue_with_default_handler do
-        api_flags = api_client.get(@config.environment_flags_url).body
-        api_flags = api_flags.select { |flag| flag[:feature_segment].nil? }
-        Flagsmith::Flags::Collection.from_api(
-          api_flags,
-          analytics_processor: analytics_processor,
-          default_flag_handler: default_flag_handler
-        )
+      if offline_handler
+        begin
+          process_environment_flags_from_api
+        rescue StandardError
+          environment_flags_from_document
+        end
+      else
+        begin
+          process_environment_flags_from_api
+        rescue StandardError
+          if default_flag_handler
+            return Flagsmith::Flags::Collection.new(
+              {},
+              default_flag_handler: default_flag_handler
+            )
+          end
+          raise
+        end
       end
     end
+    # rubocop:enable Metrics/MethodLength
 
+    def process_environment_flags_from_api
+      api_flags = api_client.get(@config.environment_flags_url).body
+      api_flags = api_flags.select { |flag| flag[:feature_segment].nil? }
+      Flagsmith::Flags::Collection.from_api(
+        api_flags,
+        analytics_processor: analytics_processor,
+        default_flag_handler: default_flag_handler,
+        offline_handler: offline_handler
+      )
+    end
+
+    # rubocop:disable Metrics/MethodLength
     def get_identity_flags_from_api(identifier, traits = {})
-      rescue_with_default_handler do
-        data = generate_identities_data(identifier, traits)
-        json_response = api_client.post(@config.identities_url, data.to_json).body
-
-        Flagsmith::Flags::Collection.from_api(
-          json_response[:flags],
-          analytics_processor: analytics_processor,
-          default_flag_handler: default_flag_handler
-        )
+      if offline_handler
+        begin
+          process_identity_flags_from_api(identifier, traits)
+        rescue StandardError
+          get_identity_flags_from_document(identifier, traits)
+        end
+      else
+        begin
+          process_identity_flags_from_api(identifier, traits)
+        rescue StandardError
+          if default_flag_handler
+            return Flagsmith::Flags::Collection.new(
+              {},
+              default_flag_handler: default_flag_handler
+            )
+          end
+          raise
+        end
       end
     end
+    # rubocop:enable Metrics/MethodLength
 
-    def rescue_with_default_handler
-      yield
-    rescue StandardError
-      if default_flag_handler
-        return Flagsmith::Flags::Collection.new(
-          {},
-          default_flag_handler: default_flag_handler
-        )
-      end
-      raise
+    def process_identity_flags_from_api(identifier, traits = {})
+      data = generate_identities_data(identifier, traits)
+      json_response = api_client.post(@config.identities_url, data.to_json).body
+
+      Flagsmith::Flags::Collection.from_api(
+        json_response[:flags],
+        analytics_processor: analytics_processor,
+        default_flag_handler: default_flag_handler,
+        offline_handler: offline_handler
+      )
     end
 
     def build_identity_model(identifier, traits = {})
