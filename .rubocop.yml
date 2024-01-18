@@ -4,7 +4,7 @@ Layout/HashAlignment:
   AllowMultipleStyles: true
   EnforcedColonStyle: key
 AllCops:
-  TargetRubyVersion: 2.4  # Pin to flagsmith.gemspec required_ruby_version
+  TargetRubyVersion: 3.0  # Pin to flagsmith.gemspec required_ruby_version
   NewCops: enable
   SuggestExtensions: false
   Exclude:

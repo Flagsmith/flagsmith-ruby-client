@@ -3,7 +3,7 @@
 require File.expand_path('lib/flagsmith/version', __dir__)
 
 Gem::Specification.new do |spec|
-  spec.required_ruby_version = '>= 2.4.0'
+  spec.required_ruby_version = '>= 3.0.0'
   spec.name = 'flagsmith'
   spec.version = Flagsmith::VERSION
   spec.authors = ['Tom Stuart', 'Brian Moelk', 'Zach Aysan']
@@ -32,8 +32,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rspec'
   spec.add_development_dependency 'rubocop'
 
-  spec.add_dependency 'faraday', '>= 1.0.0'
-  spec.add_dependency 'faraday_middleware'
+  spec.add_dependency 'faraday', '>= 2.0.1'
   spec.add_dependency 'faraday-retry'
   spec.add_dependency 'semantic'
   spec.metadata['rubygems_mfa_required'] = 'true'

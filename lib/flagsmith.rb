@@ -5,7 +5,6 @@ require 'pry-byebug'
 
 require 'faraday'
 require 'faraday/retry'
-require 'faraday_middleware'
 
 # Hash#slice was added in ruby version 2.5
 # This is the patch to use slice in earler versions
