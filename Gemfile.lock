@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    flagsmith (3.2.0)
+    flagsmith (4.0.0)
       faraday (>= 2.0.1)
       faraday-retry
       semantic
