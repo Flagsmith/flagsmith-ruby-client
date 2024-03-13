@@ -6,24 +6,35 @@ module Flagsmith
     class Environment
       attr_reader :id, :api_key
       attr_accessor :project, :feature_states, :amplitude_config, :segment_config,
-                    :mixpanel_config, :heap_config
+                    :mixpanel_config, :heap_config, :identity_overrides
 
-      def initialize(id:, api_key:, project:, feature_states: [])
+      def initialize(id:, api_key:, project:, feature_states: [], identity_overrides: [])
         @id = id
         @api_key = api_key
         @project = project
         @feature_states = feature_states
+        @identity_overrides = identity_overrides
       end
 
       class << self
+        # rubocop:disable Metrics/MethodLength
         def build(json)
           project = Flagsmith::Engine::Project.build(json[:project])
           feature_states = json[:feature_states].map do |fs|
             Flagsmith::Engine::FeatureState.build(fs)
           end
 
-          new(**json.slice(:id, :api_key).merge(project: project, feature_states: feature_states))
+          identity_overrides = json.fetch(:identity_overrides, []).map do |io|
+            Flagsmith::Engine::Identity.build(io)
+          end
+
+          new(**json.slice(:id, :api_key).merge(
+            project: project,
+            feature_states: feature_states,
+            identity_overrides: identity_overrides
+          ))
         end
+        # rubocop:enable Metrics/MethodLength
       end
     end
 
