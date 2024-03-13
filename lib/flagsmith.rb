@@ -49,13 +49,14 @@ module Flagsmith
     #
     # You can see full description in the Flagsmith::Config
 
-    attr_reader :config, :environment
+    attr_reader :config, :environment, :identity_overrides_by_identifier
 
     delegate Flagsmith::Config::OPTIONS => :@config
 
     def initialize(config)
       @_mutex = Mutex.new
       @config = Flagsmith::Config.new(config)
+      @identity_overrides_by_identifier = {}
 
       validate_offline_mode!
 
@@ -113,6 +114,16 @@ module Flagsmith
     # You only need to call this if you wish to bypass environment_refresh_interval_seconds.
     def update_environment
       @_mutex.synchronize { @environment = environment_from_api }
+      update_identity_overrides
+    end
+
+    def update_identity_overrides
+      return unless @environment
+
+      @identity_overrides_by_identifier = {}
+      @environment.identity_overrides.each do |identity|
+        @identity_overrides_by_identifier[identity.identifier] = identity
+      end
     end
 
     def environment_from_api
@@ -177,7 +188,7 @@ module Flagsmith
               'Local evaluation or offline handler is required to obtain identity segments.'
       end
 
-      identity_model = build_identity_model(identifier, traits)
+      identity_model = get_identity_model(identifier, traits)
       segment_models = engine.get_identity_segments(environment, identity_model)
       segment_models.map { |sm| Flagsmith::Segments::Segment.new(id: sm.id, name: sm.name) }.compact
     end
@@ -194,7 +205,7 @@ module Flagsmith
     end
 
     def get_identity_flags_from_document(identifier, traits = {})
-      identity_model = build_identity_model(identifier, traits)
+      identity_model = get_identity_model(identifier, traits)
 
       Flagsmith::Flags::Collection.from_feature_state_models(
         engine.get_identity_feature_states(environment, identity_model),
@@ -276,19 +287,28 @@ module Flagsmith
       )
     end
 
-    def build_identity_model(identifier, traits = {})
+    # rubocop:disable Metrics/MethodLength
+    def get_identity_model(identifier, traits = {})
       unless environment
         raise Flagsmith::ClientError,
-              'Unable to build identity model when no local environment present.'
+              'Unable to get identity model when no local environment present.'
       end
 
       trait_models = traits.map do |key, value|
         Flagsmith::Engine::Identities::Trait.new(trait_key: key, trait_value: value)
       end
+
+      if identity_overrides_by_identifier.key? identifier
+        identity = identity_overrides_by_identifier[identifier]
+        identity.update_traits trait_models
+        return identity
+      end
+
       Flagsmith::Engine::Identity.new(
         identity_traits: trait_models, environment_api_key: environment_key, identifier: identifier
       )
     end
+    # rubocop:enable Metrics/MethodLength
 
     def generate_identities_data(identifier, traits = {})
       {
