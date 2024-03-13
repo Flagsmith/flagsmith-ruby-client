@@ -20,4 +20,18 @@ RSpec.describe Flagsmith do
       expect(flag.value).to eq("some-overridden-value")
     end
   end
+
+  describe '#get_multivariate_flags' do
+    it 'should return a 100% multivariate variation in local evaluation' do
+      allow_any_instance_of(Flagsmith::Client).to receive(:api_client).and_return(mock_api_client)
+
+      flagsmith = Flagsmith::Client.new(environment_key: mock_api_key, api_url: mock_api_url, enable_local_evaluation: true)
+      expect(flagsmith.config.local_evaluation?).to be_truthy
+
+      flag = flagsmith.get_identity_flags("some-identifier").get_flag("test_mv")
+
+      expect(flag.enabled).to be_falsy
+      expect(flag.value).to eq("8888")
+    end
+  end
 end

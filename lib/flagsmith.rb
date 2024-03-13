@@ -209,6 +209,7 @@ module Flagsmith
 
       Flagsmith::Flags::Collection.from_feature_state_models(
         engine.get_identity_feature_states(environment, identity_model),
+        identity_id: identity_model.composite_key,
         analytics_processor: analytics_processor,
         default_flag_handler: default_flag_handler,
         offline_handler: offline_handler

@@ -14,7 +14,7 @@ RSpec.describe Flagsmith::Client do
     )
 
     response = flagsmith.get_environment_flags
-    expect(response.count).to eq(1)
+    expect(response.count).to eq(2)
     expect(response.first[-1].feature_name).to eq("some_feature")
   end
 

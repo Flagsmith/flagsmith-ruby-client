@@ -65,6 +65,29 @@
       },
       "segment_id": null,
       "enabled": true
+    },
+    {
+      "feature": {
+        "id": 83755,
+        "name": "test_mv",
+        "type": "MULTIVARIATE"
+      },
+      "enabled": false,
+      "django_id": 482285,
+      "feature_segment": null,
+      "featurestate_uuid": "c3af5fbf-39ba-422c-a846-f2fea952b37c",
+      "feature_state_value": "1111",
+      "multivariate_feature_state_values": [
+        {
+          "multivariate_feature_option": {
+            "value": "8888",
+            "id": 11516
+          },
+          "percentage_allocation": 100.0,
+          "id": 38451,
+          "mv_fs_value_uuid": "a4299c73-2430-47e4-9185-42accd01686c"
+        }
+      ]
     }
   ],
   "updated_at": "2023-07-14 16:12:00.000000",
