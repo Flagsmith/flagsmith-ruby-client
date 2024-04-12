@@ -7,7 +7,7 @@ module Flagsmith
     OPTIONS = %i[
       environment_key api_url custom_headers request_timeout_seconds enable_local_evaluation
       environment_refresh_interval_seconds retries enable_analytics default_flag_handler
-      offline_mode offline_handler logger
+      offline_mode offline_handler polling_manager_failure_limit logger
     ].freeze
 
     # Available Configs
@@ -38,6 +38,8 @@ module Flagsmith
     #                                            bypasses requests to the api.
     #   +offline_handler+                      - A file object that contains a JSON serialization of
     #                                            the entire environment, project, flags, etc.
+    #   +polling_manager_failure_limit+        - An integer to control how long to suppress errors in
+    #                                            the polling manager for local evaluation mode.
     #   +logger+                               - Pass your logger, default is Logger.new($stdout)
     #
     attr_reader(*OPTIONS)
@@ -89,6 +91,7 @@ module Flagsmith
       @default_flag_handler = opts[:default_flag_handler]
       @offline_mode = opts.fetch(:offline_mode, false)
       @offline_handler = opts[:offline_handler]
+      @polling_manager_failure_limit = opts.fetch(:polling_manager_failure_limit, 10)
       @logger = options.fetch(:logger, Logger.new($stdout).tap { |l| l.level = :debug })
     end
     # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
