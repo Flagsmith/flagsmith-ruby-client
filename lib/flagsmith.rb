@@ -45,7 +45,7 @@ module Flagsmith
     #
     # :environment_key, :api_url, :custom_headers, :request_timeout_seconds, :enable_local_evaluation,
     # :environment_refresh_interval_seconds, :retries, :enable_analytics, :default_flag_handler,
-    # :offline_mode, :offline_handler
+    # :offline_mode, :offline_handler, :polling_manager_failure_limit
     #
     # You can see full description in the Flagsmith::Config
 
@@ -106,7 +106,7 @@ module Flagsmith
       update_environment
 
       @environment_data_polling_manager ||= Flagsmith::EnvironmentDataPollingManager.new(
-        self, environment_refresh_interval_seconds
+        self, environment_refresh_interval_seconds, @config.polling_manager_failure_limit
       ).tap(&:start)
     end
 
