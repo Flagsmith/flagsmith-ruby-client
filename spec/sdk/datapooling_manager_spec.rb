@@ -19,7 +19,7 @@ RSpec.describe Flagsmith::EnvironmentDataPollingManager do
     allow(double(Flagsmith::Config)).to receive(:environment_url).and_return("environment-document/")
   end
 
-  subject { Flagsmith::EnvironmentDataPollingManager.new(flagsmith, refresh_interval_seconds) }
+  subject { Flagsmith::EnvironmentDataPollingManager.new(flagsmith, refresh_interval_seconds, 10) }
 
   it 'test_polling_manager_calls_update_environment_on_start' do
     times = (delay_time / refresh_interval_seconds).to_i
