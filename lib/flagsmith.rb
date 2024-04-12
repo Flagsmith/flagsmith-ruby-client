@@ -93,7 +93,7 @@ module Flagsmith
         Flagsmith::AnalyticsProcessor.new(
           api_client: api_client,
           timeout: request_timeout_seconds,
-          logger: @config.logger,
+          logger: @config.logger
         )
     end
 
