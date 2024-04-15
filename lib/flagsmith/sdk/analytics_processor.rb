@@ -19,15 +19,20 @@ module Flagsmith
       @analytics_data = {}
       @api_client = data.fetch(:api_client)
       @timeout = data.fetch(:timeout, 3)
+      @logger = data.fetch(:logger)
     end
 
     # Sends all the collected data to the api asynchronously and resets the timer
     def flush
       return if @analytics_data.empty?
 
-      @api_client.post(ENDPOINT, @analytics_data.to_json)
+      begin
+        @api_client.post(ENDPOINT, @analytics_data.to_json)
+        @analytics_data = {}
+      rescue StandardError => e
+        @logger.warn "Temporarily unable to access flag analytics endpoint for exception: #{e}"
+      end
 
-      @analytics_data = {}
       @last_flushed = Time.now
     end
 
