@@ -104,7 +104,7 @@ module Flagsmith
     def environment_data_polling_manager
       return nil unless @config.local_evaluation?
 
-      update_environment
+      update_environment if @environment_data_polling_manager.nil?
 
       @environment_data_polling_manager ||= Flagsmith::EnvironmentDataPollingManager.new(
         self, environment_refresh_interval_seconds
