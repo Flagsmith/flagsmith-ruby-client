@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    flagsmith (4.0.1)
+    flagsmith (4.1.0)
       faraday (>= 2.0.1)
       faraday-retry
       semantic
@@ -17,7 +17,7 @@ GEM
       faraday-net_http (>= 2.0, < 3.2)
     faraday-net_http (3.1.0)
       net-http
-    faraday-retry (2.2.0)
+    faraday-retry (2.2.1)
       faraday (~> 2.0)
     gem-release (2.2.2)
     json (2.7.1)
