@@ -7,6 +7,8 @@ module Flagsmith
   class EnvironmentDataPollingManager
     include Flagsmith::SDK::Intervals
 
+    attr_reader :failures_since_last_update
+
     def initialize(main, refresh_interval_seconds, polling_manager_failure_limit)
       @main = main
       @refresh_interval_seconds = refresh_interval_seconds
