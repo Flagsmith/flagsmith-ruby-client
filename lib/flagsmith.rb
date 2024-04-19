@@ -92,7 +92,8 @@ module Flagsmith
       @analytics_processor ||=
         Flagsmith::AnalyticsProcessor.new(
           api_client: api_client,
-          timeout: request_timeout_seconds
+          timeout: request_timeout_seconds,
+          logger: @config.logger
         )
     end
 
@@ -103,7 +104,7 @@ module Flagsmith
     def environment_data_polling_manager
       return nil unless @config.local_evaluation?
 
-      update_environment
+      update_environment if @environment_data_polling_manager.nil?
 
       @environment_data_polling_manager ||= Flagsmith::EnvironmentDataPollingManager.new(
         self, environment_refresh_interval_seconds, @config.polling_manager_failure_limit

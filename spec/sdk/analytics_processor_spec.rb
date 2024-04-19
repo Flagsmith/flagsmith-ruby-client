@@ -14,7 +14,7 @@ RSpec.describe Flagsmith::AnalyticsProcessor do
   end
 
   subject do Flagsmith::AnalyticsProcessor.new(
-    api_client: flagsmith.api_client, timeout: flagsmith.config.request_timeout_seconds
+    api_client: flagsmith.api_client, timeout: flagsmith.config.request_timeout_seconds, logger: flagsmith.config.logger
     )
   end
 
