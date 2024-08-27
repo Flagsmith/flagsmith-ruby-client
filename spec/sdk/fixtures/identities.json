@@ -59,12 +59,14 @@
     {
       "id": 215352,
       "trait_key": "roles",
-      "trait_value": "[\"admin\",\"staff\"]"
+      "trait_value": "[\"admin\",\"staff\"]",
+      "transient": false
     },
     {
       "id": 215988,
       "trait_key": "foo",
-      "trait_value": "bar"
+      "trait_value": "bar",
+      "transient": false
     }
   ]
 }
