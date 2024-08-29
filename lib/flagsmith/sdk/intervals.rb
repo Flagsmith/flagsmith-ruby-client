@@ -9,8 +9,8 @@ module Flagsmith
       def set_interval(delay)
         Thread.new do
           loop do
-            sleep delay
             yield if block_given?
+            sleep delay
           end
         end
       end
