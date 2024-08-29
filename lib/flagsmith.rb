@@ -148,11 +148,13 @@ module Flagsmith
     # environment, e.g. email address, username, uuid
     # traits { key => value } is a dictionary of traits to add / update on the identity in
     # Flagsmith, e.g. { "num_orders": 10 }
+    # in lieu of a trait value, a trait coniguration dictionary can be provided,
+    # e.g. { "num_orders": { "value": 10, "transient": true } }
     # returns Flags object holding all the flags for the given identity.
-    def get_identity_flags(identifier, **traits)
+    def get_identity_flags(identifier, transient = false, **traits) # rubocop:disable Style/OptionalBooleanParameter
       return get_identity_flags_from_document(identifier, traits) if environment
 
-      get_identity_flags_from_api(identifier, traits)
+      get_identity_flags_from_api(identifier, traits, transient)
     end
 
     def feature_enabled?(feature_name, default: false)
@@ -253,16 +255,16 @@ module Flagsmith
     end
 
     # rubocop:disable Metrics/MethodLength
-    def get_identity_flags_from_api(identifier, traits = {})
+    def get_identity_flags_from_api(identifier, traits, transient)
       if offline_handler
         begin
-          process_identity_flags_from_api(identifier, traits)
+          process_identity_flags_from_api(identifier, traits, transient)
         rescue StandardError
           get_identity_flags_from_document(identifier, traits)
         end
       else
         begin
-          process_identity_flags_from_api(identifier, traits)
+          process_identity_flags_from_api(identifier, traits, transient)
         rescue StandardError
           if default_flag_handler
             return Flagsmith::Flags::Collection.new(
@@ -276,8 +278,8 @@ module Flagsmith
     end
     # rubocop:enable Metrics/MethodLength
 
-    def process_identity_flags_from_api(identifier, traits = {})
-      data = generate_identities_data(identifier, traits)
+    def process_identity_flags_from_api(identifier, traits, transient)
+      data = generate_identities_data(identifier, traits, transient)
       json_response = api_client.post(@config.identities_url, data.to_json).body
 
       Flagsmith::Flags::Collection.from_api(
@@ -311,10 +313,13 @@ module Flagsmith
     end
     # rubocop:enable Metrics/MethodLength
 
-    def generate_identities_data(identifier, traits = {})
+    def generate_identities_data(identifier, traits, transient)
       {
         identifier: identifier,
-        traits: traits.map { |key, value| { trait_key: key, trait_value: value } }
+        transient: transient,
+        traits: traits.map do |key, value|
+          value.is_a?(Hash) ? { trait_key: key, trait_value: value[:value], transient: value[:transient] || false } : { trait_key: key, trait_value: value }
+        end
       }
     end
   end

@@ -30,7 +30,7 @@ RSpec.shared_context 'shared mocks', shared_context: :metadata do
                                            .and_return(mock_api_client)
     allow(mock_api_client).to receive(:get).with('flags/').and_return(flags_response)
     allow(mock_api_client).to receive(:post).with(
-      'identities/', { identifier: user_id, traits: [] }.to_json
+      'identities/', { identifier: user_id, transient: false, traits: [] }.to_json
     ).and_return(identities_response)
     allow(mock_api_client).to receive(:get).with('environment-document/')
                                            .and_return(environment_document_response)
