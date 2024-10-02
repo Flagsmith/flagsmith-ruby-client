@@ -71,7 +71,7 @@ module Flagsmith
         def from_api(json_flag_data)
           new(
             enabled: json_flag_data[:enabled],
-            value: json_flag_data[:feature_state_value] || json_flag_data[:value],
+            value: json_flag_data.fetch(:feature_state_value) { json_flag_data[:value] },
             feature_name: json_flag_data.dig(:feature, :name),
             feature_id: json_flag_data.dig(:feature, :id)
           )
