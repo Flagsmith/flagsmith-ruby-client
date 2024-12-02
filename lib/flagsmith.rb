@@ -16,6 +16,7 @@ require 'flagsmith/sdk/pooling_manager'
 require 'flagsmith/sdk/models/flags'
 require 'flagsmith/sdk/models/segments'
 require 'flagsmith/sdk/offline_handlers'
+require 'flagsmith/sdk/realtime_client'
 
 require 'flagsmith/engine/core'
 
@@ -46,6 +47,7 @@ module Flagsmith
     # :environment_key, :api_url, :custom_headers, :request_timeout_seconds, :enable_local_evaluation,
     # :environment_refresh_interval_seconds, :retries, :enable_analytics, :default_flag_handler,
     # :offline_mode, :offline_handler, :polling_manager_failure_limit
+    # :realtime_api_url, :enable_realtime_updates, :logger
     #
     # You can see full description in the Flagsmith::Config
 
@@ -59,6 +61,7 @@ module Flagsmith
       @identity_overrides_by_identifier = {}
 
       validate_offline_mode!
+      validate_realtime_mode!
 
       api_client
       analytics_processor
@@ -78,8 +81,19 @@ module Flagsmith
             'Cannot use offline_handler and default_flag_handler at the same time.'
     end
 
+    def validate_realtime_mode!
+      return unless @config.realtime_mode? && !@config.local_evaluation?
+
+      raise Flagsmith::ClientError,
+            'The enable_realtime_updates config param requires a matching enable_local_evaluation param.'
+    end
+
     def api_client
       @api_client ||= Flagsmith::ApiClient.new(@config)
+    end
+
+    def realtime_client
+      @realtime_client ||= Flagsmith::RealtimeClient.new(@config)
     end
 
     def engine
@@ -103,6 +117,14 @@ module Flagsmith
 
     def environment_data_polling_manager
       return nil unless @config.local_evaluation?
+
+      # Bypass the environment data polling manager if realtime
+      # is present in the configuration.
+      if @config.realtime_mode?
+        update_environment
+        realtime_client.listen self unless realtime_client.running
+        return
+      end
 
       update_environment if @environment_data_polling_manager.nil?
 
