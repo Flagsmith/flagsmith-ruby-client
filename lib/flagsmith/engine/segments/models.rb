@@ -37,15 +37,15 @@ module Flagsmith
 
         MATCHING_FUNCTIONS = {
           EQUAL => ->(other_value, self_value) { other_value == self_value },
-          GREATER_THAN => ->(other_value, self_value) { other_value > self_value },
-          GREATER_THAN_INCLUSIVE => ->(other_value, self_value) { other_value >= self_value },
-          LESS_THAN => ->(other_value, self_value) { other_value < self_value },
-          LESS_THAN_INCLUSIVE => ->(other_value, self_value) { other_value <= self_value },
+          GREATER_THAN => ->(other_value, self_value) { (other_value || false) && other_value > self_value },
+          GREATER_THAN_INCLUSIVE => ->(other_value, self_value) { (other_value || false) && other_value >= self_value },
+          LESS_THAN => ->(other_value, self_value) { (other_value || false) && other_value < self_value },
+          LESS_THAN_INCLUSIVE => ->(other_value, self_value) { (other_value || false) && other_value <= self_value },
           NOT_EQUAL => ->(other_value, self_value) { other_value != self_value },
-          CONTAINS => ->(other_value, self_value) { other_value.include? self_value },
+          CONTAINS => ->(other_value, self_value) { (other_value || false) && other_value.include?(self_value) },
 
-          NOT_CONTAINS => ->(other_value, self_value) { !other_value.include? self_value },
-          REGEX => ->(other_value, self_value) { other_value.match? self_value }
+          NOT_CONTAINS => ->(other_value, self_value) { (other_value || false) && !other_value.include?(self_value) },
+          REGEX => ->(other_value, self_value) { (other_value || false) && other_value.match?(self_value) }
         }.freeze
 
         def initialize(operator:, value:, property: nil)
