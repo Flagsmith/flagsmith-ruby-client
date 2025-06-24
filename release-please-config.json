@@ -1,5 +1,5 @@
 {
-    "bootstrap-sha": "fd2094131e5e4972a17be5a8efa4cb379cc821ee",
+    "bootstrap-sha": "2535f5d5bf16e4cb1ca30e10dd2e925eb62dbd9b",
     "packages": {
         ".": {
             "release-type": "ruby",
