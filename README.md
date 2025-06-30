@@ -1,5 +1,3 @@
-<img width="100%" src="https://github.com/Flagsmith/flagsmith/raw/main/static-files/hero.png"/>
-
 # Flagsmith Ruby Client
 
 The SDK clients for Ruby [https://www.flagsmith.com/](https://www.flagsmith.com/). Flagsmith allows you to manage feature flags and remote config across multiple projects, environments and organizations.
