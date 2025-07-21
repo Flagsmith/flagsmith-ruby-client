@@ -1,5 +1,24 @@
+# Changelog
+
+## [4.3.1](https://github.com/Flagsmith/flagsmith-ruby-client/compare/v4.3.0...v4.3.1) (2025-07-21)
+
+
+### CI
+
+* add release please ([#77](https://github.com/Flagsmith/flagsmith-ruby-client/issues/77)) ([a815cd9](https://github.com/Flagsmith/flagsmith-ruby-client/commit/a815cd9f2274f9bda9842786f2a09a358f203f46))
+
+
+### Docs
+
+* removing hero image from SDK readme ([#78](https://github.com/Flagsmith/flagsmith-ruby-client/issues/78)) ([154c5b2](https://github.com/Flagsmith/flagsmith-ruby-client/commit/154c5b22f0b10c7a013605cf1265c6338f986c62))
+
+
+### Other
+
+* versioned test data ([#80](https://github.com/Flagsmith/flagsmith-ruby-client/issues/80)) ([18eedd9](https://github.com/Flagsmith/flagsmith-ruby-client/commit/18eedd9d51a6a5489fed16e47c167a8bb4c3ae4c))
+
 <a id="v4.3.0"></a>
-# [v4.3.0](https://github.com/Flagsmith/flagsmith-ruby-client/releases/tag/v4.3.0) - 2024-12-06
+## [v4.3.0](https://github.com/Flagsmith/flagsmith-ruby-client/releases/tag/v4.3.0) - 2024-12-06
 
 ## What's Changed
 * Bump rexml from 3.2.8 to 3.3.9 by [@dependabot](https://github.com/dependabot) in [#71](https://github.com/Flagsmith/flagsmith-ruby-client/pull/71)
@@ -18,7 +37,7 @@
 
 
 <a id="v4.2.0"></a>
-# [v4.2.0](https://github.com/Flagsmith/flagsmith-ruby-client/releases/tag/v4.2.0) - 2024-10-22
+## [v4.2.0](https://github.com/Flagsmith/flagsmith-ruby-client/releases/tag/v4.2.0) - 2024-10-22
 
 ## What's Changed
 * feat: Support transient identities and traits by [@khvn26](https://github.com/khvn26) in [#66](https://github.com/Flagsmith/flagsmith-ruby-client/pull/66)
@@ -30,7 +49,7 @@
 
 
 <a id="v4.1.1"></a>
-# [v4.1.1](https://github.com/Flagsmith/flagsmith-ruby-client/releases/tag/v4.1.1) - 2024-05-22
+## [v4.1.1](https://github.com/Flagsmith/flagsmith-ruby-client/releases/tag/v4.1.1) - 2024-05-22
 
 ## What's Changed
 * fix: Squash exceptions for polling manager by [@zachaysan](https://github.com/zachaysan) in [#55](https://github.com/Flagsmith/flagsmith-ruby-client/pull/55)
@@ -43,7 +62,7 @@
 
 
 <a id="v4.1.0"></a>
-# [v4.1.0](https://github.com/Flagsmith/flagsmith-ruby-client/releases/tag/v4.1.0) - 2024-04-19
+## [v4.1.0](https://github.com/Flagsmith/flagsmith-ruby-client/releases/tag/v4.1.0) - 2024-04-19
 
 ## What's Changed
 * feat: Add identity overrides to client by [@zachaysan](https://github.com/zachaysan) in [#50](https://github.com/Flagsmith/flagsmith-ruby-client/pull/50)
@@ -62,7 +81,7 @@
 
 
 <a id="v4.0.1"></a>
-# [v4.0.1](https://github.com/Flagsmith/flagsmith-ruby-client/releases/tag/v4.0.1) - 2024-02-06
+## [v4.0.1](https://github.com/Flagsmith/flagsmith-ruby-client/releases/tag/v4.0.1) - 2024-02-06
 
 ## What's Changed
 * fix: Remove dev dependences by [@zachaysan](https://github.com/zachaysan) in [#45](https://github.com/Flagsmith/flagsmith-ruby-client/pull/45)
@@ -75,7 +94,7 @@
 
 
 <a id="v4.0.0"></a>
-# [Version 4.0.0 (v4.0.0)](https://github.com/Flagsmith/flagsmith-ruby-client/releases/tag/v4.0.0) - 2024-01-30
+## [Version 4.0.0 (v4.0.0)](https://github.com/Flagsmith/flagsmith-ruby-client/releases/tag/v4.0.0) - 2024-01-30
 
 ## What's Changed
 * Bump puma from 5.6.4 to 6.3.1 in /example by [@dependabot](https://github.com/dependabot) in [#35](https://github.com/Flagsmith/flagsmith-ruby-client/pull/35)
@@ -94,7 +113,7 @@
 
 
 <a id="v3.2.0"></a>
-# [Version 3.2.0 (v3.2.0)](https://github.com/Flagsmith/flagsmith-ruby-client/releases/tag/v3.2.0) - 2023-07-25
+## [Version 3.2.0 (v3.2.0)](https://github.com/Flagsmith/flagsmith-ruby-client/releases/tag/v3.2.0) - 2023-07-25
 
 ## What's Changed
 * Prevent publish workflow from running by [@matthewelwell](https://github.com/matthewelwell) in [#25](https://github.com/Flagsmith/flagsmith-ruby-client/pull/25)
@@ -112,7 +131,7 @@
 
 
 <a id="v3.1.1"></a>
-# [Version 3.1.1 (v3.1.1)](https://github.com/Flagsmith/flagsmith-ruby-client/releases/tag/v3.1.1) - 2023-02-22
+## [Version 3.1.1 (v3.1.1)](https://github.com/Flagsmith/flagsmith-ruby-client/releases/tag/v3.1.1) - 2023-02-22
 
 ## What's Changed
 * Fix analytics flush timer by [@matthewelwell](https://github.com/matthewelwell) in [#23](https://github.com/Flagsmith/flagsmith-ruby-client/pull/23)
@@ -125,7 +144,7 @@
 
 
 <a id="v3.1.0"></a>
-# [Version 3.1.0 (v3.1.0)](https://github.com/Flagsmith/flagsmith-ruby-client/releases/tag/v3.1.0) - 2022-11-01
+## [Version 3.1.0 (v3.1.0)](https://github.com/Flagsmith/flagsmith-ruby-client/releases/tag/v3.1.0) - 2022-11-01
 
 ## What's Changed
 * Add modulo operator by [@matthewelwell](https://github.com/matthewelwell) in [#21](https://github.com/Flagsmith/flagsmith-ruby-client/pull/21)
@@ -140,7 +159,7 @@
 
 
 <a id="v3.0.2"></a>
-# [Version 3.0.2 (v3.0.2)](https://github.com/Flagsmith/flagsmith-ruby-client/releases/tag/v3.0.2) - 2022-07-13
+## [Version 3.0.2 (v3.0.2)](https://github.com/Flagsmith/flagsmith-ruby-client/releases/tag/v3.0.2) - 2022-07-13
 
 ## What's Changed
 * Use feature name instead of id for analytics by [@matthewelwell](https://github.com/matthewelwell) in [#17](https://github.com/Flagsmith/flagsmith-ruby-client/pull/17)
@@ -157,7 +176,7 @@
 
 
 <a id="v3.0.1"></a>
-# [Version 3.0.1 (v3.0.1)](https://github.com/Flagsmith/flagsmith-ruby-client/releases/tag/v3.0.1) - 2022-06-09
+## [Version 3.0.1 (v3.0.1)](https://github.com/Flagsmith/flagsmith-ruby-client/releases/tag/v3.0.1) - 2022-06-09
 
 ## What's Changed
 * Add BaseFlag and DefaultFlag classes by [@matthewelwell](https://github.com/matthewelwell) in [#14](https://github.com/Flagsmith/flagsmith-ruby-client/pull/14)
@@ -170,7 +189,7 @@
 
 
 <a id="v3.0.0"></a>
-# [Version 3.0.0 (v3.0.0)](https://github.com/Flagsmith/flagsmith-ruby-client/releases/tag/v3.0.0) - 2022-06-07
+## [Version 3.0.0 (v3.0.0)](https://github.com/Flagsmith/flagsmith-ruby-client/releases/tag/v3.0.0) - 2022-06-07
 
 ## What's Changed
 * Example app by [@byReham](https://github.com/byReham) in [#10](https://github.com/Flagsmith/flagsmith-ruby-client/pull/10)
