@@ -7,11 +7,14 @@ require 'faraday/retry'
 # This is the patch to use slice in earler versions
 require 'flagsmith/hash_slice'
 
+require 'flagsmith/version'
+
 require 'flagsmith/sdk/analytics_processor'
 require 'flagsmith/sdk/api_client'
 require 'flagsmith/sdk/config'
 require 'flagsmith/sdk/errors'
 require 'flagsmith/sdk/intervals'
+require 'flagsmith/sdk/utils'
 require 'flagsmith/sdk/pooling_manager'
 require 'flagsmith/sdk/models/flags'
 require 'flagsmith/sdk/models/segments'

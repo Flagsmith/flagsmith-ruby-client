@@ -31,6 +31,7 @@ module Flagsmith
       faraday.headers['Accept'] = 'application/json'
       faraday.headers['Content-Type'] = 'application/json'
       faraday.headers['X-Environment-Key'] = config.environment_key
+      faraday.headers['User-Agent'] = Flagsmith::SDK::Utils.user_agent
       faraday.headers.merge(config.custom_headers)
     end
 
