@@ -34,14 +34,9 @@ RSpec.describe Flagsmith::Engine do
         test_evaluation_context = test_case[:context]
         test_expected_result = test_case[:result]
 
-        # TODO: Build environment/identity models and map to evaluation context
-        evaluation_context = test_evaluation_context
-
         # TODO: Implement evaluation logic
         evaluation_result = {}
 
-        # For now, verify the context structure is valid
-        expect(evaluation_context).to eq(test_evaluation_context)
 
         # TODO: Uncomment when evaluation is implemented
         # expect(evaluation_result).to eq(test_expected_result)
