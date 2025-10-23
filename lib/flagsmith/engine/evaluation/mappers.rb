@@ -7,7 +7,7 @@ module Flagsmith
         # Using integer constant instead of -Float::INFINITY because the JSON serializer rejects infinity values
         HIGHEST_PRIORITY = 0
         WEAKEST_PRIORITY = 99_999_999
-        #
+
         # @param environment [Flagsmith::Engine::Environment] The environment model
         # @param identity [Flagsmith::Engine::Identity, nil] Optional identity model
         # @param override_traits [Array<Flagsmith::Engine::Identities::Trait>, nil] Optional override traits
