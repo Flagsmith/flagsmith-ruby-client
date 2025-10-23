@@ -74,6 +74,7 @@ module Flagsmith
                 value: fs.get_value
               }
               override_hash[:priority] = fs.feature_segment.priority if fs.feature_segment&.priority
+              override_hash[:metadata] = { flagsmithId: fs.feature.id }
               override_hash
             end
 
