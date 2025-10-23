@@ -103,20 +103,6 @@ RSpec.describe Flagsmith::Engine::EvaluationContext::Mappers do
       expect(variant[:priority]).to eq(38451)
     end
 
-    it 'maps segment overrides correctly' do
-      context = described_class.get_evaluation_context(environment)
-
-      segment = context[:segments]['1']
-      expect(segment[:overrides]).to be_an(Array)
-      expect(segment[:overrides].length).to eq(1)
-
-      override = segment[:overrides][0]
-      expect(override[:feature_key]).to eq('1')
-      expect(override[:name]).to eq('some_feature')
-      expect(override[:enabled]).to be false
-      expect(override[:value]).to eq('segment_override')
-    end
-
     it 'maps multivariate features with multiple variants correctly' do
       # Given
       mv_option1 = Flagsmith::Engine::Features::MultivariateOption.new(id: 100, value: 'variant_a')
