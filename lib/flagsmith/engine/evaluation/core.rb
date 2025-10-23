@@ -2,9 +2,7 @@
 
 module Flagsmith
   module Engine
-    module EvaluationContext
-      # Core evaluation logic for the evaluation context
-      # This will contain the main evaluation engine logic similar to Node SDK
+    module Evaluation
       module Core
         # Get evaluation result from evaluation context
         #
