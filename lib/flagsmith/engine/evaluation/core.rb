@@ -3,12 +3,13 @@
 module Flagsmith
   module Engine
     module Evaluation
+      # Core evaluation logic module
       module Core
         # Get evaluation result from evaluation context
         #
         # @param evaluation_context [Hash] The evaluation context
         # @return [Hash] Evaluation result with flags and segments
-        def self.get_evaluation_result(evaluation_context)
+        def self.get_evaluation_result(_evaluation_context)
           # TODO: Implement core evaluation logic
           {
             flags: {},
