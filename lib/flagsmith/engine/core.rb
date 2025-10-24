@@ -11,7 +11,7 @@ require_relative 'projects/models'
 require_relative 'segments/evaluator'
 require_relative 'segments/models'
 require_relative 'utils/hash_func'
-require_relative 'evaluationContext/mappers'
+require_relative 'evaluation/mappers'
 
 module Flagsmith
   module Engine

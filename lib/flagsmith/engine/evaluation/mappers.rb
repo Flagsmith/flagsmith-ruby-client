@@ -4,9 +4,8 @@ module Flagsmith
   module Engine
     module EvaluationContext
       module Mappers
-        # Using integer constant instead of -Float::INFINITY because the JSON serializer rejects infinity values
-        HIGHEST_PRIORITY = 0
-        WEAKEST_PRIORITY = 99_999_999
+        STRONGEST_PRIORITY = Float::INFINITY
+        WEAKEST_PRIORITY = -Float::INFINITY
 
         # @param environment [Flagsmith::Engine::Environment] The environment model
         # @param identity [Flagsmith::Engine::Identity, nil] Optional identity model
@@ -165,7 +164,6 @@ module Flagsmith
         # @param identity_overrides [Array<Flagsmith::Engine::Identity>] Array of identity override models
         # @return [Hash] Segments hash for identity overrides
         def self.map_identity_overrides_to_segments(identity_overrides)
-          require 'digest'
 
           segments = {}
           features_to_identifiers = {}
@@ -191,7 +189,7 @@ module Flagsmith
             end
 
             # Create hash of the overrides to group identities with same overrides
-            overrides_hash = Digest::SHA1.hexdigest(overrides_key.to_json)
+            overrides_hash = overrides_key.hash
 
             features_to_identifiers[overrides_hash] ||= { identifiers: [], overrides: overrides_key }
             features_to_identifiers[overrides_hash][:identifiers] << identity.identifier
