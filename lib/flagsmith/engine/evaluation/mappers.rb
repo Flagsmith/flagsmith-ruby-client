@@ -209,7 +209,7 @@ module Flagsmith
                     {
                       property: '$.identity.identifier',
                       operator: 'IN',
-                      value: data[:identifiers].join(',')
+                      value: data[:identifiers]
                     }
                   ],
                   rules: []
