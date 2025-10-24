@@ -30,9 +30,25 @@ module Flagsmith
         end
 
         # Returns Record<string: override.name, SegmentOverride>
-        def process_segment_overrides(_identity_segments)
+        def process_segment_overrides(identity_segments)
           segment_overrides = {}
-          return segment_overrides
+
+          identity_segments.each do |segment|
+            next unless segment[:overrides]
+
+            overrides_list = segment[:overrides].is_a?(Array) ? segment[:overrides] : []
+
+            overrides_list.each do |override|
+              if should_apply_override(override, segment_overrides)
+                segment_overrides[override[:feature_key]] = {
+                  feature: override,
+                  segment_name: segment[:name]
+                }
+              end
+            end
+          end
+
+          segment_overrides
         end
 
         # returns EvaluationResultFlags<Metadata>
