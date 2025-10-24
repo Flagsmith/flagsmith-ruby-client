@@ -183,7 +183,7 @@ module Flagsmith
                 name: fs.feature.name,
                 enabled: fs.enabled,
                 value: fs.get_value,
-                priority: WEAKEST_PRIORITY,
+                priority: STRONGEST_PRIORITY,
                 metadata: {
                   flagsmithId: fs.feature.id
                 }
