@@ -56,7 +56,7 @@ module Flagsmith
 
             overrides_list.each do |override|
               if should_apply_override(override, segment_overrides)
-                segment_overrides[override[:feature_key]] = {
+                segment_overrides[override[:name]] = {
                   feature: override,
                   segment_name: segment[:name]
                 }
@@ -83,8 +83,9 @@ module Flagsmith
         end
 
         # returns boolean
-        def should_apply_override(_override, _existing_overrides)
-          raise NotImplementedError
+        def should_apply_override(override, existing_overrides)
+          current_override = existing_overrides[override[:name]]
+          !current_override || higher_priority?(override[:priority], current_override[:feature][:priority])
         end
 
         private
