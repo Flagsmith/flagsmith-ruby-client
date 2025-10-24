@@ -21,11 +21,27 @@ module Flagsmith
 
         # Returns { segments: EvaluationResultSegments; segmentOverrides: Record<string, SegmentOverride>; }
         def evaluate_segments(evaluation_context)
-          if evaluation_context.identities.nil? || evaluation_context.segments.nil?
+          if evaluation_context[:identity].nil? || evaluation_context[:segments].nil?
             return [], {}
           end
-          segments = []
-          segment_overrides = process_segment_overrides(evaluation_context.identities)
+
+          identity_segments = [] # To be getIdentitySegments when implemented
+
+          segments = identity_segments.map do |segment|
+            result = {
+              key: segment[:key],
+              name: segment[:name]
+            }
+
+            if segment[:metadata]
+              result[:metadata] = segment[:metadata].dup
+            end
+
+            result
+          end
+
+          segment_overrides = process_segment_overrides(identity_segments)
+
           return segments, segment_overrides
         end
 
