@@ -73,7 +73,7 @@ RSpec.describe Flagsmith::Engine::EvaluationContext::Mappers do
       expect(override[:enabled]).to be false
       expect(override[:value]).to eq('some-overridden-value')
       expect(override[:priority]).to eq(Flagsmith::Engine::EvaluationContext::Mappers::STRONGEST_PRIORITY)
-      expect(override[:metadata][:flagsmithId]).to eq(1)
+      expect(override[:metadata][:flagsmith_id]).to eq(1)
 
       # Verify features
       expect(context[:features]).to be_a(Hash)
@@ -85,7 +85,7 @@ RSpec.describe Flagsmith::Engine::EvaluationContext::Mappers do
       expect(some_feature[:enabled]).to be true
       expect(some_feature[:value]).to eq('some-value')
       expect(some_feature[:priority]).to be_nil
-      expect(some_feature[:metadata][:flagsmithId]).to eq(1)
+      expect(some_feature[:metadata][:flagsmith_id]).to eq(1)
 
       # Verify multivariate feature
       expect(context[:features]).to have_key('test_mv')

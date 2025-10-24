@@ -56,7 +56,7 @@ module Flagsmith
 
             feature_hash[:variants] = variants if variants
             feature_hash[:priority] = fs.feature_segment.priority if fs.feature_segment&.priority
-            feature_hash[:metadata] = { flagsmithId: fs.feature.id }
+            feature_hash[:metadata] = { flagsmith_id: fs.feature.id }
 
             features[fs.feature.name] = feature_hash
           end
@@ -73,7 +73,7 @@ module Flagsmith
                 value: fs.get_value
               }
               override_hash[:priority] = fs.feature_segment.priority if fs.feature_segment&.priority
-              override_hash[:metadata] = { flagsmithId: fs.feature.id }
+              override_hash[:metadata] = { flagsmith_id: fs.feature.id }
               override_hash
             end
 
@@ -183,7 +183,7 @@ module Flagsmith
                 value: fs.get_value,
                 priority: STRONGEST_PRIORITY,
                 metadata: {
-                  flagsmithId: fs.feature.id
+                  flagsmith_id: fs.feature.id
                 }
               }
             end
