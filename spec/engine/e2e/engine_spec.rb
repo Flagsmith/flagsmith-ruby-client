@@ -40,6 +40,7 @@ RSpec.describe Flagsmith::Engine do
 
         # TODO: Uncomment when evaluation is implemented
         expect(evaluation_result[:flags]).to eq(test_expected_result[:flags])
+        expect(evaluation_result[:segments]).to eq(test_expected_result[:segments])
       end
     end
   end

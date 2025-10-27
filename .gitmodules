@@ -1,4 +1,4 @@
 [submodule "spec/engine-test-data"]
 	path = spec/engine-test-data
 	url = git@github.com:Flagsmith/engine-test-data.git
-	branch = v3.1.0
+	branch = main

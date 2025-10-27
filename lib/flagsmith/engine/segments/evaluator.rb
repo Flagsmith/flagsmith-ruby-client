@@ -21,11 +21,14 @@ module Flagsmith
         def get_identity_segments_from_context(context)
           return [] unless context[:identity] && context[:segments]
 
-          context[:segments].values.select do |segment|
+          matching_segments = context[:segments].values.select do |segment|
             next false if segment[:rules].nil? || segment[:rules].empty?
 
-            segment[:rules].all? { |rule| traits_match_segment_rule_from_context(rule, segment[:key], context) }
+            matches = segment[:rules].all? { |rule| traits_match_segment_rule_from_context(rule, segment[:key], context) }
+            matches
           end
+
+          matching_segments
         end
 
         # Model-based segment evaluation (existing approach)
@@ -190,15 +193,15 @@ module Flagsmith
         # @param context [Hash] The evaluation context
         # @return [Object, nil] The trait value or nil
         def get_trait_value(property, context)
-          # Check if it's a JSONPath expression
           if property.start_with?('$.')
             context_value = get_context_value(property, context)
-            return context_value unless non_primitive?(context_value)
+            if !context_value.nil? && !non_primitive?(context_value)
+              return context_value
+            end
           end
 
-          # Otherwise look in traits
           traits = context.dig(:identity, :traits) || {}
-          traits[property]
+          traits[property] || traits[property.to_sym]
         end
 
         # Get value from context using JSONPath-like syntax

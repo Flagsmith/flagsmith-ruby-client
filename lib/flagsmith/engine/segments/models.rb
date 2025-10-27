@@ -45,7 +45,7 @@ module Flagsmith
           CONTAINS => ->(other_value, self_value) { (other_value || false) && other_value.include?(self_value) },
 
           NOT_CONTAINS => ->(other_value, self_value) { (other_value || false) && !other_value.include?(self_value) },
-          REGEX => ->(other_value, self_value) { (other_value || false) && other_value.match?(self_value) }
+          REGEX => ->(other_value, self_value) { (other_value || false) && other_value.to_s.match?(self_value) }
         }.freeze
 
         def initialize(operator:, value:, property: nil)
@@ -55,11 +55,17 @@ module Flagsmith
         end
 
         def match_trait_value?(trait_value)
-          # handle some exceptions
-          trait_value = Semantic::Version.new(trait_value.gsub(/:semver$/, '')) if @value.is_a?(String) && @value.match?(/:semver$/)
+          if @value.is_a?(String) && @value.match?(/:semver$/)
+            begin
+              trait_value = Semantic::Version.new(trait_value.to_s.gsub(/:semver$/, ''))
+            rescue StandardError
+              return false
+            end
+          end
 
           return match_in_value(trait_value) if @operator == IN
           return match_modulo_value(trait_value) if @operator == MODULO
+          return MATCHING_FUNCTIONS[REGEX]&.call(trait_value, @value) if @operator == REGEX
 
           type_as_trait_value = format_to_type_of(trait_value)
           formatted_value = type_as_trait_value ? type_as_trait_value.call(@value) : @value
@@ -72,10 +78,17 @@ module Flagsmith
           {
             'String' => ->(v) { v.to_s },
             'Semantic::Version' => ->(v) { Semantic::Version.new(v.to_s.gsub(/:semver$/, '')) },
+            # Double check this is the desired behavior between SDKs
             'TrueClass' => ->(v) { ['True', 'true', 'TRUE', true, 1, '1'].include?(v) },
-            'FalseClass' => ->(v) { !['False', 'false', 'FALSE', false, 0, '0'].include?(v) },
-            'Integer' => ->(v) { v.to_i },
-            'Float' => ->(v) { v.to_f }
+            'FalseClass' => ->(v) { !['False', 'false', 'FALSE', false].include?(v) },
+            'Integer' => ->(v) {
+              i = v.to_i;
+              i.to_s == v.to_s ? i : v
+            },
+            'Float' => ->(v) {
+              f = v.to_f;
+              f.to_s == v.to_s ? f : v
+            }
           }[input.class.to_s]
         end
         # rubocop:enable Metrics/AbcSize
@@ -88,9 +101,23 @@ module Flagsmith
         end
 
         def match_in_value(trait_value)
-          return @value.split(',').include?(trait_value.to_s) if trait_value.is_a?(String) || trait_value.is_a?(Integer)
+          return false if trait_value.nil? || trait_value.is_a?(TrueClass) || trait_value.is_a?(FalseClass)
 
-          false
+          if @value.is_a?(Array)
+            return @value.include?(trait_value.to_s)
+          end
+
+          if @value.is_a?(String)
+            begin
+              parsed = JSON.parse(@value)
+              if parsed.is_a?(Array)
+                return parsed.include?(trait_value.to_s)
+              end
+            rescue JSON::ParserError
+            end
+          end
+
+          @value.to_s.split(',').include?(trait_value.to_s)
         end
 
         class << self

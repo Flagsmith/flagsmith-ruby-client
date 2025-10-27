@@ -37,7 +37,6 @@ module Flagsmith
 
           segments = identity_segments.map do |segment|
             result = {
-              key: segment[:key],
               name: segment[:name]
             }
 
@@ -103,9 +102,9 @@ module Flagsmith
 
             # Set reason
             flag_result[:reason] = evaluated[:reason] ||
-                                   get_targeting_match_reason({ type: 'SEGMENT', override: segment_override })
+              get_targeting_match_reason({ type: 'SEGMENT', override: segment_override })
 
-            flags[final_feature[:name]] = flag_result
+            flags[final_feature[:name].to_sym] = flag_result
           end
 
           flags
@@ -153,7 +152,10 @@ module Flagsmith
         # @param evaluation_context [Hash] The evaluation context
         # @return [String, nil] The identity key or nil if no identity
         def get_identity_key(evaluation_context)
-          evaluation_context.dig(:identity, :key)
+          return nil unless evaluation_context[:identity]
+
+          evaluation_context[:identity][:key] ||
+            "#{evaluation_context[:environment][:key]}_#{evaluation_context[:identity][:identifier]}"
         end
 
         # returns boolean
