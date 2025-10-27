@@ -217,15 +217,40 @@ module Flagsmith
       end
 
       identity_model = get_identity_model(identifier, traits)
-      segment_models = engine.get_identity_segments(environment, identity_model)
-      segment_models.map { |sm| Flagsmith::Segments::Segment.new(id: sm.id, name: sm.name) }.compact
+
+      context = Flagsmith::Engine::EvaluationContext::Mappers.get_evaluation_context(
+        environment, identity_model
+      )
+
+      unless context
+        raise Flagsmith::ClientError,
+              'Local evaluation required to obtain identity segments'
+      end
+
+      evaluation_result = Flagsmith::Engine::Evaluation::Core.get_evaluation_result(context)
+
+      evaluation_result[:segments].map do |segment_result|
+        flagsmith_id = segment_result.dig(:metadata, :flagsmith_id)
+        next unless flagsmith_id
+
+        Flagsmith::Segments::Segment.new(id: flagsmith_id, name: segment_result[:name])
+      end.compact
     end
 
     private
 
     def environment_flags_from_document
-      Flagsmith::Flags::Collection.from_feature_state_models(
-        engine.get_environment_feature_states(environment),
+      context = Flagsmith::Engine::EvaluationContext::Mappers.get_evaluation_context(environment)
+
+      unless context
+        raise Flagsmith::ClientError,
+              'Unable to get flags. No environment present.'
+      end
+
+      evaluation_result = Flagsmith::Engine::Evaluation::Core.get_evaluation_result(context)
+
+      Flagsmith::Flags::Collection.from_evaluation_result(
+        evaluation_result,
         analytics_processor: analytics_processor,
         default_flag_handler: default_flag_handler,
         offline_handler: offline_handler
@@ -235,9 +260,19 @@ module Flagsmith
     def get_identity_flags_from_document(identifier, traits = {})
       identity_model = get_identity_model(identifier, traits)
 
-      Flagsmith::Flags::Collection.from_feature_state_models(
-        engine.get_identity_feature_states(environment, identity_model),
-        identity_id: identity_model.composite_key,
+      context = Flagsmith::Engine::EvaluationContext::Mappers.get_evaluation_context(
+        environment, identity_model
+      )
+
+      unless context
+        raise Flagsmith::ClientError,
+              'Unable to get flags. No environment present.'
+      end
+
+      evaluation_result = Flagsmith::Engine::Evaluation::Core.get_evaluation_result(context)
+
+      Flagsmith::Flags::Collection.from_evaluation_result(
+        evaluation_result,
         analytics_processor: analytics_processor,
         default_flag_handler: default_flag_handler,
         offline_handler: offline_handler

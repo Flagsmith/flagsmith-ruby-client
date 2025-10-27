@@ -13,12 +13,12 @@ module Flagsmith
         include Flagsmith::Engine::Segments::Constants
         include Flagsmith::Engine::Utils::HashFunc
 
-        # Context-based segment evaluation (new approach)
+        # Context-based segment evaluation
         # Returns all segments that the identity belongs to based on segment rules evaluation
         #
         # @param context [Hash] Evaluation context containing identity and segment definitions
         # @return [Array<Hash>] Array of segments that the identity matches
-        def get_identity_segments_from_context(context)
+        def get_identity_segments(context)
           return [] unless context[:identity] && context[:segments]
 
           matching_segments = context[:segments].values.select do |segment|
@@ -29,13 +29,6 @@ module Flagsmith
           end
 
           matching_segments
-        end
-
-        # Model-based segment evaluation (existing approach)
-        def get_identity_segments(environment, identity, override_traits = nil)
-          environment.project.segments.select do |s|
-            evaluate_identity_in_segment(identity, s, override_traits)
-          end
         end
 
         # Evaluates whether a given identity is in the provided segment.

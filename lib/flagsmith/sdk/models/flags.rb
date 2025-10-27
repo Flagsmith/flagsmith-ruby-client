@@ -32,12 +32,13 @@ module Flagsmith
 
     # 'live' Flag class as returned by API or local evaluation
     class Flag < BaseFlag
-      attr_reader :feature_name, :feature_id
+      attr_reader :feature_name, :feature_id, :reason
 
-      def initialize(feature_name:, enabled:, value:, feature_id:)
+      def initialize(feature_name:, enabled:, value:, feature_id:, reason: nil)
         super(enabled: enabled, value: value, default: false)
         @feature_name = feature_name
         @feature_id = feature_id
+        @reason = reason
       end
 
       def <=>(other)
@@ -54,7 +55,8 @@ module Flagsmith
           feature_name: feature_name,
           value: value,
           enabled: enabled,
-          default: default
+          default: default,
+          reason: reason
         }
       end
 
@@ -180,6 +182,31 @@ module Flagsmith
 
           new(
             feature_states.each_with_object({}, &to_flag_object),
+            **args
+          )
+        end
+
+        def from_evaluation_result(evaluation_result, **args)
+          to_flag_object = lambda { |flag_result, acc|
+            flagsmith_id = flag_result.dig(:metadata, :flagsmith_id)
+
+            if flagsmith_id.nil?
+              raise Flagsmith::ClientError,
+                    "FlagResult metadata.flagsmith_id is missing for feature \"#{flag_result[:name]}\". " \
+                    "This indicates a bug in the SDK, please report it."
+            end
+
+            acc[normalize_key(flag_result[:name])] = Flagsmith::Flags::Flag.new(
+              feature_name: flag_result[:name],
+              enabled: flag_result[:enabled],
+              value: flag_result[:value],
+              feature_id: flagsmith_id,
+              reason: flag_result[:reason]
+            )
+          }
+
+          new(
+            evaluation_result[:flags].each_value.each_with_object({}, &to_flag_object),
             **args
           )
         end
