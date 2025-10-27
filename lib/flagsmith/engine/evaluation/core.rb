@@ -1,10 +1,18 @@
 # frozen_string_literal: true
 
+require_relative '../utils/hash_func'
+require_relative '../features/constants'
+require_relative '../segments/evaluator'
+
 module Flagsmith
   module Engine
     module Evaluation
       # Core evaluation logic module
       module Core
+        extend self
+        include Flagsmith::Engine::Utils::HashFunc
+        include Flagsmith::Engine::Features::TargetingReasons
+        include Flagsmith::Engine::Segments::Evaluator
         # Get evaluation result from evaluation context
         #
         # @param evaluation_context [Hash] The evaluation context
@@ -25,7 +33,7 @@ module Flagsmith
             return [], {}
           end
 
-          identity_segments = [] # To be getIdentitySegments when implemented
+          identity_segments = get_identity_segments_from_context(evaluation_context)
 
           segments = identity_segments.map do |segment|
             result = {
@@ -68,18 +76,68 @@ module Flagsmith
         end
 
         # returns EvaluationResultFlags<Metadata>
-        def evaluate_features(evaluation_context, _segment_overrides)
-          raise NotImplementedError
+        def evaluate_features(evaluation_context, segment_overrides)
+          flags = {}
+
+          (evaluation_context[:features] || {}).each_value do |feature|
+            segment_override = segment_overrides[feature[:name]]
+            final_feature = segment_override ? segment_override[:feature] : feature
+            has_override = !segment_override.nil?
+
+            # Evaluate feature value
+            evaluated = if has_override
+                          { value: final_feature[:value], reason: nil }
+                        else
+                          evaluate_feature_value(final_feature, get_identity_key(evaluation_context))
+                        end
+
+            # Build flag result
+            flag_result = {
+              name: final_feature[:name],
+              enabled: final_feature[:enabled],
+              value: evaluated[:value]
+            }
+
+            # Add metadata if present
+            flag_result[:metadata] = final_feature[:metadata] if final_feature[:metadata]
+
+            # Set reason
+            flag_result[:reason] = evaluated[:reason] ||
+                                   get_targeting_match_reason({ type: 'SEGMENT', override: segment_override })
+
+            flags[final_feature[:name]] = flag_result
+          end
+
+          flags
         end
 
         # Returns {value: any; reason?: string}
-        def evaluate_feature_value(_feature, _identity_key)
-          raise NotImplementedError
+        def evaluate_feature_value(feature, identity_key = nil)
+          if feature[:variants]&.any? && identity_key
+            return get_multivariate_feature_value(feature, identity_key)
+          end
+
+          { value: feature[:value], reason: nil }
         end
 
         # Returns {value: any; reason?: string}
-        def get_multivariate_feature_value(_feature, _identity_key)
-          raise NotImplementedError
+        def get_multivariate_feature_value(feature, identity_key)
+          percentage_value = hashed_percentage_for_object_ids([feature[:key], identity_key])
+          sorted_variants = (feature[:variants] || []).sort_by { |v| v[:priority] || Float::INFINITY }
+
+          start_percentage = 0
+          sorted_variants.each do |variant|
+            limit = start_percentage + variant[:weight]
+            if start_percentage <= percentage_value && percentage_value < limit
+              return {
+                value: variant[:value],
+                reason: get_targeting_match_reason({ type: 'SPLIT', weight: variant[:weight] })
+              }
+            end
+            start_percentage = limit
+          end
+
+          { value: feature[:value], reason: nil }
         end
 
         # returns boolean
@@ -90,21 +148,29 @@ module Flagsmith
 
         private
 
+        # Extract identity key from evaluation context
+        #
+        # @param evaluation_context [Hash] The evaluation context
+        # @return [String, nil] The identity key or nil if no identity
+        def get_identity_key(evaluation_context)
+          evaluation_context.dig(:identity, :key)
+        end
+
         # returns boolean
         def higher_priority?(priority_a, priority_b)
           (priority_a || Float::INFINITY) < (priority_b || Float::INFINITY)
         end
 
         def get_targeting_match_reason(match_object)
-          type = match_object.type
+          type = match_object[:type]
 
           if type == 'SEGMENT'
-            return match_object.override ? "TARGETING_MATCH; segment=#{match_object.override.segment_name}" : 'DEFAULT'
+            return match_object[:override] ? "#{TARGETING_REASON_TARGETING_MATCH}; segment=#{match_object[:override][:segment_name]}" : TARGETING_REASON_DEFAULT
           end
 
-          return "SPLIT; weight=#{match_object.weight}" if type == 'SPLIT'
+          return "#{TARGETING_REASON_SPLIT}; weight=#{match_object[:weight]}" if type == 'SPLIT'
 
-          'DEFAULT'
+          TARGETING_REASON_DEFAULT
         end
       end
     end

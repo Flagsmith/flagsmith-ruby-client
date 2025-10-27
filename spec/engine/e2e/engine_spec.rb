@@ -35,11 +35,11 @@ RSpec.describe Flagsmith::Engine do
         test_expected_result = test_case[:result]
 
         # TODO: Implement evaluation logic
-        evaluation_result = {}
+        evaluation_result = Flagsmith::Engine::Evaluation::Core.get_evaluation_result(test_evaluation_context)
 
 
         # TODO: Uncomment when evaluation is implemented
-        # expect(evaluation_result).to eq(test_expected_result)
+        expect(evaluation_result[:flags]).to eq(test_expected_result[:flags])
       end
     end
   end
