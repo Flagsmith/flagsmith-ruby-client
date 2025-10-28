@@ -103,16 +103,12 @@ module Flagsmith
         def match_in_value(trait_value)
           return false if trait_value.nil? || trait_value.is_a?(TrueClass) || trait_value.is_a?(FalseClass)
 
-<<<<<<< HEAD
           # Floats/doubles are not supported by the engine due to ambiguous serialization across supported platforms. (segments/models_spec.rb)
           return false unless trait_value.is_a?(String) || trait_value.is_a?(Integer)
 
           if @value.is_a?(Array)
             return @value.include?(trait_value.to_s)
           end
-=======
-          return @value.include?(trait_value.to_s) if @value.is_a?(Array)
->>>>>>> 6a6a129d14a0f15bbf3252a2c6b539681dfa7e85
 
           if @value.is_a?(String)
             begin
