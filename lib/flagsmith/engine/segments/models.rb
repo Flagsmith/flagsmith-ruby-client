@@ -81,12 +81,12 @@ module Flagsmith
             # Double check this is the desired behavior between SDKs
             'TrueClass' => ->(v) { ['True', 'true', 'TRUE', true, 1, '1'].include?(v) },
             'FalseClass' => ->(v) { !['False', 'false', 'FALSE', false].include?(v) },
-            'Integer' => ->(v) {
-              i = v.to_i;
+            'Integer' => lambda { |v|
+              i = v.to_i
               i.to_s == v.to_s ? i : v
             },
-            'Float' => ->(v) {
-              f = v.to_f;
+            'Float' => lambda { |v|
+              f = v.to_f
               f.to_s == v.to_s ? f : v
             }
           }[input.class.to_s]
@@ -103,16 +103,12 @@ module Flagsmith
         def match_in_value(trait_value)
           return false if trait_value.nil? || trait_value.is_a?(TrueClass) || trait_value.is_a?(FalseClass)
 
-          if @value.is_a?(Array)
-            return @value.include?(trait_value.to_s)
-          end
+          return @value.include?(trait_value.to_s) if @value.is_a?(Array)
 
           if @value.is_a?(String)
             begin
               parsed = JSON.parse(@value)
-              if parsed.is_a?(Array)
-                return parsed.include?(trait_value.to_s)
-              end
+              return parsed.include?(trait_value.to_s) if parsed.is_a?(Array)
             rescue JSON::ParserError
             end
           end

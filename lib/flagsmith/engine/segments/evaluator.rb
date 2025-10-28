@@ -21,14 +21,12 @@ module Flagsmith
         def get_identity_segments_from_context(context)
           return [] unless context[:identity] && context[:segments]
 
-          matching_segments = context[:segments].values.select do |segment|
+          context[:segments].values.select do |segment|
             next false if segment[:rules].nil? || segment[:rules].empty?
 
             matches = segment[:rules].all? { |rule| traits_match_segment_rule_from_context(rule, segment[:key], context) }
             matches
           end
-
-          matching_segments
         end
 
         # Model-based segment evaluation (existing approach)
@@ -153,10 +151,10 @@ module Flagsmith
 
           trait_value = get_trait_value(condition[:property], context)
 
-          return trait_value != nil if condition[:operator] == IS_SET
+          return !trait_value.nil? if condition[:operator] == IS_SET
           return trait_value.nil? if condition[:operator] == IS_NOT_SET
 
-          if !trait_value.nil?
+          unless trait_value.nil?
             # Reuse existing Condition class logic
             condition_obj = Flagsmith::Engine::Segments::Condition.new(
               operator: condition[:operator],
@@ -195,9 +193,7 @@ module Flagsmith
         def get_trait_value(property, context)
           if property.start_with?('$.')
             context_value = get_context_value(property, context)
-            if !context_value.nil? && !non_primitive?(context_value)
-              return context_value
-            end
+            return context_value if !context_value.nil? && !non_primitive?(context_value)
           end
 
           traits = context.dig(:identity, :traits) || {}
