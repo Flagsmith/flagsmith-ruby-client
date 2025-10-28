@@ -11,11 +11,11 @@ module Flagsmith
     module Segments
       # Evaluator methods
       module Evaluator
-        extend self
         include Flagsmith::Engine::Segments::Constants
         include Flagsmith::Engine::Utils::HashFunc
 
-        # Context-based segment evaluation
+        module_function
+        # Context-based segment evaluation (new approach)
         # Returns all segments that the identity belongs to based on segment rules evaluation
         #
         # @param context [Hash] Evaluation context containing identity and segment definitions
@@ -23,14 +23,12 @@ module Flagsmith
         def get_identity_segments(context)
           return [] unless context[:identity] && context[:segments]
 
-          matching_segments = context[:segments].values.select do |segment|
+          context[:segments].values.select do |segment|
             next false if segment[:rules].nil? || segment[:rules].empty?
 
             matches = segment[:rules].all? { |rule| traits_match_segment_rule_from_context(rule, segment[:key], context) }
             matches
           end
-
-          matching_segments
         end
 
         # Context-based helper functions
@@ -55,7 +53,7 @@ module Flagsmith
         # @param context [Hash] The evaluation context
         # @return [Boolean] True if conditions match according to rule type
         def evaluate_conditions_from_context(rule, segment_key, context)
-          return true if rule[:conditions].nil? || rule[:conditions].empty?
+          return true unless rule[:conditions]&.any?
 
           condition_results = rule[:conditions].map do |condition|
             traits_match_segment_condition_from_context(condition, segment_key, context)
@@ -93,10 +91,10 @@ module Flagsmith
 
           return false if condition[:property].nil?
           trait_value = get_trait_value(condition[:property], context)
-          return trait_value != nil if condition[:operator] == IS_SET
+          return !trait_value.nil? if condition[:operator] == IS_SET
           return trait_value.nil? if condition[:operator] == IS_NOT_SET
 
-          if !trait_value.nil?
+          unless trait_value.nil?
             # Reuse existing Condition class logic
             condition_obj = Flagsmith::Engine::Segments::Condition.new(
               operator: condition[:operator],
@@ -135,9 +133,7 @@ module Flagsmith
         def get_trait_value(property, context)
           if property.start_with?('$.')
             context_value = get_context_value(property, context)
-            if !context_value.nil? && !non_primitive?(context_value)
-              return context_value
-            end
+            return context_value if !context_value.nil? && !non_primitive?(context_value)
           end
 
           traits = context.dig(:identity, :traits) || {}

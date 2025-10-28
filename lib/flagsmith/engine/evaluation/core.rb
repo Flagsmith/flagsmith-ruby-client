@@ -23,15 +23,13 @@ module Flagsmith
           flags = evaluate_features(evaluation_context, segment_overrides)
           {
             flags: flags,
-            segments: segments,
+            segments: segments
           }
         end
 
         # Returns { segments: EvaluationResultSegments; segmentOverrides: Record<string, SegmentOverride>; }
         def evaluate_segments(evaluation_context)
-          if evaluation_context[:identity].nil? || evaluation_context[:segments].nil?
-            return [], {}
-          end
+          return [], {} if evaluation_context[:identity].nil? || evaluation_context[:segments].nil?
 
           identity_segments = get_identity_segments(evaluation_context)
 
@@ -40,16 +38,14 @@ module Flagsmith
               name: segment[:name]
             }
 
-            if segment[:metadata]
-              result[:metadata] = segment[:metadata].dup
-            end
+            result[:metadata] = segment[:metadata].dup if segment[:metadata]
 
             result
           end
 
           segment_overrides = process_segment_overrides(identity_segments)
 
-          return segments, segment_overrides
+          [segments, segment_overrides]
         end
 
         # Returns Record<string: override.name, SegmentOverride>
@@ -62,12 +58,12 @@ module Flagsmith
             overrides_list = segment[:overrides].is_a?(Array) ? segment[:overrides] : []
 
             overrides_list.each do |override|
-              if should_apply_override(override, segment_overrides)
-                segment_overrides[override[:name]] = {
-                  feature: override,
-                  segment_name: segment[:name]
-                }
-              end
+              next unless should_apply_override(override, segment_overrides)
+
+              segment_overrides[override[:name]] = {
+                feature: override,
+                segment_name: segment[:name]
+              }
             end
           end
 
@@ -102,7 +98,7 @@ module Flagsmith
 
             # Set reason
             flag_result[:reason] = evaluated[:reason] ||
-              get_targeting_match_reason({ type: 'SEGMENT', override: segment_override })
+                                   get_targeting_match_reason({ type: 'SEGMENT', override: segment_override })
 
             flags[final_feature[:name].to_sym] = flag_result
           end
@@ -112,9 +108,7 @@ module Flagsmith
 
         # Returns {value: any; reason?: string}
         def evaluate_feature_value(feature, identity_key = nil)
-          if feature[:variants]&.any? && identity_key
-            return get_multivariate_feature_value(feature, identity_key)
-          end
+          return get_multivariate_feature_value(feature, identity_key) if feature[:variants]&.any? && identity_key
 
           { value: feature[:value], reason: nil }
         end
