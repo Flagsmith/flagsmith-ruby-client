@@ -14,13 +14,13 @@ module Flagsmith
         def self.get_evaluation_context(environment, identity = nil, override_traits = nil)
           environment_context = map_environment_model_to_evaluation_context(environment)
           identity_context = identity ? map_identity_model_to_identity_context(identity, override_traits) : nil
-  
+
           context = environment_context.dup
           context[:identity] = identity_context if identity_context
-  
+
           context
         end
-  
+
         # Maps environment model to evaluation context
         #
         # @param environment [Flagsmith::Engine::Environment] The environment model
@@ -105,7 +105,7 @@ module Flagsmith
         def self.uuid_to_big_int(uuid)
           uuid.gsub('-', '').to_i(16)
         end
-  
+
         # Maps identity model to identity context
         #
         # @param identity [Flagsmith::Engine::Identity] The identity model
@@ -127,7 +127,7 @@ module Flagsmith
             traits: traits_hash
           }
         end
-  
+
         # Maps segment rule model to rule hash
         #
         # @param rule [Flagsmith::Engine::Segments::Rule] The segment rule model
@@ -138,33 +138,32 @@ module Flagsmith
           }
 
           # Map conditions if present
-          if rule.conditions&.any?
-            result[:conditions] = rule.conditions.map do |condition|
-              {
-                property: condition.property,
-                operator: condition.operator,
-                value: condition.value
-              }
-            end
-          else
-            result[:conditions] = []
-          end
+          result[:conditions] = if rule.conditions&.any?
+                                  rule.conditions.map do |condition|
+                                    {
+                                      property: condition.property,
+                                      operator: condition.operator,
+                                      value: condition.value
+                                    }
+                                  end
+                                else
+                                  []
+                                end
 
-          if rule.rules&.any?
-            result[:rules] = rule.rules.map { |nested_rule| map_segment_rule_model_to_rule(nested_rule) }
-          else
-            result[:rules] = []
-          end
+          result[:rules] = if rule.rules&.any?
+                             rule.rules.map { |nested_rule| map_segment_rule_model_to_rule(nested_rule) }
+                           else
+                             []
+                           end
 
           result
         end
-  
+
         # Maps identity overrides to segments
         #
         # @param identity_overrides [Array<Flagsmith::Engine::Identity>] Array of identity override models
         # @return [Hash] Segments hash for identity overrides
         def self.map_identity_overrides_to_segments(identity_overrides)
-
           segments = {}
           features_to_identifiers = {}
 
@@ -228,4 +227,3 @@ module Flagsmith
     end
   end
 end
-  
