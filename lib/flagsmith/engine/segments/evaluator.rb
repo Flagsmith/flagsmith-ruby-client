@@ -9,10 +9,10 @@ module Flagsmith
     module Segments
       # Evaluator methods
       module Evaluator
-        extend self
         include Flagsmith::Engine::Segments::Constants
         include Flagsmith::Engine::Utils::HashFunc
 
+        module_function
         # Context-based segment evaluation (new approach)
         # Returns all segments that the identity belongs to based on segment rules evaluation
         #
@@ -111,7 +111,7 @@ module Flagsmith
         # @param context [Hash] The evaluation context
         # @return [Boolean] True if conditions match according to rule type
         def evaluate_conditions_from_context(rule, segment_key, context)
-          return true if rule[:conditions].nil? || rule[:conditions].empty?
+          return true unless rule[:conditions]&.any?
 
           condition_results = rule[:conditions].map do |condition|
             traits_match_segment_condition_from_context(condition, segment_key, context)

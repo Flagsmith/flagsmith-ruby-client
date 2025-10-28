@@ -58,7 +58,7 @@ module Flagsmith
           if @value.is_a?(String) && @value.match?(/:semver$/)
             begin
               trait_value = Semantic::Version.new(trait_value.to_s.gsub(/:semver$/, ''))
-            rescue StandardError
+            rescue ArgumentError, Semantic::Version::ValidationFailed => _e
               return false
             end
           end
