@@ -55,7 +55,8 @@ module Flagsmith
             }
 
             feature_hash[:variants] = variants if variants
-            feature_hash[:priority] = fs.feature_segment.priority if fs.feature_segment&.priority
+            priority = fs.feature_segment&.priority
+            feature_hash[:priority] = priority unless priority.nil?
             feature_hash[:metadata] = { flagsmith_id: fs.feature.id }
 
             features[fs.feature.name] = feature_hash
@@ -138,17 +139,9 @@ module Flagsmith
           }
 
           # Map conditions if present
-          result[:conditions] = if rule.conditions&.any?
-                                  rule.conditions.map do |condition|
-                                    {
-                                      property: condition.property,
-                                      operator: condition.operator,
-                                      value: condition.value
-                                    }
-                                  end
-                                else
-                                  []
-                                end
+          result[:conditions] = (rule.conditions || []).map do |condition|
+            { property: condition.property, operator: condition.operator, value: condition.value }
+          end
 
           result[:rules] = if rule.rules&.any?
                              rule.rules.map { |nested_rule| map_segment_rule_model_to_rule(nested_rule) }
@@ -188,7 +181,7 @@ module Flagsmith
             end
 
             # Create hash of the overrides to group identities with same overrides
-            overrides_hash = overrides_key.hash
+            overrides_hash = Digest::SHA1.hexdigest(overrides_key.inspect)
 
             features_to_identifiers[overrides_hash] ||= { identifiers: [], overrides: overrides_key }
             features_to_identifiers[overrides_hash][:identifiers] << identity.identifier
