@@ -122,7 +122,7 @@ module Flagsmith
         # Returns {value: any; reason?: string}
         def get_multivariate_feature_value(feature, identity_key)
           percentage_value = hashed_percentage_for_object_ids([feature[:key], identity_key])
-          sorted_variants = (feature[:variants] || []).sort_by { |v| v[:priority] || Float::INFINITY }
+          sorted_variants = (feature[:variants] || []).sort_by { |v| v[:priority] || WEAKEST_PRIORITY }
 
           start_percentage = 0
           sorted_variants.each do |variant|
@@ -160,7 +160,7 @@ module Flagsmith
 
         # returns boolean
         def higher_priority?(priority_a, priority_b)
-          (priority_a || Float::INFINITY) < (priority_b || Float::INFINITY)
+          (priority_a || WEAKEST_PRIORITY) < (priority_b || WEAKEST_PRIORITY)
         end
 
         def get_targeting_match_reason(match_object)

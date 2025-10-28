@@ -174,18 +174,6 @@ module Flagsmith
           )
         end
 
-        def from_feature_state_models(feature_states, identity_id: nil, **args)
-          to_flag_object = lambda { |feature_state, acc|
-            acc[normalize_key(feature_state.feature.name)] =
-              Flagsmith::Flags::Flag.from_feature_state_model(feature_state, identity_id)
-          }
-
-          new(
-            feature_states.each_with_object({}, &to_flag_object),
-            **args
-          )
-        end
-
         def from_evaluation_result(evaluation_result, **args)
           to_flag_object = lambda { |flag_result, acc|
             flagsmith_id = flag_result.dig(:metadata, :flagsmith_id)

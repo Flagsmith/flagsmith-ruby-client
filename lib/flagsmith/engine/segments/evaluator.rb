@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'json'
+require 'jsonpath'
 require_relative 'constants'
 require_relative 'models'
 require_relative '../utils/hash_func'
@@ -31,60 +33,7 @@ module Flagsmith
           matching_segments
         end
 
-        # Evaluates whether a given identity is in the provided segment.
-        #
-        # :param identity: identity model object to evaluate
-        # :param segment: segment model object to evaluate
-        # :param override_traits: pass in a list of traits to use instead of those on the
-        #     identity model itself
-        # :return: True if the identity is in the segment, False otherwise
-        def evaluate_identity_in_segment(identity, segment, override_traits = nil)
-          segment.rules&.length&.positive? &&
-            segment.rules.all? do |rule|
-              traits_match_segment_rule(
-                override_traits || identity.identity_traits,
-                rule,
-                segment.id,
-                identity.django_id || identity.composite_key
-              )
-            end
-        end
-
-        # rubocop:disable Metrics/MethodLength
-        def traits_match_segment_rule(identity_traits, rule, segment_id, identity_id)
-          matching_block = lambda { |condition|
-            traits_match_segment_condition(identity_traits, condition, segment_id, identity_id)
-          }
-
-          matches_conditions =
-            if rule.conditions&.length&.positive?
-              rule.conditions.send(rule.matching_function, &matching_block)
-            else
-              true
-            end
-
-          matches_conditions &&
-            rule.rules.all? { |r| traits_match_segment_rule(identity_traits, r, segment_id, identity_id) }
-        end
-        # rubocop:enable Metrics/MethodLength
-
-        def traits_match_segment_condition(identity_traits, condition, segment_id, identity_id)
-          if condition.operator == PERCENTAGE_SPLIT
-            return hashed_percentage_for_object_ids([segment_id,
-                                                     identity_id]) <= condition.value.to_f
-          end
-
-          trait = identity_traits.find { |t| t.key.to_s == condition.property }
-
-          return handle_trait_existence_conditions(trait, condition.operator) if [IS_SET,
-                                                                                  IS_NOT_SET].include?(condition.operator)
-
-          return condition.match_trait_value?(trait.trait_value) if trait
-
-          false
-        end
-
-        # Context-based helper functions (new approach)
+        # Context-based helper functions
 
         # Evaluates whether a segment rule matches using context
         #
@@ -143,9 +92,7 @@ module Flagsmith
           end
 
           return false if condition[:property].nil?
-
           trait_value = get_trait_value(condition[:property], context)
-
           return trait_value != nil if condition[:operator] == IS_SET
           return trait_value.nil? if condition[:operator] == IS_NOT_SET
 
@@ -197,25 +144,15 @@ module Flagsmith
           traits[property] || traits[property.to_sym]
         end
 
-        # Get value from context using JSONPath-like syntax
+        # Get value from context using JSONPath syntax
         #
         # @param json_path [String] JSONPath expression (e.g., '$.identity.identifier')
         # @param context [Hash] The evaluation context
         # @return [Object, nil] The value at the path or nil
         def get_context_value(json_path, context)
           return nil unless context && json_path&.start_with?('$.')
-
-          # Simple JSONPath implementation - handle basic cases
-          path_parts = json_path.sub('$.', '').split('.')
-          current = context
-
-          path_parts.each do |part|
-            return nil unless current.is_a?(Hash)
-
-            current = current[part.to_sym]
-          end
-
-          current
+          results = JsonPath.new(json_path, use_symbols: true).on(context)
+          results.first
         rescue StandardError
           nil
         end
@@ -239,14 +176,6 @@ module Flagsmith
           return false if value.nil?
 
           value.is_a?(Hash) || value.is_a?(Array)
-        end
-
-        private
-
-        def handle_trait_existence_conditions(matching_trait, operator)
-          return operator == IS_NOT_SET if matching_trait.nil?
-
-          operator == IS_SET
         end
       end
     end
