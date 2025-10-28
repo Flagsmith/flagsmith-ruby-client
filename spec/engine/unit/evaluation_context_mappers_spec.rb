@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe Flagsmith::Engine::EvaluationContext::Mappers do
+RSpec.describe Flagsmith::Engine::Evaluation::Mappers do
   describe '.get_evaluation_context' do
     let(:environment_json) do
       JSON.parse(
@@ -72,7 +72,7 @@ RSpec.describe Flagsmith::Engine::EvaluationContext::Mappers do
       expect(override[:name]).to eq('some_feature')
       expect(override[:enabled]).to be false
       expect(override[:value]).to eq('some-overridden-value')
-      expect(override[:priority]).to eq(Flagsmith::Engine::EvaluationContext::Mappers::STRONGEST_PRIORITY)
+      expect(override[:priority]).to eq(Flagsmith::Engine::Evaluation::Mappers::STRONGEST_PRIORITY)
       expect(override[:metadata][:flagsmith_id]).to eq(1)
 
       # Verify features

@@ -2,7 +2,7 @@
 
 module Flagsmith
   module Engine
-    module EvaluationContext
+    module Evaluation
       module Mappers
         STRONGEST_PRIORITY = Float::INFINITY
         WEAKEST_PRIORITY = -Float::INFINITY
