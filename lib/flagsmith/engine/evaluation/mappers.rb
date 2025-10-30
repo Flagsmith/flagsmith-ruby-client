@@ -181,7 +181,7 @@ module Flagsmith
             end
 
             # Create hash of the overrides to group identities with same overrides
-            overrides_hash = Digest::SHA1.hexdigest(overrides_key.inspect)
+            overrides_hash = overrides_key.hash
 
             features_to_identifiers[overrides_hash] ||= { identifiers: [], overrides: overrides_key }
             features_to_identifiers[overrides_hash][:identifiers] << identity.identifier
