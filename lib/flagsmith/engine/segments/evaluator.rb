@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'json'
+require 'jsonpath'
 require_relative 'constants'
 require_relative 'models'
 require_relative '../utils/hash_func'
@@ -200,25 +202,15 @@ module Flagsmith
           traits[property] || traits[property.to_sym]
         end
 
-        # Get value from context using JSONPath-like syntax
+        # Get value from context using JSONPath syntax
         #
         # @param json_path [String] JSONPath expression (e.g., '$.identity.identifier')
         # @param context [Hash] The evaluation context
         # @return [Object, nil] The value at the path or nil
         def get_context_value(json_path, context)
           return nil unless context && json_path&.start_with?('$.')
-
-          # Simple JSONPath implementation - handle basic cases
-          path_parts = json_path.sub('$.', '').split('.')
-          current = context
-
-          path_parts.each do |part|
-            return nil unless current.is_a?(Hash)
-
-            current = current[part.to_sym]
-          end
-
-          current
+          results = JsonPath.new(json_path, use_symbols: true).on(context)
+          results.first
         rescue StandardError
           nil
         end
