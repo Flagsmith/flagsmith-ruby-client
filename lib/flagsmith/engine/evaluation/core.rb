@@ -38,7 +38,7 @@ module Flagsmith
               name: segment[:name]
             }
 
-            result[:metadata] = segment[:metadata].dup if segment[:metadata]
+            result[:metadata] = segment[:metadata] if segment[:metadata]
 
             result
           end
