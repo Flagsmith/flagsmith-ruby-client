@@ -26,7 +26,7 @@ module Flagsmith
 
           def self.map_overrides_to_segments(identity_overrides)
             features_to_identifiers = group_by_overrides(identity_overrides)
-            build_segments(features_to_identifiers)
+            build_identity_override_segments(features_to_identifiers)
           end
 
           def self.group_by_overrides(identity_overrides)
@@ -59,18 +59,18 @@ module Flagsmith
             end
           end
 
-          def self.build_segments(features_to_identifiers)
+          def self.build_identity_override_segments(features_to_identifiers)
             segments = {}
 
             features_to_identifiers.each do |overrides_hash, data|
               segment_key = "identity_override_#{overrides_hash}"
-              segments[segment_key] = build_segment(segment_key, data)
+              segments[segment_key] = build_identity_override_segment(segment_key, data)
             end
 
             segments
           end
 
-          def self.build_segment(segment_key, data)
+          def self.build_identity_override_segment(segment_key, data)
             {
               key: segment_key,
               name: 'identity_override',
@@ -80,7 +80,7 @@ module Flagsmith
             }
           end
 
-          def self.build_rule(identifiers) # rubocop:disable Metrics/MethodLength
+          def self.build_identity_override_rule(identifiers) # rubocop:disable Metrics/MethodLength
             {
               type: 'ALL',
               conditions: [
