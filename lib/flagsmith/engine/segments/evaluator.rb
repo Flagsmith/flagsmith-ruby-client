@@ -197,7 +197,7 @@ module Flagsmith
         def get_trait_value(property, context)
           if property.start_with?('$.')
             context_value = get_context_value(property, context)
-            return context_value if !context_value.nil? && !non_primitive?(context_value)
+            return context_value if !context_value.nil? && is_primitive?(context_value)
           end
 
           traits = context.dig(:identity, :traits) || {}
@@ -228,14 +228,14 @@ module Flagsmith
             "#{context[:environment][:key]}_#{context[:identity][:identifier]}"
         end
 
-        # Check if value is non-primitive (object or array)
+        # Check if value is primitive (not an object or array)
         #
         # @param value [Object] The value to check
-        # @return [Boolean] True if value is an object or array
-        def non_primitive?(value)
-          return false if value.nil?
+        # @return [Boolean] True if value is primitive (not an object or array)
+        def is_primitive?(value)
+          return true if value.nil?
 
-          value.is_a?(Hash) || value.is_a?(Array)
+          !(value.is_a?(Hash) || value.is_a?(Array))
         end
 
         private
