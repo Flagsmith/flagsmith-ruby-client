@@ -45,7 +45,7 @@ module Flagsmith
         #
         # @param context [Hash] Evaluation context containing identity and segment definitions
         # @return [Array<Hash>] Array of segments that the identity matches
-        def get_identity_segments_from_context(context)
+        def get_segments_from_context(context)
           return [] unless context[:identity] && context[:segments]
 
           context[:segments].values.select do |segment|

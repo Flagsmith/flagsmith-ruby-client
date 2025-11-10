@@ -31,7 +31,7 @@ module Flagsmith
         def evaluate_segments(evaluation_context)
           return [], {} if evaluation_context[:segments].nil?
 
-          identity_segments = get_identity_segments_from_context(evaluation_context)
+          identity_segments = get_segments_from_context(evaluation_context)
 
           segments = identity_segments.map do |segment|
             result = {
