@@ -54,7 +54,7 @@ module Flagsmith
           @property = property
         end
 
-        def match_trait_value?(trait_value)
+        def match_trait_value?(trait_value) # rubocop:disable Metrics/MethodLength
           if @value.is_a?(String) && @value.match?(/:semver$/)
             begin
               trait_value = Semantic::Version.new(trait_value.to_s.gsub(/:semver$/, ''))
@@ -73,8 +73,7 @@ module Flagsmith
           MATCHING_FUNCTIONS[operator]&.call(trait_value, formatted_value)
         end
 
-        # rubocop:disable Metrics/AbcSize
-        def format_to_type_of(input)
+        def format_to_type_of(input) # rubocop:disable Metrics/AbcSize
           {
             'String' => ->(v) { v.to_s },
             'Semantic::Version' => ->(v) { Semantic::Version.new(v.to_s.gsub(/:semver$/, '')) },
@@ -91,7 +90,6 @@ module Flagsmith
             }
           }[input.class.to_s]
         end
-        # rubocop:enable Metrics/AbcSize
 
         def match_modulo_value(trait_value)
           divisor, remainder = @value.split('|')
@@ -100,10 +98,8 @@ module Flagsmith
           false
         end
 
-        def match_in_value(trait_value)
-          return false if trait_value.nil? || trait_value.is_a?(TrueClass) || trait_value.is_a?(FalseClass)
-
-          return false if [true, false].include? trait_value
+        def match_in_value(trait_value) # rubocop:disable Metrics/AbcSize
+          return false if trait_value.nil? || trait_value.is_a?(TrueClass) || trait_value.is_a?(FalseClass) || ([true, false].include? trait_value)
 
           return @value.include?(trait_value.to_s) if @value.is_a?(Array)
 
@@ -114,7 +110,6 @@ module Flagsmith
             rescue JSON::ParserError
             end
           end
-
           @value.to_s.split(',').include?(trait_value.to_s)
         end
 

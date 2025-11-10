@@ -34,13 +34,7 @@ module Flagsmith
           identity_segments = get_segments_from_context(evaluation_context)
 
           segments = identity_segments.map do |segment|
-            result = {
-              name: segment[:name]
-            }
-
-            result[:metadata] = segment[:metadata] if segment[:metadata]
-
-            result
+            { name: segment[:name], metadata: segment[:metadata] }.compact
           end
 
           segment_overrides = process_segment_overrides(identity_segments)
@@ -131,7 +125,7 @@ module Flagsmith
         # returns boolean
         def should_apply_override(override, existing_overrides)
           current_override = existing_overrides[override[:name]]
-          !current_override || is_stronger_priority?(override[:priority], current_override[:feature][:priority])
+          !current_override || stronger_priority?(override[:priority], current_override[:feature][:priority])
         end
 
         private
@@ -148,7 +142,7 @@ module Flagsmith
         end
 
         # returns boolean
-        def is_stronger_priority?(priority_a, priority_b)
+        def stronger_priority?(priority_a, priority_b)
           (priority_a || WEAKEST_PRIORITY) < (priority_b || WEAKEST_PRIORITY)
         end
       end
