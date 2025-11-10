@@ -136,7 +136,7 @@ module Flagsmith
         # returns boolean
         def should_apply_override(override, existing_overrides)
           current_override = existing_overrides[override[:name]]
-          !current_override || higher_priority?(override[:priority], current_override[:feature][:priority])
+          !current_override || is_stronger_priority?(override[:priority], current_override[:feature][:priority])
         end
 
         private
@@ -153,7 +153,7 @@ module Flagsmith
         end
 
         # returns boolean
-        def higher_priority?(priority_a, priority_b)
+        def is_stronger_priority?(priority_a, priority_b)
           (priority_a || Float::INFINITY) < (priority_b || Float::INFINITY)
         end
 
