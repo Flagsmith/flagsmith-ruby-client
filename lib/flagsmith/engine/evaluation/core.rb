@@ -29,7 +29,7 @@ module Flagsmith
 
         # Returns { segments: EvaluationResultSegments; segmentOverrides: Record<string, SegmentOverride>; }
         def evaluate_segments(evaluation_context)
-          return [], {} if evaluation_context[:identity].nil? || evaluation_context[:segments].nil?
+          return [], {} if evaluation_context[:segments].nil?
 
           identity_segments = get_identity_segments_from_context(evaluation_context)
 
