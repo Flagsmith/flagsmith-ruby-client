@@ -74,7 +74,7 @@ module Flagsmith
             {
               key: segment_key,
               name: 'identity_override',
-              rules: [build_rule(data[:identifiers])],
+              rules: [build_identity_override_rule(data[:identifiers])],
               metadata: { source: 'identity_override' },
               overrides: data[:overrides]
             }
