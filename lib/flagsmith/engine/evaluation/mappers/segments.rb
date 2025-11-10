@@ -52,7 +52,7 @@ module Flagsmith
             {
               type: rule.type,
               conditions: map_conditions(rule.conditions),
-              rules: map_nested_rules(rule.rules)
+              rules: (rule.rules || []).map { |nested_rule| map_rule(nested_rule) }
             }
           end
 
@@ -60,12 +60,6 @@ module Flagsmith
             (conditions || []).map do |condition|
               { property: condition.property, operator: condition.operator, value: condition.value }
             end
-          end
-
-          def self.map_nested_rules(rules)
-            return [] unless rules&.any?
-
-            rules.map { |nested_rule| map_rule(nested_rule) }
           end
         end
       end
