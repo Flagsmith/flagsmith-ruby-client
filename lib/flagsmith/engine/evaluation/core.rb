@@ -43,15 +43,11 @@ module Flagsmith
         end
 
         # Returns Record<string: override.name, SegmentOverride>
-        def process_segment_overrides(identity_segments)
+        def process_segment_overrides(identity_segments) # rubocop:disable Metrics/MethodLength
           segment_overrides = {}
 
           identity_segments.each do |segment|
-            next unless segment[:overrides]
-
-            overrides_list = segment[:overrides].is_a?(Array) ? segment[:overrides] : []
-
-            overrides_list.each do |override|
+            Array(segment[:overrides]).each do |override|
               next unless should_apply_override(override, segment_overrides)
 
               segment_overrides[override[:name]] = {
@@ -66,33 +62,15 @@ module Flagsmith
 
         # returns EvaluationResultFlags<Metadata>
         def evaluate_features(evaluation_context, segment_overrides)
-          flags = {}
+          identity_key = get_identity_key(evaluation_context)
 
-          (evaluation_context[:features] || {}).each_value do |feature|
+          (evaluation_context[:features] || {}).each_with_object({}) do |(_, feature), flags|
             segment_override = segment_overrides[feature[:name]]
             final_feature = segment_override ? segment_override[:feature] : feature
-            has_override = !segment_override.nil?
 
-            # Evaluate feature value
-            evaluated = evaluate_feature_value(final_feature, get_identity_key(evaluation_context))
-
-            # Build flag result
-            flag_result = {
-              name: final_feature[:name],
-              enabled: final_feature[:enabled],
-              value: evaluated[:value]
-            }
-
-            # Add metadata if present
-            flag_result[:metadata] = final_feature[:metadata] if final_feature[:metadata]
-
-            # Set reason
-            flag_result[:reason] = evaluated[:reason] ||
-                                   (has_override ? "#{TARGETING_REASON_TARGETING_MATCH}; segment=#{segment_override[:segment_name]}" : TARGETING_REASON_DEFAULT)
+            flag_result = build_flag_result(final_feature, identity_key, segment_override)
             flags[final_feature[:name].to_sym] = flag_result
           end
-
-          flags
         end
 
         # Returns {value: any; reason?: string}
@@ -107,19 +85,19 @@ module Flagsmith
           percentage_value = hashed_percentage_for_object_ids([feature[:key], identity_key])
           sorted_variants = (feature[:variants] || []).sort_by { |v| v[:priority] || WEAKEST_PRIORITY }
 
+          variant = find_matching_variant(sorted_variants, percentage_value)
+          variant || { value: feature[:value], reason: nil }
+        end
+
+        def find_matching_variant(sorted_variants, percentage_value)
           start_percentage = 0
           sorted_variants.each do |variant|
             limit = start_percentage + variant[:weight]
-            if start_percentage <= percentage_value && percentage_value < limit
-              return {
-                value: variant[:value],
-                reason: "#{TARGETING_REASON_SPLIT}; weight=#{variant[:weight]}"
-              }
-            end
+            return { value: variant[:value], reason: "#{TARGETING_REASON_SPLIT}; weight=#{variant[:weight]}" } if start_percentage <= percentage_value && percentage_value < limit
+
             start_percentage = limit
           end
-
-          { value: feature[:value], reason: nil }
+          nil
         end
 
         # returns boolean
@@ -129,6 +107,20 @@ module Flagsmith
         end
 
         private
+
+        def build_flag_result(feature, identity_key, segment_override)
+          evaluated = evaluate_feature_value(feature, identity_key)
+
+          flag_result = {
+            name: feature[:name],
+            enabled: feature[:enabled],
+            value: evaluated[:value],
+            reason: evaluated[:reason] || (segment_override ? "#{TARGETING_REASON_TARGETING_MATCH}; segment=#{segment_override[:segment_name]}" : TARGETING_REASON_DEFAULT)
+          }
+
+          flag_result[:metadata] = feature[:metadata] if feature[:metadata]
+          flag_result
+        end
 
         # Extract identity key from evaluation context
         #

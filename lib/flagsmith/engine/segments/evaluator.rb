@@ -10,7 +10,7 @@ module Flagsmith
   module Engine
     module Segments
       # Evaluator methods
-      module Evaluator
+      module Evaluator # rubocop:disable Metrics/ModuleLength
         include Flagsmith::Engine::Segments::Constants
         include Flagsmith::Engine::Utils::HashFunc
 
@@ -144,30 +144,30 @@ module Flagsmith
         # @param context [Hash] The evaluation context
         # @return [Boolean] True if the condition matches
         def traits_match_segment_condition_from_context(condition, segment_key, context)
-          if condition[:operator] == PERCENTAGE_SPLIT
-            context_value_key = get_context_value(condition[:property], context) || get_identity_key_from_context(context)
-            hashed_percentage = hashed_percentage_for_object_ids([segment_key, context_value_key])
-            return hashed_percentage <= condition[:value].to_f
-          end
-
+          return handle_percentage_split(condition, segment_key, context) if condition[:operator] == PERCENTAGE_SPLIT
           return false if condition[:property].nil?
 
           trait_value = get_trait_value(condition[:property], context)
+          evaluate_trait_condition(condition, trait_value)
+        end
 
+        def handle_percentage_split(condition, segment_key, context)
+          context_value_key = get_context_value(condition[:property], context) || get_identity_key_from_context(context)
+          hashed_percentage = hashed_percentage_for_object_ids([segment_key, context_value_key])
+          hashed_percentage <= condition[:value].to_f
+        end
+
+        def evaluate_trait_condition(condition, trait_value)
           return !trait_value.nil? if condition[:operator] == IS_SET
           return trait_value.nil? if condition[:operator] == IS_NOT_SET
+          return false if trait_value.nil?
 
-          unless trait_value.nil?
-            # Reuse existing Condition class logic
-            condition_obj = Flagsmith::Engine::Segments::Condition.new(
-              operator: condition[:operator],
-              value: condition[:value],
-              property: condition[:property]
-            )
-            return condition_obj.match_trait_value?(trait_value)
-          end
-
-          false
+          condition_obj = Flagsmith::Engine::Segments::Condition.new(
+            operator: condition[:operator],
+            value: condition[:value],
+            property: condition[:property]
+          )
+          condition_obj.match_trait_value?(trait_value)
         end
 
         # Evaluate rule conditions based on type (ALL/ANY/NONE)
