@@ -20,7 +20,7 @@ RSpec.describe Flagsmith::Engine::Evaluation::Mappers do
       # Then - verify structure
       expect(context).to be_a(Hash)
       expect(context[:environment][:key]).to eq('B62qaMZNwfiqT76p38ggrQ')
-      expect(context[:environment][:name]).to eq('Test project')
+      expect(context[:environment][:name]).to eq('Test environment')
       expect(context[:identity]).to be_nil
 
       # Verify segments

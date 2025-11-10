@@ -4,13 +4,14 @@ module Flagsmith
   module Engine
     # EnvironmentModel
     class Environment
-      attr_reader :id, :api_key
+      attr_reader :id, :api_key, :name
       attr_accessor :project, :feature_states, :amplitude_config, :segment_config,
                     :mixpanel_config, :heap_config, :identity_overrides
 
-      def initialize(id:, api_key:, project:, feature_states: [], identity_overrides: [])
+      def initialize(id:, api_key:, name: nil, project:, feature_states: [], identity_overrides: [])
         @id = id
         @api_key = api_key
+        @name = name
         @project = project
         @feature_states = feature_states
         @identity_overrides = identity_overrides
@@ -28,7 +29,7 @@ module Flagsmith
             Flagsmith::Engine::Identity.build(io)
           end
 
-          new(**json.slice(:id, :api_key).merge(
+          new(**json.slice(:id, :api_key, :name).merge(
             project: project,
             feature_states: feature_states,
             identity_overrides: identity_overrides

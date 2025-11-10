@@ -9,7 +9,7 @@ module Flagsmith
           def self.build_environment_context(environment)
             {
               key: environment.api_key,
-              name: environment.project.name
+              name: environment.name
             }
           end
 
