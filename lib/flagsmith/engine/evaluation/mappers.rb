@@ -3,6 +3,7 @@
 module Flagsmith
   module Engine
     module Evaluation
+      # Mappers for converting between models and evaluation contexts
       module Mappers
         STRONGEST_PRIORITY = Float::INFINITY
         WEAKEST_PRIORITY = -Float::INFINITY
@@ -161,7 +162,7 @@ module Flagsmith
           features_to_identifiers = {}
 
           identity_overrides.each do |identity|
-            next if identity.identity_features.nil? || !identity.identity_features.any?
+            next if identity.identity_features.nil? || identity.identity_features.none?
 
             # Sort features by name for consistent hashing
             sorted_features = identity.identity_features.to_a.sort_by { |fs| fs.feature.name }

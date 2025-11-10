@@ -3,6 +3,7 @@
 module Flagsmith
   module Engine
     module Evaluation
+      # Core evaluation logic for feature flags
       module Core
         # Get evaluation result from evaluation context
         #
