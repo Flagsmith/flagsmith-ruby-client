@@ -94,7 +94,7 @@ module Flagsmith
 
             # Set reason
             flag_result[:reason] = evaluated[:reason] ||
-              (has_override ? "#{TARGETING_REASON_TARGETING_MATCH}; segment=#{segment_override[:segment_name]}" : TARGETING_REASON_DEFAULT)
+                                   (has_override ? "#{TARGETING_REASON_TARGETING_MATCH}; segment=#{segment_override[:segment_name]}" : TARGETING_REASON_DEFAULT)
             flags[final_feature[:name].to_sym] = flag_result
           end
 

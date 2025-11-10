@@ -13,14 +13,13 @@ module Flagsmith
       module Evaluator
         include Flagsmith::Engine::Segments::Constants
         include Flagsmith::Engine::Utils::HashFunc
-        
+
         # Model-based segment evaluation (existing approach)
         def get_identity_segments(environment, identity, override_traits = nil)
           environment.project.segments.select do |s|
             evaluate_identity_in_segment(identity, s, override_traits)
           end
         end
-
 
         def traits_match_segment_condition(identity_traits, condition, segment_id, identity_id)
           if condition.operator == PERCENTAGE_SPLIT
@@ -38,8 +37,8 @@ module Flagsmith
           false
         end
 
-
         module_function
+
         # Context-based segment evaluation (new approach)
         # Returns all segments that the identity belongs to based on segment rules evaluation
         #
@@ -211,6 +210,7 @@ module Flagsmith
         # @return [Object, nil] The value at the path or nil
         def get_context_value(json_path, context)
           return nil unless context && json_path&.start_with?('$.')
+
           results = JsonPath.new(json_path, use_symbols: true).on(context)
           results.first
         rescue StandardError
