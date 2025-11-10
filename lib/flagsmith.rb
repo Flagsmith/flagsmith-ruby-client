@@ -69,7 +69,6 @@ module Flagsmith
       api_client
       analytics_processor
       environment_data_polling_manager
-      engine
       load_offline_handler
     end
 
@@ -99,9 +98,6 @@ module Flagsmith
       @realtime_client ||= Flagsmith::RealtimeClient.new(@config)
     end
 
-    def engine
-      @engine ||= Flagsmith::Engine::Engine.new
-    end
 
     def analytics_processor
       return nil unless @config.enable_analytics?
@@ -227,7 +223,7 @@ module Flagsmith
               'Local evaluation required to obtain identity segments'
       end
 
-      evaluation_result = Flagsmith::Engine::Evaluation::Core.get_evaluation_result(context)
+      evaluation_result = Flagsmith::Engine.get_evaluation_result(context)
 
       evaluation_result[:segments].map do |segment_result|
         flagsmith_id = segment_result.dig(:metadata, :flagsmith_id)
@@ -247,7 +243,7 @@ module Flagsmith
               'Unable to get flags. No environment present.'
       end
 
-      evaluation_result = Flagsmith::Engine::Evaluation::Core.get_evaluation_result(context)
+      evaluation_result = Flagsmith::Engine.get_evaluation_result(context)
 
       Flagsmith::Flags::Collection.from_evaluation_result(
         evaluation_result,
@@ -269,7 +265,7 @@ module Flagsmith
               'Unable to get flags. No environment present.'
       end
 
-      evaluation_result = Flagsmith::Engine::Evaluation::Core.get_evaluation_result(context)
+      evaluation_result = Flagsmith::Engine.get_evaluation_result(context)
 
       Flagsmith::Flags::Collection.from_evaluation_result(
         evaluation_result,

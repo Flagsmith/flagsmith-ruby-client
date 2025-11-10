@@ -13,14 +13,14 @@ module Flagsmith
       module Evaluator
         include Flagsmith::Engine::Segments::Constants
         include Flagsmith::Engine::Utils::HashFunc
-
+        
         module_function
         # Context-based segment evaluation (new approach)
         # Returns all segments that the identity belongs to based on segment rules evaluation
         #
         # @param context [Hash] Evaluation context containing identity and segment definitions
         # @return [Array<Hash>] Array of segments that the identity matches
-        def get_identity_segments(context)
+        def get_segments_from_context(context)
           return [] unless context[:identity] && context[:segments]
 
           context[:segments].values.select do |segment|
@@ -31,7 +31,60 @@ module Flagsmith
           end
         end
 
-        # Context-based helper functions
+        def traits_match_segment_condition(identity_traits, condition, segment_id, identity_id)
+          if condition.operator == PERCENTAGE_SPLIT
+            return hashed_percentage_for_object_ids([segment_id,
+                                                     identity_id]) <= condition.value.to_f
+          end
+
+          trait = identity_traits.find { |t| t.key.to_s == condition.property }
+
+          return handle_trait_existence_conditions(trait, condition.operator) if [IS_SET,
+                                                                                  IS_NOT_SET].include?(condition.operator)
+
+          return condition.match_trait_value?(trait.trait_value) if trait
+
+          false
+        end
+
+        # Evaluates whether a given identity is in the provided segment.
+        #
+        # :param identity: identity model object to evaluate
+        # :param segment: segment model object to evaluate
+        # :param override_traits: pass in a list of traits to use instead of those on the
+        #     identity model itself
+        # :return: True if the identity is in the segment, False otherwise
+        def evaluate_identity_in_segment(identity, segment, override_traits = nil)
+          segment.rules&.length&.positive? &&
+            segment.rules.all? do |rule|
+              traits_match_segment_rule(
+                override_traits || identity.identity_traits,
+                rule,
+                segment.id,
+                identity.django_id || identity.composite_key
+              )
+            end
+        end
+
+        # rubocop:disable Metrics/MethodLength
+        def traits_match_segment_rule(identity_traits, rule, segment_id, identity_id)
+          matching_block = lambda { |condition|
+            traits_match_segment_condition(identity_traits, condition, segment_id, identity_id)
+          }
+
+          matches_conditions =
+            if rule.conditions&.length&.positive?
+              rule.conditions.send(rule.matching_function, &matching_block)
+            else
+              true
+            end
+
+          matches_conditions &&
+            rule.rules.all? { |r| traits_match_segment_rule(identity_traits, r, segment_id, identity_id) }
+        end
+        # rubocop:enable Metrics/MethodLength
+
+        # Context-based helper functions (new approach)
 
         # Evaluates whether a segment rule matches using context
         #
@@ -133,7 +186,7 @@ module Flagsmith
         def get_trait_value(property, context)
           if property.start_with?('$.')
             context_value = get_context_value(property, context)
-            return context_value if !context_value.nil? && !non_primitive?(context_value)
+            return context_value if !context_value.nil? && is_primitive?(context_value)
           end
 
           traits = context.dig(:identity, :traits) || {}
@@ -164,14 +217,14 @@ module Flagsmith
             "#{context[:environment][:key]}_#{context[:identity][:identifier]}"
         end
 
-        # Check if value is non-primitive (object or array)
+        # Check if value is primitive (not an object or array)
         #
         # @param value [Object] The value to check
-        # @return [Boolean] True if value is an object or array
-        def non_primitive?(value)
-          return false if value.nil?
+        # @return [Boolean] True if value is primitive (not an object or array)
+        def is_primitive?(value)
+          return true if value.nil?
 
-          value.is_a?(Hash) || value.is_a?(Array)
+          !(value.is_a?(Hash) || value.is_a?(Array))
         end
       end
     end

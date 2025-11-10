@@ -32,7 +32,7 @@ RSpec.describe Flagsmith::Engine do
         test_evaluation_context = test_case[:context]
         test_expected_result = test_case[:result]
 
-        evaluation_result = Flagsmith::Engine::Evaluation::Core.get_evaluation_result(test_evaluation_context)
+        evaluation_result = Flagsmith::Engine.get_evaluation_result(test_evaluation_context)
 
         expect(evaluation_result[:flags]).to eq(test_expected_result[:flags])
         expect(evaluation_result[:segments]).to eq(test_expected_result[:segments])
