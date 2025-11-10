@@ -8,7 +8,8 @@ module Flagsmith
       attr_accessor :project, :feature_states, :amplitude_config, :segment_config,
                     :mixpanel_config, :heap_config, :identity_overrides
 
-      def initialize(id:, api_key:, name: nil, project:, feature_states: [], identity_overrides: [])
+      # rubocop:disable Metrics/ParameterLists
+      def initialize(id:, api_key:, project:, name: nil, feature_states: [], identity_overrides: [])
         @id = id
         @api_key = api_key
         @name = name
@@ -16,6 +17,7 @@ module Flagsmith
         @feature_states = feature_states
         @identity_overrides = identity_overrides
       end
+      # rubocop:enable Metrics/ParameterLists
 
       class << self
         # rubocop:disable Metrics/MethodLength
