@@ -7,7 +7,7 @@ require_relative '../segments/evaluator'
 module Flagsmith
   module Engine
     module Evaluation
-      # Core evaluation logic module
+      # Core evaluation logic for feature flags
       module Core
         extend self
         include Flagsmith::Engine::Utils::HashFunc
