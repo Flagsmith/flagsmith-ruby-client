@@ -181,7 +181,7 @@ module Flagsmith
             if flagsmith_id.nil?
               raise Flagsmith::ClientError,
                     "FlagResult metadata.flagsmith_id is missing for feature \"#{flag_result[:name]}\". " \
-                    "This indicates a bug in the SDK, please report it."
+                    'This indicates a bug in the SDK, please report it.'
             end
 
             acc[normalize_key(flag_result[:name])] = Flagsmith::Flags::Flag.new(

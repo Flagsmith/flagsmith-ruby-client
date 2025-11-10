@@ -98,7 +98,6 @@ module Flagsmith
       @realtime_client ||= Flagsmith::RealtimeClient.new(@config)
     end
 
-
     def analytics_processor
       return nil unless @config.enable_analytics?
 

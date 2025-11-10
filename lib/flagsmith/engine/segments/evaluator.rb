@@ -10,11 +10,12 @@ module Flagsmith
   module Engine
     module Segments
       # Evaluator methods
-      module Evaluator
+      module Evaluator # rubocop:disable Metrics/ModuleLength
         include Flagsmith::Engine::Segments::Constants
         include Flagsmith::Engine::Utils::HashFunc
-        
+
         module_function
+
         # Context-based segment evaluation (new approach)
         # Returns all segments that the identity belongs to based on segment rules evaluation
         #
@@ -136,28 +137,30 @@ module Flagsmith
         # @param context [Hash] The evaluation context
         # @return [Boolean] True if the condition matches
         def traits_match_segment_condition_from_context(condition, segment_key, context)
-          if condition[:operator] == PERCENTAGE_SPLIT
-            context_value_key = get_context_value(condition[:property], context) || get_identity_key_from_context(context)
-            hashed_percentage = hashed_percentage_for_object_ids([segment_key, context_value_key])
-            return hashed_percentage <= condition[:value].to_f
-          end
-
+          return handle_percentage_split(condition, segment_key, context) if condition[:operator] == PERCENTAGE_SPLIT
           return false if condition[:property].nil?
+
           trait_value = get_trait_value(condition[:property], context)
+          evaluate_trait_condition(condition, trait_value)
+        end
+
+        def handle_percentage_split(condition, segment_key, context)
+          context_value_key = get_context_value(condition[:property], context) || get_identity_key_from_context(context)
+          hashed_percentage = hashed_percentage_for_object_ids([segment_key, context_value_key])
+          hashed_percentage <= condition[:value].to_f
+        end
+
+        def evaluate_trait_condition(condition, trait_value)
           return !trait_value.nil? if condition[:operator] == IS_SET
           return trait_value.nil? if condition[:operator] == IS_NOT_SET
+          return false if trait_value.nil?
 
-          unless trait_value.nil?
-            # Reuse existing Condition class logic
-            condition_obj = Flagsmith::Engine::Segments::Condition.new(
-              operator: condition[:operator],
-              value: condition[:value],
-              property: condition[:property]
-            )
-            return condition_obj.match_trait_value?(trait_value)
-          end
-
-          false
+          condition_obj = Flagsmith::Engine::Segments::Condition.new(
+            operator: condition[:operator],
+            value: condition[:value],
+            property: condition[:property]
+          )
+          condition_obj.match_trait_value?(trait_value)
         end
 
         # Evaluate rule conditions based on type (ALL/ANY/NONE)
@@ -186,7 +189,7 @@ module Flagsmith
         def get_trait_value(property, context)
           if property.start_with?('$.')
             context_value = get_context_value(property, context)
-            return context_value if !context_value.nil? && is_primitive?(context_value)
+            return context_value if !context_value.nil? && primitive?(context_value)
           end
 
           traits = context.dig(:identity, :traits) || {}
@@ -200,6 +203,7 @@ module Flagsmith
         # @return [Object, nil] The value at the path or nil
         def get_context_value(json_path, context)
           return nil unless context && json_path&.start_with?('$.')
+
           results = JsonPath.new(json_path, use_symbols: true).on(context)
           results.first
         rescue StandardError
@@ -221,7 +225,7 @@ module Flagsmith
         #
         # @param value [Object] The value to check
         # @return [Boolean] True if value is primitive (not an object or array)
-        def is_primitive?(value)
+        def primitive?(value)
           return true if value.nil?
 
           !(value.is_a?(Hash) || value.is_a?(Array))
