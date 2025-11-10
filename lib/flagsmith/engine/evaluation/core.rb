@@ -94,8 +94,7 @@ module Flagsmith
 
             # Set reason
             flag_result[:reason] = evaluated[:reason] ||
-                                   get_targeting_match_reason({ type: 'SEGMENT', override: segment_override })
-
+              (has_override ? "#{TARGETING_REASON_TARGETING_MATCH}; segment=#{segment_override[:segment_name]}" : TARGETING_REASON_DEFAULT)
             flags[final_feature[:name].to_sym] = flag_result
           end
 
@@ -120,7 +119,7 @@ module Flagsmith
             if start_percentage <= percentage_value && percentage_value < limit
               return {
                 value: variant[:value],
-                reason: get_targeting_match_reason({ type: 'SPLIT', weight: variant[:weight] })
+                reason: "#{TARGETING_REASON_SPLIT}; weight=#{variant[:weight]}"
               }
             end
             start_percentage = limit
@@ -151,18 +150,6 @@ module Flagsmith
         # returns boolean
         def is_stronger_priority?(priority_a, priority_b)
           (priority_a || WEAKEST_PRIORITY) < (priority_b || WEAKEST_PRIORITY)
-        end
-
-        def get_targeting_match_reason(match_object)
-          type = match_object[:type]
-
-          if type == 'SEGMENT'
-            return match_object[:override] ? "#{TARGETING_REASON_TARGETING_MATCH}; segment=#{match_object[:override][:segment_name]}" : TARGETING_REASON_DEFAULT
-          end
-
-          return "#{TARGETING_REASON_SPLIT}; weight=#{match_object[:weight]}" if type == 'SPLIT'
-
-          TARGETING_REASON_DEFAULT
         end
       end
     end
