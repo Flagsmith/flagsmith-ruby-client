@@ -102,8 +102,12 @@ module Flagsmith
 
         def match_in_value(trait_value)
           return false if trait_value.nil? || trait_value.is_a?(TrueClass) || trait_value.is_a?(FalseClass)
+          
+          return false unless ![true, false].include? trait_value
 
-          return @value.include?(trait_value.to_s) if @value.is_a?(Array)
+          if @value.is_a?(Array)
+            return @value.include?(trait_value.to_s)
+          end
 
           if @value.is_a?(String)
             begin
