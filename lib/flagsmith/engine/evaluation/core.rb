@@ -80,11 +80,7 @@ module Flagsmith
             has_override = !segment_override.nil?
 
             # Evaluate feature value
-            evaluated = if has_override
-                          { value: final_feature[:value], reason: nil }
-                        else
-                          evaluate_feature_value(final_feature, get_identity_key(evaluation_context))
-                        end
+            evaluated = evaluate_feature_value(final_feature, get_identity_key(evaluation_context))
 
             # Build flag result
             flag_result = {
