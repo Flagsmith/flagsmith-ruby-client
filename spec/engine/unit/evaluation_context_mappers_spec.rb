@@ -68,7 +68,6 @@ RSpec.describe Flagsmith::Engine::Mappers do
       expect(override_condition[:value]).to include('overridden-id')
 
       override = identity_override_segment[:overrides][0]
-      expect(override[:feature_key]).to eq('1')
       expect(override[:name]).to eq('some_feature')
       expect(override[:enabled]).to be false
       expect(override[:value]).to eq('some-overridden-value')
@@ -80,7 +79,6 @@ RSpec.describe Flagsmith::Engine::Mappers do
       expect(context[:features]).to have_key('some_feature')
 
       some_feature = context[:features]['some_feature']
-      expect(some_feature[:feature_key]).to eq('1')
       expect(some_feature[:name]).to eq('some_feature')
       expect(some_feature[:enabled]).to be true
       expect(some_feature[:value]).to eq('some-value')
@@ -90,7 +88,6 @@ RSpec.describe Flagsmith::Engine::Mappers do
       # Verify multivariate feature
       expect(context[:features]).to have_key('test_mv')
       test_mv = context[:features]['test_mv']
-      expect(test_mv[:feature_key]).to eq('83755')
       expect(test_mv[:name]).to eq('test_mv')
       expect(test_mv[:enabled]).to be false
       expect(test_mv[:value]).to eq('1111')

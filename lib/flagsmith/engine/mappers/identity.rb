@@ -44,11 +44,10 @@ module Flagsmith
           features_to_identifiers
         end
 
-        def self.build_overrides_key(identity_features) # rubocop:disable Metrics/MethodLength
+        def self.build_overrides_key(identity_features)
           sorted_features = identity_features.to_a.sort_by { |fs| fs.feature.name }
           sorted_features.map do |feature_state|
             {
-              feature_key: feature_state.feature.id.to_s,
               name: feature_state.feature.name,
               enabled: feature_state.enabled,
               value: feature_state.get_value,
