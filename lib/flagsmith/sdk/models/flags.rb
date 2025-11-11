@@ -177,25 +177,24 @@ module Flagsmith
         def from_evaluation_result(evaluation_result, **args)
           to_flag_object = lambda { |flag_result, acc|
             flagsmith_id = flag_result.dig(:metadata, :flagsmith_id)
-
             if flagsmith_id.nil?
               raise Flagsmith::ClientError,
-                    "FlagResult metadata.flagsmith_id is missing for feature \"#{flag_result[:name]}\". " \
-                    'This indicates a bug in the SDK, please report it.'
+                    "FlagResult metadata.flagsmith_id is missing for feature \"#{flag_result[:name]}\". This indicates a bug in the SDK, please report it."
             end
 
-            acc[flag_result[:name]] = Flagsmith::Flags::Flag.new(
-              feature_name: flag_result[:name],
-              enabled: flag_result[:enabled],
-              value: flag_result[:value],
-              feature_id: flagsmith_id,
-              reason: flag_result[:reason]
-            )
+            acc[flag_result[:name]] = Collection.map_evaluated_flag_to_flag_result(flag_result, flagsmith_id)
           }
 
-          new(
-            evaluation_result[:flags].each_value.each_with_object({}, &to_flag_object),
-            **args
+          new(evaluation_result[:flags].each_value.each_with_object({}, &to_flag_object), **args)
+        end
+
+        def map_evaluated_flag_to_flag_result(flag_result, flagsmith_id)
+          Flagsmith::Flags::Flag.new(
+            feature_name: flag_result[:name],
+            enabled: flag_result[:enabled],
+            value: flag_result[:value],
+            feature_id: flagsmith_id,
+            reason: flag_result[:reason]
           )
         end
 

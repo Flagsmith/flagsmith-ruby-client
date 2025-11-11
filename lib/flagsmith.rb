@@ -206,35 +206,22 @@ module Flagsmith
     end
 
     def get_identity_segments(identifier, traits = {})
-      unless environment
-        raise Flagsmith::ClientError,
-              'Local evaluation or offline handler is required to obtain identity segments.'
-      end
+      raise Flagsmith::ClientError, 'Local evaluation or offline handler is required to obtain identity segments.' unless environment
 
       identity_model = get_identity_model(identifier, traits)
-
-      context = Flagsmith::Engine::Mappers.get_evaluation_context(
-        environment, identity_model
-      )
-
-      unless context
-        raise Flagsmith::ClientError,
-              'Local evaluation required to obtain identity segments'
-      end
+      context = Flagsmith::Engine::Mappers.get_evaluation_context(environment, identity_model)
+      raise Flagsmith::ClientError, 'Local evaluation required to obtain identity segments' unless context
 
       evaluation_result = Flagsmith::Engine.get_evaluation_result(context)
-
-      evaluation_result[:segments].map do |segment_result|
+      evaluation_result[:segments].filter_map do |segment_result|
         flagsmith_id = segment_result.dig(:metadata, :flagsmith_id)
-        next unless flagsmith_id
-
-        Flagsmith::Segments::Segment.new(id: flagsmith_id, name: segment_result[:name])
-      end.compact
+        Flagsmith::Segments::Segment.new(id: flagsmith_id, name: segment_result[:name]) if flagsmith_id
+      end
     end
 
     private
 
-    def environment_flags_from_document
+    def environment_flags_from_document # rubocop:disable Metrics/MethodLength
       context = Flagsmith::Engine::Mappers.get_evaluation_context(environment)
 
       unless context
@@ -254,22 +241,13 @@ module Flagsmith
 
     def get_identity_flags_from_document(identifier, traits = {})
       identity_model = get_identity_model(identifier, traits)
-
-      context = Flagsmith::Engine::Mappers.get_evaluation_context(
-        environment, identity_model
-      )
-
-      unless context
-        raise Flagsmith::ClientError,
-              'Unable to get flags. No environment present.'
-      end
+      context = Flagsmith::Engine::Mappers.get_evaluation_context(environment, identity_model)
+      raise Flagsmith::ClientError, 'Unable to get flags. No environment present.' unless context
 
       evaluation_result = Flagsmith::Engine.get_evaluation_result(context)
-
       Flagsmith::Flags::Collection.from_evaluation_result(
         evaluation_result,
-        analytics_processor: analytics_processor,
-        default_flag_handler: default_flag_handler,
+        analytics_processor: analytics_processor, default_flag_handler: default_flag_handler,
         offline_handler: offline_handler
       )
     end
