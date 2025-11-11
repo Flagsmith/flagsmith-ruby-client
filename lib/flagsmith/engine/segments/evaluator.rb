@@ -14,7 +14,7 @@ module Flagsmith
         include Flagsmith::Engine::Segments::Constants
         include Flagsmith::Engine::Utils::HashFunc
 
-        # Model-based segment evaluation (existing approach)
+        # Model-based segment evaluation
         def get_identity_segments(environment, identity, override_traits = nil)
           environment.project.segments.select do |s|
             evaluate_identity_in_segment(identity, s, override_traits)
@@ -39,7 +39,19 @@ module Flagsmith
 
         module_function
 
-        # Context-based segment evaluation (new approach)
+        def get_enriched_context(context)
+          identity_context = context[:identity]
+          return context unless identity_context
+          return context if identity_context[:key]
+
+          enriched_context = context.dup
+          enriched_context[:identity] = identity_context.merge(
+            key: "#{context[:environment][:key]}_#{identity_context[:identifier]}"
+          )
+          enriched_context
+        end
+
+        # Context-based segment evaluation
         # Returns all segments that the identity belongs to based on segment rules evaluation
         #
         # @param context [Hash] Evaluation context containing identity and segment definitions
@@ -92,7 +104,7 @@ module Flagsmith
         end
         # rubocop:enable Metrics/MethodLength
 
-        # Context-based helper functions (new approach)
+        # Context-based helper functions
 
         # Evaluates whether a segment rule matches using context
         #
@@ -224,8 +236,7 @@ module Flagsmith
         def get_identity_key_from_context(context)
           return nil unless context[:identity]
 
-          context[:identity][:key] ||
-            "#{context[:environment][:key]}_#{context[:identity][:identifier]}"
+          context[:identity][:key]
         end
 
         # Check if value is primitive (not an object or array)

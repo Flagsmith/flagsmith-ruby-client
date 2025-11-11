@@ -19,6 +19,7 @@ module Flagsmith
         # @return [Hash] Evaluation result with flags and segments
         # returns EvaluationResultWithMetadata
         def get_evaluation_result(evaluation_context)
+          evaluation_context = get_enriched_context(evaluation_context)
           segments, segment_overrides = evaluate_segments(evaluation_context)
           flags = evaluate_features(evaluation_context, segment_overrides)
           {
