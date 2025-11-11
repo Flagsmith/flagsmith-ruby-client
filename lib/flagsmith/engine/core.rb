@@ -13,7 +13,6 @@ require_relative 'segments/evaluator'
 require_relative 'segments/models'
 require_relative 'utils/hash_func'
 require_relative 'mappers'
-require_relative 'evaluation/core'
 
 module Flagsmith
   # Core evaluation logic for feature flags
@@ -29,6 +28,7 @@ module Flagsmith
     # @return [Hash] Evaluation result with flags and segments
     # returns EvaluationResultWithMetadata
     def get_evaluation_result(evaluation_context)
+      evaluation_context = get_enriched_context(evaluation_context)
       segments, segment_overrides = evaluate_segments(evaluation_context)
       flags = evaluate_features(evaluation_context, segment_overrides)
       {
@@ -141,7 +141,11 @@ module Flagsmith
     # returns boolean
     def should_apply_override(override, existing_overrides)
       current_override = existing_overrides[override[:name]]
-      !current_override || is_stronger_priority?(override[:priority], current_override[:feature][:priority])
+      !current_override || stronger_priority?(override[:priority], current_override[:feature][:priority])
+    end
+
+    def stronger_priority?(priority_a, priority_b)
+      (priority_a || WEAKEST_PRIORITY) < (priority_b || WEAKEST_PRIORITY)
     end
 
     private
@@ -153,13 +157,7 @@ module Flagsmith
     def get_identity_key(evaluation_context)
       return nil unless evaluation_context[:identity]
 
-      evaluation_context[:identity][:key] ||
-        "#{evaluation_context[:environment][:key]}_#{evaluation_context[:identity][:identifier]}"
-    end
-
-    # returns boolean
-    def is_stronger_priority?(priority_a, priority_b)
-      (priority_a || WEAKEST_PRIORITY) < (priority_b || WEAKEST_PRIORITY)
+      evaluation_context[:identity][:key]
     end
   end
 end
