@@ -213,7 +213,7 @@ module Flagsmith
 
       identity_model = get_identity_model(identifier, traits)
 
-      context = Flagsmith::Engine::Evaluation::Mappers.get_evaluation_context(
+      context = Flagsmith::Engine::Mappers.get_evaluation_context(
         environment, identity_model
       )
 
@@ -235,7 +235,7 @@ module Flagsmith
     private
 
     def environment_flags_from_document
-      context = Flagsmith::Engine::Evaluation::Mappers.get_evaluation_context(environment)
+      context = Flagsmith::Engine::Mappers.get_evaluation_context(environment)
 
       unless context
         raise Flagsmith::ClientError,
@@ -255,7 +255,7 @@ module Flagsmith
     def get_identity_flags_from_document(identifier, traits = {})
       identity_model = get_identity_model(identifier, traits)
 
-      context = Flagsmith::Engine::Evaluation::Mappers.get_evaluation_context(
+      context = Flagsmith::Engine::Mappers.get_evaluation_context(
         environment, identity_model
       )
 

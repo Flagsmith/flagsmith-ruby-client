@@ -12,7 +12,8 @@ require_relative 'projects/models'
 require_relative 'segments/evaluator'
 require_relative 'segments/models'
 require_relative 'utils/hash_func'
-require_relative 'evaluation/mappers'
+require_relative 'mappers'
+require_relative 'evaluation/core'
 
 module Flagsmith
   # Core evaluation logic for feature flags

@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-RSpec.describe Flagsmith::Engine::Evaluation::Mappers do
+RSpec.describe Flagsmith::Engine::Mappers do
   describe '.get_evaluation_context' do
     let(:environment_json) do
       JSON.parse(
@@ -20,7 +20,7 @@ RSpec.describe Flagsmith::Engine::Evaluation::Mappers do
       # Then - verify structure
       expect(context).to be_a(Hash)
       expect(context[:environment][:key]).to eq('B62qaMZNwfiqT76p38ggrQ')
-      expect(context[:environment][:name]).to eq('Test project')
+      expect(context[:environment][:name]).to eq('Test environment')
       expect(context[:identity]).to be_nil
 
       # Verify segments
@@ -72,7 +72,7 @@ RSpec.describe Flagsmith::Engine::Evaluation::Mappers do
       expect(override[:name]).to eq('some_feature')
       expect(override[:enabled]).to be false
       expect(override[:value]).to eq('some-overridden-value')
-      expect(override[:priority]).to eq(Flagsmith::Engine::Evaluation::Mappers::STRONGEST_PRIORITY)
+      expect(override[:priority]).to eq(Flagsmith::Engine::Mappers::STRONGEST_PRIORITY)
       expect(override[:metadata][:flagsmith_id]).to eq(1)
 
       # Verify features
