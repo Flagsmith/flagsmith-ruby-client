@@ -184,7 +184,7 @@ module Flagsmith
                     'This indicates a bug in the SDK, please report it.'
             end
 
-            acc[normalize_key(flag_result[:name])] = Flagsmith::Flags::Flag.new(
+            acc[flag_result[:name]] = Flagsmith::Flags::Flag.new(
               feature_name: flag_result[:name],
               enabled: flag_result[:enabled],
               value: flag_result[:value],
