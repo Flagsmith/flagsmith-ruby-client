@@ -20,10 +20,9 @@ module Flagsmith
           features
         end
 
-        def self.build_feature_hash(feature_state) # rubocop:disable Metrics/MethodLength
+        def self.build_feature_hash(feature_state)
           feature_hash = {
             key: feature_state.django_id&.to_s || feature_state.uuid,
-            feature_key: feature_state.feature.id.to_s,
             name: feature_state.feature.name,
             enabled: feature_state.enabled,
             value: feature_state.get_value,
