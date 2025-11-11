@@ -214,8 +214,8 @@ module Flagsmith
 
       evaluation_result = Flagsmith::Engine.get_evaluation_result(context)
       evaluation_result[:segments].filter_map do |segment_result|
-        flagsmith_id = segment_result.dig(:metadata, :flagsmith_id)
-        Flagsmith::Segments::Segment.new(id: flagsmith_id, name: segment_result[:name]) if flagsmith_id
+        id = segment_result.dig(:metadata, :id)
+        Flagsmith::Segments::Segment.new(id: id, name: segment_result[:name]) if id
       end
     end
 

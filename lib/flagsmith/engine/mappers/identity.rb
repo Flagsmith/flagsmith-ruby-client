@@ -52,7 +52,7 @@ module Flagsmith
               enabled: feature_state.enabled,
               value: feature_state.get_value,
               priority: Mappers::STRONGEST_PRIORITY,
-              metadata: { flagsmith_id: feature_state.feature.id }
+              metadata: { id: feature_state.feature.id }
             }
           end
         end
