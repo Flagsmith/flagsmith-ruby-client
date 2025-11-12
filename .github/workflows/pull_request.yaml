@@ -14,9 +14,6 @@ on:
       - synchronize
       - reopened
       - ready_for_review
-    branches:
-      - main
-      - release/**
 
   push:
     branches:

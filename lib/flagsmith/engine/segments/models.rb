@@ -45,7 +45,7 @@ module Flagsmith
           CONTAINS => ->(other_value, self_value) { (other_value || false) && other_value.include?(self_value) },
 
           NOT_CONTAINS => ->(other_value, self_value) { (other_value || false) && !other_value.include?(self_value) },
-          REGEX => ->(other_value, self_value) { (other_value || false) && other_value.match?(self_value) }
+          REGEX => ->(other_value, self_value) { (other_value || false) && other_value.to_s.match?(self_value) }
         }.freeze
 
         def initialize(operator:, value:, property: nil)
@@ -55,30 +55,48 @@ module Flagsmith
         end
 
         def match_trait_value?(trait_value)
-          # handle some exceptions
-          trait_value = Semantic::Version.new(trait_value.gsub(/:semver$/, '')) if @value.is_a?(String) && @value.match?(/:semver$/)
+          trait_value = parse_semver_trait_value(trait_value)
+          return false if trait_value.nil?
 
           return match_in_value(trait_value) if @operator == IN
           return match_modulo_value(trait_value) if @operator == MODULO
+          return MATCHING_FUNCTIONS[REGEX]&.call(trait_value, @value) if @operator == REGEX
 
+          match_with_type_conversion(trait_value)
+        end
+
+        def parse_semver_trait_value(trait_value)
+          return trait_value unless @value.is_a?(String) && @value.match?(/:semver$/)
+
+          Semantic::Version.new(trait_value.to_s.gsub(/:semver$/, ''))
+        rescue ArgumentError, Semantic::Version::ValidationFailed
+          nil
+        end
+
+        def match_with_type_conversion(trait_value)
           type_as_trait_value = format_to_type_of(trait_value)
           formatted_value = type_as_trait_value ? type_as_trait_value.call(@value) : @value
-
           MATCHING_FUNCTIONS[operator]&.call(trait_value, formatted_value)
         end
 
-        # rubocop:disable Metrics/AbcSize
+        TYPE_CONVERTERS = {
+          'String' => ->(v) { v.to_s },
+          'Semantic::Version' => ->(v) { Semantic::Version.new(v.to_s.gsub(/:semver$/, '')) },
+          'TrueClass' => ->(v) { ['True', 'true', 'TRUE', true, 1, '1'].include?(v) },
+          'FalseClass' => ->(v) { !['False', 'false', 'FALSE', false].include?(v) },
+          'Integer' => lambda { |v|
+            i = v.to_i
+            i.to_s == v.to_s ? i : v
+          },
+          'Float' => lambda { |v|
+            f = v.to_f
+            f.to_s == v.to_s ? f : v
+          }
+        }.freeze
+
         def format_to_type_of(input)
-          {
-            'String' => ->(v) { v.to_s },
-            'Semantic::Version' => ->(v) { Semantic::Version.new(v.to_s.gsub(/:semver$/, '')) },
-            'TrueClass' => ->(v) { ['True', 'true', 'TRUE', true, 1, '1'].include?(v) },
-            'FalseClass' => ->(v) { !['False', 'false', 'FALSE', false, 0, '0'].include?(v) },
-            'Integer' => ->(v) { v.to_i },
-            'Float' => ->(v) { v.to_f }
-          }[input.class.to_s]
+          TYPE_CONVERTERS[input.class.to_s]
         end
-        # rubocop:enable Metrics/AbcSize
 
         def match_modulo_value(trait_value)
           divisor, remainder = @value.split('|')
@@ -88,9 +106,25 @@ module Flagsmith
         end
 
         def match_in_value(trait_value)
-          return @value.split(',').include?(trait_value.to_s) if trait_value.is_a?(String) || trait_value.is_a?(Integer)
+          return false if invalid_in_value?(trait_value)
+          return @value.include?(trait_value.to_s) if @value.is_a?(Array)
 
-          false
+          parse_and_match_string_value(trait_value)
+        end
+
+        def invalid_in_value?(trait_value)
+          trait_value.nil? || [TrueClass, FalseClass].any? { |klass| trait_value.is_a?(klass) }
+        end
+
+        def parse_and_match_string_value(trait_value) # rubocop:disable Metrics/AbcSize
+          return @value.to_s.split(',').include?(trait_value.to_s) unless @value.is_a?(String)
+
+          parsed = JSON.parse(@value)
+          return parsed.include?(trait_value.to_s) if parsed.is_a?(Array)
+
+          @value.to_s.split(',').include?(trait_value.to_s)
+        rescue JSON::ParserError
+          @value.to_s.split(',').include?(trait_value.to_s)
         end
 
         class << self

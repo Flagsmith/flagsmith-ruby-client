@@ -33,7 +33,7 @@ RSpec.describe Flagsmith::Engine::Mappers do
       expect(segment[:rules].length).to eq(1)
       expect(segment[:overrides]).to be_empty.or be_an(Array)
       expect(segment[:metadata][:source]).to eq('API')
-      expect(segment[:metadata][:flagsmith_id]).to eq(1)
+      expect(segment[:metadata][:id]).to eq(1)
 
       # Verify segment rules
       expect(segment[:rules][0][:type]).to eq('ALL')
@@ -72,7 +72,7 @@ RSpec.describe Flagsmith::Engine::Mappers do
       expect(override[:enabled]).to be false
       expect(override[:value]).to eq('some-overridden-value')
       expect(override[:priority]).to eq(Flagsmith::Engine::Mappers::STRONGEST_PRIORITY)
-      expect(override[:metadata][:flagsmith_id]).to eq(1)
+      expect(override[:metadata][:id]).to eq(1)
 
       # Verify features
       expect(context[:features]).to be_a(Hash)
@@ -83,7 +83,7 @@ RSpec.describe Flagsmith::Engine::Mappers do
       expect(some_feature[:enabled]).to be true
       expect(some_feature[:value]).to eq('some-value')
       expect(some_feature[:priority]).to be_nil
-      expect(some_feature[:metadata][:flagsmith_id]).to eq(1)
+      expect(some_feature[:metadata][:id]).to eq(1)
 
       # Verify multivariate feature
       expect(context[:features]).to have_key('test_mv')
