@@ -26,7 +26,7 @@ module Flagsmith
             name: feature_state.feature.name,
             enabled: feature_state.enabled,
             value: feature_state.get_value,
-            metadata: { flagsmith_id: feature_state.feature.id }
+            metadata: { id: feature_state.feature.id }
           }
           add_variants_to_feature(feature_hash, feature_state)
           add_priority_to_feature(feature_hash, feature_state)

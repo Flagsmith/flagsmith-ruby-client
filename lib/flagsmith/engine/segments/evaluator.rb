@@ -14,29 +14,6 @@ module Flagsmith
         include Flagsmith::Engine::Segments::Constants
         include Flagsmith::Engine::Utils::HashFunc
 
-        # Model-based segment evaluation
-        def get_identity_segments(environment, identity, override_traits = nil)
-          environment.project.segments.select do |s|
-            evaluate_identity_in_segment(identity, s, override_traits)
-          end
-        end
-
-        def traits_match_segment_condition(identity_traits, condition, segment_id, identity_id)
-          if condition.operator == PERCENTAGE_SPLIT
-            return hashed_percentage_for_object_ids([segment_id,
-                                                     identity_id]) <= condition.value.to_f
-          end
-
-          trait = identity_traits.find { |t| t.key.to_s == condition.property }
-
-          return handle_trait_existence_conditions(trait, condition.operator) if [IS_SET,
-                                                                                  IS_NOT_SET].include?(condition.operator)
-
-          return condition.match_trait_value?(trait.trait_value) if trait
-
-          false
-        end
-
         module_function
 
         def get_enriched_context(context)
@@ -65,6 +42,22 @@ module Flagsmith
             matches = segment[:rules].all? { |rule| traits_match_segment_rule_from_context(rule, segment[:key], context) }
             matches
           end
+        end
+
+        def traits_match_segment_condition(identity_traits, condition, segment_id, identity_id)
+          if condition.operator == PERCENTAGE_SPLIT
+            return hashed_percentage_for_object_ids([segment_id,
+                                                     identity_id]) <= condition.value.to_f
+          end
+
+          trait = identity_traits.find { |t| t.key.to_s == condition.property }
+
+          return handle_trait_existence_conditions(trait, condition.operator) if [IS_SET,
+                                                                                  IS_NOT_SET].include?(condition.operator)
+
+          return condition.match_trait_value?(trait.trait_value) if trait
+
+          false
         end
 
         # Evaluates whether a given identity is in the provided segment.
@@ -247,14 +240,6 @@ module Flagsmith
           return true if value.nil?
 
           !(value.is_a?(Hash) || value.is_a?(Array))
-        end
-
-        private
-
-        def handle_trait_existence_conditions(matching_trait, operator)
-          return operator == IS_NOT_SET if matching_trait.nil?
-
-          operator == IS_SET
         end
       end
     end

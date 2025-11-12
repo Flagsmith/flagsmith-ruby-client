@@ -8,8 +8,6 @@ def get_test_files
 end
 
 def parse_jsonc(content)
-  # Simple JSONC parser: remove single-line comments
-  # JSON.parse will handle the rest
   cleaned = content.lines.reject { |line| line.strip.start_with?('//') }.join
   JSON.parse(cleaned, symbolize_names: true)
 end
@@ -34,11 +32,8 @@ RSpec.describe Flagsmith::Engine do
         test_evaluation_context = test_case[:context]
         test_expected_result = test_case[:result]
 
-        # TODO: Implement evaluation logic
-        evaluation_result = Flagsmith::Engine::Evaluation::Core.get_evaluation_result(test_evaluation_context)
+        evaluation_result = Flagsmith::Engine.get_evaluation_result(test_evaluation_context)
 
-
-        # TODO: Uncomment when evaluation is implemented
         expect(evaluation_result[:flags]).to eq(test_expected_result[:flags])
         expect(evaluation_result[:segments]).to eq(test_expected_result[:segments])
       end

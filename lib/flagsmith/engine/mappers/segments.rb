@@ -21,7 +21,7 @@ module Flagsmith
             overrides: build_overrides(segment.feature_states),
             metadata: {
               source: 'API',
-              flagsmith_id: segment.id
+              id: segment.id
             }
           }
         end
@@ -33,7 +33,7 @@ module Flagsmith
               name: feature_state.feature.name,
               enabled: feature_state.enabled,
               value: feature_state.get_value,
-              metadata: { flagsmith_id: feature_state.feature.id }
+              metadata: { id: feature_state.feature.id }
             }
             add_priority_to_override(override_hash, feature_state)
             override_hash

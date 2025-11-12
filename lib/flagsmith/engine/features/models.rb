@@ -58,7 +58,7 @@ module Flagsmith
       #        but `self` does.
       #     2. `other` have a feature segment with high priority
       def higher_segment_priority?(other)
-        feature_segment.priority.to_i < (other&.feature_segment&.priority || Float::INFINITY)
+        feature_segment.priority.to_i < (other&.feature_segment&.priority || WEAKEST_PRIORITY)
       rescue TypeError, NoMethodError
         false
       end
