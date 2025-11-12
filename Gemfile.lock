@@ -4,6 +4,7 @@ PATH
     flagsmith (4.3.0)
       faraday (>= 2.0.1)
       faraday-retry
+      jsonpath (~> 1.1)
       semantic
 
 GEM
@@ -21,8 +22,11 @@ GEM
       faraday (~> 2.0)
     gem-release (2.2.2)
     json (2.7.1)
+    jsonpath (1.1.5)
+      multi_json
     language_server-protocol (3.17.0.3)
     method_source (1.0.0)
+    multi_json (1.17.0)
     net-http (0.4.1)
       uri
     parallel (1.24.0)

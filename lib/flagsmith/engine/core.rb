@@ -5,84 +5,143 @@ require 'securerandom'
 
 require_relative 'environments/models'
 require_relative 'features/models'
+require_relative 'features/constants'
 require_relative 'identities/models'
 require_relative 'organisations/models'
 require_relative 'projects/models'
 require_relative 'segments/evaluator'
 require_relative 'segments/models'
 require_relative 'utils/hash_func'
+require_relative 'mappers'
 
 module Flagsmith
+  # Core evaluation logic for feature flags
   module Engine
-    # Flags engine methods
-    class Engine
-      include Flagsmith::Engine::Segments::Evaluator
+    extend self
+    include Flagsmith::Engine::Utils::HashFunc
+    include Flagsmith::Engine::Features::TargetingReasons
+    include Flagsmith::Engine::Segments::Evaluator
 
-      def get_identity_feature_state(environment, identity, feature_name, override_traits = nil)
-        feature_states = get_identity_feature_states_dict(environment, identity, override_traits).values
+    # Get evaluation result from evaluation context
+    #
+    # @param evaluation_context [Hash] The evaluation context
+    # @return [Hash] Evaluation result with flags and segments
+    def get_evaluation_result(evaluation_context)
+      evaluation_context = get_enriched_context(evaluation_context)
+      segments, segment_overrides = evaluate_segments(evaluation_context)
+      flags = evaluate_features(evaluation_context, segment_overrides)
+      {
+        flags: flags,
+        segments: segments
+      }
+    end
 
-        feature_state = feature_states.find { |f| f.feature.name == feature_name }
+    # Returns { segments: EvaluationResultSegments; segmentOverrides: Record<string, SegmentOverride>; }
+    def evaluate_segments(evaluation_context)
+      return [], {} if evaluation_context[:segments].nil?
 
-        raise Flagsmith::FeatureStateNotFound, 'Feature State Not Found' if feature_state.nil?
+      identity_segments = get_segments_from_context(evaluation_context)
 
-        feature_state
+      segments = identity_segments.map do |segment|
+        { name: segment[:name], metadata: segment[:metadata] }.compact
       end
 
-      def get_identity_feature_states(environment, identity, override_traits = nil)
-        feature_states = get_identity_feature_states_dict(environment, identity, override_traits).values
+      segment_overrides = process_segment_overrides(identity_segments)
 
-        return feature_states.select(&:enabled?) if environment.project.hide_disabled_flags
+      [segments, segment_overrides]
+    end
 
-        feature_states
-      end
+    # Returns Record<string: override.name, SegmentOverride>
+    def process_segment_overrides(identity_segments) # rubocop:disable Metrics/MethodLength
+      segment_overrides = {}
 
-      def get_environment_feature_state(environment, feature_name)
-        features_state = environment.feature_states.find { |f| f.feature.name == feature_name }
+      identity_segments.each do |segment|
+        Array(segment[:overrides]).each do |override|
+          next unless should_apply_override(override, segment_overrides)
 
-        raise Flagsmith::FeatureStateNotFound, 'Feature State Not Found' if features_state.nil?
-
-        features_state
-      end
-
-      def get_environment_feature_states(environment)
-        return environment.feature_states.select(&:enabled?) if environment.project.hide_disabled_flags
-
-        environment.feature_states
-      end
-
-      private
-
-      def get_identity_feature_states_dict(environment, identity, override_traits = nil)
-        # Get feature states from the environment
-        feature_states = {}
-        override = ->(fs) { feature_states[fs.feature.id] = fs }
-        environment.feature_states.each(&override)
-
-        override_by_matching_segments(environment, identity, override_traits) do |fs|
-          override.call(fs) unless higher_segment_priority?(feature_states, fs)
-        end
-
-        # Override with any feature states defined directly the identity
-        identity.identity_features.each(&override)
-        feature_states
-      end
-
-      # Override with any feature states defined by matching segments
-      def override_by_matching_segments(environment, identity, override_traits)
-        identity_segments = get_identity_segments(environment, identity, override_traits)
-        identity_segments.each do |matching_segment|
-          matching_segment.feature_states.each do |feature_state|
-            yield feature_state if block_given?
-          end
+          segment_overrides[override[:name]] = {
+            feature: override,
+            segment_name: segment[:name]
+          }
         end
       end
 
-      def higher_segment_priority?(collection, feature_state)
-        collection.key?(feature_state.feature.id) &&
-          collection[feature_state.feature.id].higher_segment_priority?(
-            feature_state
-          )
+      segment_overrides
+    end
+
+    def evaluate_features(evaluation_context, segment_overrides)
+      identity_key = get_identity_key(evaluation_context)
+
+      (evaluation_context[:features] || {}).each_with_object({}) do |(_, feature), flags|
+        segment_override = segment_overrides[feature[:name]]
+        final_feature = segment_override ? segment_override[:feature] : feature
+
+        flag_result = build_flag_result(final_feature, identity_key, segment_override)
+        flags[final_feature[:name].to_sym] = flag_result
       end
+    end
+
+    # Returns {value: any; reason?: string}
+    def evaluate_feature_value(feature, identity_key = nil)
+      return get_multivariate_feature_value(feature, identity_key) if feature[:variants]&.any? && identity_key
+
+      { value: feature[:value], reason: nil }
+    end
+
+    # Returns {value: any; reason?: string}
+    def get_multivariate_feature_value(feature, identity_key)
+      percentage_value = hashed_percentage_for_object_ids([feature[:key], identity_key])
+      sorted_variants = (feature[:variants] || []).sort_by { |v| v[:priority] || WEAKEST_PRIORITY }
+
+      variant = find_matching_variant(sorted_variants, percentage_value)
+      variant || { value: feature[:value], reason: nil }
+    end
+
+    def find_matching_variant(sorted_variants, percentage_value)
+      start_percentage = 0
+      sorted_variants.each do |variant|
+        limit = start_percentage + variant[:weight]
+        return { value: variant[:value], reason: "#{TARGETING_REASON_SPLIT}; weight=#{variant[:weight]}" } if start_percentage <= percentage_value && percentage_value < limit
+
+        start_percentage = limit
+      end
+      nil
+    end
+
+    # returns boolean
+    def should_apply_override(override, existing_overrides)
+      current_override = existing_overrides[override[:name]]
+      !current_override || stronger_priority?(override[:priority], current_override[:feature][:priority])
+    end
+
+    private
+
+    def build_flag_result(feature, identity_key, segment_override)
+      evaluated = evaluate_feature_value(feature, identity_key)
+
+      flag_result = {
+        name: feature[:name],
+        enabled: feature[:enabled],
+        value: evaluated[:value],
+        reason: evaluated[:reason] || (segment_override ? "#{TARGETING_REASON_TARGETING_MATCH}; segment=#{segment_override[:segment_name]}" : TARGETING_REASON_DEFAULT)
+      }
+
+      flag_result[:metadata] = feature[:metadata] if feature[:metadata]
+      flag_result
+    end
+
+    # Extract identity key from evaluation context
+    #
+    # @param evaluation_context [Hash] The evaluation context
+    # @return [String, nil] The identity key or nil if no identity
+    def get_identity_key(evaluation_context)
+      return nil unless evaluation_context[:identity]
+
+      evaluation_context[:identity][:key]
+    end
+
+    def stronger_priority?(priority_a, priority_b)
+      (priority_a || WEAKEST_PRIORITY) < (priority_b || WEAKEST_PRIORITY)
     end
   end
 end

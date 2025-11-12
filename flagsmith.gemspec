@@ -34,6 +34,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'faraday', '>= 2.0.1'
   spec.add_dependency 'faraday-retry'
+  spec.add_dependency 'jsonpath', '~> 1.1'
   spec.add_dependency 'semantic'
   spec.metadata['rubygems_mfa_required'] = 'true'
 end
