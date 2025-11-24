@@ -5,12 +5,12 @@ module Flagsmith
     module Mappers
       # Handles identity and override mapping
       module Identity
-        def self.build_environment_context(identity, override_traits = nil)
+        def self.build_identity_context(identity, override_traits = nil)
           traits = override_traits || identity.identity_traits
 
           {
             identifier: identity.identifier,
-            key: identity.django_id&.to_s || identity.composite_key,
+            key: identity.composite_key,
             traits: build_traits_hash(traits)
           }
         end
