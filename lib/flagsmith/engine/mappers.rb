@@ -43,7 +43,7 @@ module Flagsmith
       # @param override_traits [Array<Flagsmith::Engine::Identities::Trait>, nil] Optional override traits
       # @return [Hash] Identity context with :identifier, :key, and :traits
       def self.map_identity_model_to_identity_context(identity, override_traits = nil)
-        Identity.build_environment_context(identity, override_traits)
+        Identity.build_identity_context(identity, override_traits)
       end
 
       # Maps segment rule model to rule hash
