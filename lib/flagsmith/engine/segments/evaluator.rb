@@ -157,8 +157,18 @@ module Flagsmith
         end
 
         def handle_percentage_split(condition, segment_key, context)
-          context_value_key = get_context_value(condition[:property], context) || get_identity_key_from_context(context)
-          hashed_percentage = hashed_percentage_for_object_ids([segment_key, context_value_key])
+          split_key = if condition[:property].nil? || condition[:property].empty?
+                        # No property specified - use identity key
+                        get_identity_key_from_context(context)
+                      else
+                        # Property specified - must exist in context
+                        get_context_value(condition[:property], context)
+                      end
+
+          # If split_key is nil, condition doesn't match
+          return false if split_key.nil?
+
+          hashed_percentage = hashed_percentage_for_object_ids([segment_key, split_key])
           hashed_percentage <= condition[:value].to_f
         end
 
