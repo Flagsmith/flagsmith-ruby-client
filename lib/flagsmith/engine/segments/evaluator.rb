@@ -93,7 +93,7 @@ module Flagsmith
             end
 
           matches_conditions &&
-            rule.rules.all? { |r| traits_match_segment_rule(identity_traits, r, segment_id, identity_id) }
+            rule.rules.send(rule.matching_function) { |r| traits_match_segment_rule(identity_traits, r, segment_id, identity_id) }
         end
         # rubocop:enable Metrics/MethodLength
 
@@ -137,9 +137,10 @@ module Flagsmith
         def evaluate_sub_rules_from_context(rule, segment_key, context)
           return true if rule[:rules].nil? || rule[:rules].empty?
 
-          rule[:rules].all? do |sub_rule|
+          sub_rule_results = rule[:rules].map do |sub_rule|
             traits_match_segment_rule_from_context(sub_rule, segment_key, context)
           end
+          evaluate_rule_conditions(rule[:type], sub_rule_results)
         end
 
         # Evaluates a single segment condition using context
