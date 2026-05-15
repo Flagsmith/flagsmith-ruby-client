@@ -1,5 +1,29 @@
 # Changelog
 
+## [5.0.1](https://github.com/Flagsmith/flagsmith-ruby-client/compare/v5.0.0...v5.0.1) (2026-05-15)
+
+
+### Bug Fixes
+
+* exclude-identities-when-traits-is-undefined ([#96](https://github.com/Flagsmith/flagsmith-ruby-client/issues/96)) ([f888d4c](https://github.com/Flagsmith/flagsmith-ruby-client/commit/f888d4c03c45d7fe8b1a994f2ca512bf7f9f0fe0))
+* removed-dango-id-usage-in-mapper ([#94](https://github.com/Flagsmith/flagsmith-ruby-client/issues/94)) ([a86fc3e](https://github.com/Flagsmith/flagsmith-ruby-client/commit/a86fc3e6cf93c2e99e30b1ed7d2ff144d47be4ee))
+* respect rule type for sub-rules in segment evaluation ([#101](https://github.com/Flagsmith/flagsmith-ruby-client/issues/101)) ([e5c52d8](https://github.com/Flagsmith/flagsmith-ruby-client/commit/e5c52d8a8d06c289e9b24c9f62f021d270dbe1d9))
+
+
+### CI
+
+* setup Renovate for engine-test-data tracking ([#100](https://github.com/Flagsmith/flagsmith-ruby-client/issues/100)) ([87bd746](https://github.com/Flagsmith/flagsmith-ruby-client/commit/87bd7465a896801cdf5b4fba48f2b88ae1972198))
+
+
+### Dependency Updates
+
+* bump rexml from 3.3.9 to 3.4.2 ([#85](https://github.com/Flagsmith/flagsmith-ruby-client/issues/85)) ([16cb374](https://github.com/Flagsmith/flagsmith-ruby-client/commit/16cb3741a673441addc7accc399f74dcd31314a3))
+
+
+### Other
+
+* Remove amannn/action-semantic-pull-request workflow ([#97](https://github.com/Flagsmith/flagsmith-ruby-client/issues/97)) ([ddc0f21](https://github.com/Flagsmith/flagsmith-ruby-client/commit/ddc0f21d88f5e4325403ff6d7414e95f6283bc96))
+
 ## [5.0.0](https://github.com/Flagsmith/flagsmith-ruby-client/compare/v4.3.0...v5.0.0) (2025-11-12)
 
 
