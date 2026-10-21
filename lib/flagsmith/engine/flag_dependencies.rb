@@ -4,7 +4,8 @@ require 'set'
 
 module Flagsmith
   module Engine
-    # The `$.flags` mapping of an evaluation context, resolving a flag when a segment condition first reads it.
+    # The `$.flags` mapping of an evaluation context, resolving a flag when a segment condition first reads it,
+    # and the memo of the context's segment verdicts.
     class LazyFlags < Hash
       # Incremented whenever a cycle is cut, so a segment evaluated meanwhile is known to rest on an unresolved flag.
       attr_accessor :cycle_hits
@@ -29,6 +30,18 @@ module Flagsmith
         @used
       end
 
+      # Whether the context belongs to a segment, memoised once flags are read unless a dependency cycle was cut meanwhile.
+      def segment_matches?(segment)
+        return @segment_matches[segment] if @segment_matches&.key?(segment)
+
+        cycle_hits = @cycle_hits
+        matches = Flagsmith::Engine::Segments::Evaluator.context_in_segment?(@context, segment)
+        return false if @cycle_hits != cycle_hits
+
+        (@segment_matches ||= {}.compare_by_identity)[segment] = matches if @used
+        matches
+      end
+
       def key?(feature_name)
         !self[feature_name].nil?
       end
@@ -46,7 +59,7 @@ module Flagsmith
       end
     end
 
-    # Resolves the flags of a context whose segments depend on other flags, memoising segment verdicts.
+    # Resolves the flags of a context whose segments depend on other flags.
     class DependencyResolver
       include Flagsmith::Engine::Features::TargetingReasons
 
@@ -56,7 +69,6 @@ module Flagsmith
         @segments = context[:segments] || {}
         @features_by_name = (context[:features] || {}).values.to_h { |feature| [feature[:name].to_sym, feature] }
         @segment_keys_by_feature_name = segment_keys_by_feature_name
-        @segment_matches = {}
         @resolving = []
       end
 
@@ -96,23 +108,13 @@ module Flagsmith
 
       def matching_segment_overrides(feature_name)
         @segment_keys_by_feature_name.fetch(feature_name, []).flat_map do |segment_key|
-          next [] unless segment_matches?(segment_key)
-
           segment = @segments[segment_key]
+          next [] unless @flags.segment_matches?(segment)
+
           Array(segment[:overrides])
             .select { |override| override[:name].to_sym == feature_name }
             .map { |override| { feature: override, segment_name: segment[:name] } }
         end
-      end
-
-      def segment_matches?(segment_key)
-        return @segment_matches[segment_key] if @segment_matches.key?(segment_key)
-
-        cycle_hits = @flags.cycle_hits
-        matches = Flagsmith::Engine::Segments::Evaluator.context_in_segment?(@context, @segments[segment_key])
-        return false if @flags.cycle_hits != cycle_hits
-
-        @segment_matches[segment_key] = matches
       end
 
       def flag_result(feature_name, feature, segment_override)

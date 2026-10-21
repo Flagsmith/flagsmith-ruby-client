@@ -43,7 +43,7 @@ module Flagsmith
     def evaluate_segments(evaluation_context, resolved_flags)
       return [], {} if evaluation_context[:segments].nil?
 
-      matched_segments = get_sound_segments_from_context(evaluation_context, resolved_flags)
+      matched_segments = evaluation_context[:segments].values.select { |segment| resolved_flags.segment_matches?(segment) }
 
       segments = matched_segments.map do |segment|
         { name: segment[:name], metadata: segment[:metadata] }.compact
@@ -151,19 +151,6 @@ module Flagsmith
     end
 
     private
-
-    # Segments whose evaluation cut a dependency cycle rest on an unresolved flag, so they are skipped either way
-    def get_sound_segments_from_context(evaluation_context, resolved_flags)
-      cycle_hits = resolved_flags.cycle_hits
-
-      evaluation_context[:segments].values.select do |segment|
-        matches = context_in_segment?(evaluation_context, segment)
-        next matches if resolved_flags.cycle_hits == cycle_hits
-
-        cycle_hits = resolved_flags.cycle_hits
-        false
-      end
-    end
 
     # Flags resolved while evaluating segment conditions take precedence, as they were resolved with the cycle guard
     def apply_resolved_flags(flags, resolved_flags)
