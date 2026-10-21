@@ -1,5 +1,13 @@
 # Changelog
 
+## [5.0.2](https://github.com/Flagsmith/flagsmith-ruby-client/compare/v5.0.1...v5.0.2) (2026-10-21)
+
+
+### CI
+
+* Label Renovate's SDK spec bump PRs ([#111](https://github.com/Flagsmith/flagsmith-ruby-client/issues/111)) ([ef6c84e](https://github.com/Flagsmith/flagsmith-ruby-client/commit/ef6c84e88e953e2b7d1c2139baa5764a59b3ec25))
+* Run the Flagsmith SDK behavioural spec ([#110](https://github.com/Flagsmith/flagsmith-ruby-client/issues/110)) ([74be985](https://github.com/Flagsmith/flagsmith-ruby-client/commit/74be98598292b2c4dad634412c4ad7ad0465b268))
+
 ## [5.0.1](https://github.com/Flagsmith/flagsmith-ruby-client/compare/v5.0.0...v5.0.1) (2026-08-26)
 
 
