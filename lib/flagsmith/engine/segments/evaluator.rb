@@ -13,6 +13,7 @@ module Flagsmith
       module Evaluator # rubocop:disable Metrics/ModuleLength
         include Flagsmith::Engine::Segments::Constants
         include Flagsmith::Engine::Utils::HashFunc
+        extend Flagsmith::Engine::Utils::HashFunc
 
         module_function
 
