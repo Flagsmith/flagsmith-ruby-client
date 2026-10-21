@@ -13,6 +13,7 @@ module Flagsmith
       module Evaluator # rubocop:disable Metrics/ModuleLength
         include Flagsmith::Engine::Segments::Constants
         include Flagsmith::Engine::Utils::HashFunc
+        extend Flagsmith::Engine::Utils::HashFunc
 
         module_function
 
@@ -29,19 +30,25 @@ module Flagsmith
         end
 
         # Context-based segment evaluation
-        # Returns all segments that the identity belongs to based on segment rules evaluation
+        # Returns all segments that the context belongs to based on segment rules evaluation
         #
-        # @param context [Hash] Evaluation context containing identity and segment definitions
-        # @return [Array<Hash>] Array of segments that the identity matches
+        # @param context [Hash] Evaluation context containing segment definitions
+        # @return [Array<Hash>] Array of segments that the context matches
         def get_segments_from_context(context)
-          return [] unless context[:identity] && context[:segments]
+          return [] unless context[:segments]
 
-          context[:segments].values.select do |segment|
-            next false if segment[:rules].nil? || segment[:rules].empty?
+          context[:segments].values.select { |segment| context_in_segment?(context, segment) }
+        end
 
-            matches = segment[:rules].all? { |rule| traits_match_segment_rule_from_context(rule, segment[:key], context) }
-            matches
-          end
+        # Evaluates whether the context belongs to a segment
+        #
+        # @param context [Hash] The evaluation context
+        # @param segment [Hash] The segment definition
+        # @return [Boolean] True if every rule of the segment matches
+        def context_in_segment?(context, segment)
+          return false if segment[:rules].nil? || segment[:rules].empty?
+
+          segment[:rules].all? { |rule| traits_match_segment_rule_from_context(rule, segment[:key], context) }
         end
 
         def traits_match_segment_condition(identity_traits, condition, segment_id, identity_id)
@@ -227,10 +234,47 @@ module Flagsmith
         def get_context_value(json_path, context)
           return nil unless context && json_path&.start_with?('$.')
 
-          results = JsonPath.new(json_path, use_symbols: true).on(context)
-          results.first
+          keys = json_path_keys(json_path)
+          keys ? dig_context_value(json_path, keys, context) : compiled_json_path(json_path).first(context)
         rescue StandardError
           nil
+        end
+
+        # Digs a dotted JSONPath through hashes, deferring to JsonPath for any other node
+        #
+        # @param json_path [String] JSONPath expression
+        # @param keys [Array<Symbol>] The keys of the JSONPath
+        # @param context [Hash] The evaluation context
+        # @return [Object, nil] The value at the path or nil
+        def dig_context_value(json_path, keys, context)
+          keys.reduce(context) do |value, key|
+            return compiled_json_path(json_path).first(context) unless value.is_a?(Hash)
+            return nil unless value.key?(key)
+
+            value[key]
+          end
+        end
+
+        DOTTED_JSON_PATH = /\A\$(?:\.[\p{Alnum}_-]+)+\z/
+        JSON_PATH_KEYS = {} # rubocop:disable Style/MutableConstant
+        COMPILED_JSON_PATHS = {} # rubocop:disable Style/MutableConstant
+
+        # Splits a JSONPath made only of dotted names, which digs through hashes exactly as JsonPath does
+        #
+        # @param json_path [String] JSONPath expression
+        # @return [Array<Symbol>, false] The keys to dig, or false for any other expression
+        def json_path_keys(json_path)
+          JSON_PATH_KEYS.fetch(json_path) do
+            JSON_PATH_KEYS[json_path] = DOTTED_JSON_PATH.match?(json_path) && json_path.split('.').drop(1).map(&:to_sym)
+          end
+        end
+
+        # Compiles a JSONPath expression once, as parsing it costs more than evaluating it
+        #
+        # @param json_path [String] JSONPath expression
+        # @return [JsonPath] The compiled expression
+        def compiled_json_path(json_path)
+          COMPILED_JSON_PATHS[json_path] ||= JsonPath.new(json_path, use_symbols: true)
         end
 
         # Get identity key from context

@@ -13,10 +13,11 @@ require_relative 'segments/evaluator'
 require_relative 'segments/models'
 require_relative 'utils/hash_func'
 require_relative 'mappers'
+require_relative 'flag_dependencies'
 
 module Flagsmith
   # Core evaluation logic for feature flags
-  module Engine
+  module Engine # rubocop:disable Metrics/ModuleLength
     extend self
     include Flagsmith::Engine::Utils::HashFunc
     include Flagsmith::Engine::Features::TargetingReasons
@@ -28,25 +29,27 @@ module Flagsmith
     # @return [Hash] Evaluation result with flags and segments
     def get_evaluation_result(evaluation_context)
       evaluation_context = get_enriched_context(evaluation_context)
-      segments, segment_overrides = evaluate_segments(evaluation_context)
+      resolved_flags = LazyFlags.new
+      evaluation_context = evaluation_context.merge(flags: resolved_flags)
+      resolved_flags.bind(evaluation_context)
+
+      segments, segment_overrides = evaluate_segments(evaluation_context, resolved_flags)
       flags = evaluate_features(evaluation_context, segment_overrides)
-      {
-        flags: flags,
-        segments: segments
-      }
+      apply_resolved_flags(flags, resolved_flags) if resolved_flags.used?
+      { flags: flags, segments: segments }
     end
 
     # Returns { segments: EvaluationResultSegments; segmentOverrides: Record<string, SegmentOverride>; }
-    def evaluate_segments(evaluation_context)
+    def evaluate_segments(evaluation_context, resolved_flags)
       return [], {} if evaluation_context[:segments].nil?
 
-      identity_segments = get_segments_from_context(evaluation_context)
+      matched_segments = evaluation_context[:segments].values.select { |segment| resolved_flags.segment_matches?(segment) }
 
-      segments = identity_segments.map do |segment|
+      segments = matched_segments.map do |segment|
         { name: segment[:name], metadata: segment[:metadata] }.compact
       end
 
-      segment_overrides = process_segment_overrides(identity_segments)
+      segment_overrides = process_segment_overrides(matched_segments)
 
       [segments, segment_overrides]
     end
@@ -71,41 +74,70 @@ module Flagsmith
 
     def evaluate_features(evaluation_context, segment_overrides)
       identity_key = get_identity_key(evaluation_context)
+      targeted_feature_names = get_targeted_feature_names(evaluation_context)
 
       (evaluation_context[:features] || {}).each_with_object({}) do |(_, feature), flags|
         segment_override = segment_overrides[feature[:name]]
         final_feature = segment_override ? segment_override[:feature] : feature
+        reason = segment_override ? get_targeting_match_reason(segment_override) : get_fallback_reason(feature[:name], targeted_feature_names)
 
-        flag_result = build_flag_result(final_feature, identity_key, segment_override)
-        flags[final_feature[:name].to_sym] = flag_result
+        flags[final_feature[:name].to_sym] = get_flag_result(final_feature, identity_key, reason)
       end
     end
 
-    # Returns {value: any; reason?: string}
-    def evaluate_feature_value(feature, identity_key = nil)
-      return get_multivariate_feature_value(feature, identity_key) if feature[:variants]&.any? && identity_key
+    # Returns {name: string; enabled: boolean; value: any; reason: string; variant?: string; metadata?: any}
+    def get_flag_result(feature, identity_key, reason)
+      value = feature[:value]
+      variant = nil
 
-      { value: feature[:value], reason: nil }
+      if identity_key && feature[:variants]&.any?
+        variant = 'control'
+        matching_variant = get_multivariate_feature_value(feature, identity_key)
+        value, variant, reason = matching_variant.values_at(:value, :variant, :reason) if matching_variant
+      end
+
+      flag_result = { name: feature[:name], enabled: feature[:enabled], value: value, reason: reason, variant: variant }
+      flag_result[:metadata] = feature[:metadata] if feature[:metadata]
+      flag_result
     end
 
-    # Returns {value: any; reason?: string}
+    # Returns {value: any; variant?: string; reason: string} or nil
     def get_multivariate_feature_value(feature, identity_key)
       percentage_value = hashed_percentage_for_object_ids([feature[:key], identity_key])
       sorted_variants = (feature[:variants] || []).sort_by { |v| v[:priority] || WEAKEST_PRIORITY }
 
-      variant = find_matching_variant(sorted_variants, percentage_value)
-      variant || { value: feature[:value], reason: nil }
+      find_matching_variant(sorted_variants, percentage_value)
     end
 
     def find_matching_variant(sorted_variants, percentage_value)
       start_percentage = 0
       sorted_variants.each do |variant|
         limit = start_percentage + variant[:weight]
-        return { value: variant[:value], reason: "#{TARGETING_REASON_SPLIT}; weight=#{variant[:weight]}" } if start_percentage <= percentage_value && percentage_value < limit
+        if start_percentage <= percentage_value && percentage_value < limit
+          return { value: variant[:value], variant: variant[:key], reason: "#{TARGETING_REASON_SPLIT}; weight=#{variant[:weight]}" }
+        end
 
         start_percentage = limit
       end
       nil
+    end
+
+    # Returns the names of the features overridden by at least one segment
+    def get_targeted_feature_names(evaluation_context)
+      names = {}
+      evaluation_context[:segments]&.each_value do |segment|
+        segment[:overrides]&.each { |override| names[override[:name]] = true }
+      end
+      names
+    end
+
+    # Returns DEFAULT for a feature whose segment overrides did not match, STATIC for a feature without any
+    def get_fallback_reason(feature_name, targeted_feature_names)
+      targeted_feature_names.key?(feature_name) ? TARGETING_REASON_DEFAULT : TARGETING_REASON_STATIC
+    end
+
+    def get_targeting_match_reason(segment_override)
+      "#{TARGETING_REASON_TARGETING_MATCH}; segment=#{segment_override[:segment_name]}"
     end
 
     # returns boolean
@@ -114,20 +146,18 @@ module Flagsmith
       !current_override || stronger_priority?(override[:priority], current_override[:feature][:priority])
     end
 
+    def stronger_priority?(priority_a, priority_b)
+      (priority_a || WEAKEST_PRIORITY) < (priority_b || WEAKEST_PRIORITY)
+    end
+
     private
 
-    def build_flag_result(feature, identity_key, segment_override)
-      evaluated = evaluate_feature_value(feature, identity_key)
-
-      flag_result = {
-        name: feature[:name],
-        enabled: feature[:enabled],
-        value: evaluated[:value],
-        reason: evaluated[:reason] || (segment_override ? "#{TARGETING_REASON_TARGETING_MATCH}; segment=#{segment_override[:segment_name]}" : TARGETING_REASON_DEFAULT)
-      }
-
-      flag_result[:metadata] = feature[:metadata] if feature[:metadata]
-      flag_result
+    # Flags resolved while evaluating segment conditions take precedence, as they were resolved with the cycle guard
+    def apply_resolved_flags(flags, resolved_flags)
+      resolved_flags.each { |feature_name, flag_result| flags[feature_name] = flag_result }
+      resolved_flags.cyclic_feature_names.each do |feature_name|
+        flags[feature_name] = flags[feature_name].merge(reason: TARGETING_REASON_CIRCULAR_DEPENDENCY) if flags.key?(feature_name)
+      end
     end
 
     # Extract identity key from evaluation context
@@ -138,10 +168,6 @@ module Flagsmith
       return nil unless evaluation_context[:identity]
 
       evaluation_context[:identity][:key]
-    end
-
-    def stronger_priority?(priority_a, priority_b)
-      (priority_a || WEAKEST_PRIORITY) < (priority_b || WEAKEST_PRIORITY)
     end
   end
 end
