@@ -233,10 +233,47 @@ module Flagsmith
         def get_context_value(json_path, context)
           return nil unless context && json_path&.start_with?('$.')
 
-          results = JsonPath.new(json_path, use_symbols: true).on(context)
-          results.first
+          keys = json_path_keys(json_path)
+          keys ? dig_context_value(json_path, keys, context) : compiled_json_path(json_path).first(context)
         rescue StandardError
           nil
+        end
+
+        # Digs a dotted JSONPath through hashes, deferring to JsonPath for any other node
+        #
+        # @param json_path [String] JSONPath expression
+        # @param keys [Array<Symbol>] The keys of the JSONPath
+        # @param context [Hash] The evaluation context
+        # @return [Object, nil] The value at the path or nil
+        def dig_context_value(json_path, keys, context)
+          keys.reduce(context) do |value, key|
+            return compiled_json_path(json_path).first(context) unless value.is_a?(Hash)
+            return nil unless value.key?(key)
+
+            value[key]
+          end
+        end
+
+        DOTTED_JSON_PATH = /\A\$(?:\.[\p{Alnum}_-]+)+\z/
+        JSON_PATH_KEYS = {} # rubocop:disable Style/MutableConstant
+        COMPILED_JSON_PATHS = {} # rubocop:disable Style/MutableConstant
+
+        # Splits a JSONPath made only of dotted names, which digs through hashes exactly as JsonPath does
+        #
+        # @param json_path [String] JSONPath expression
+        # @return [Array<Symbol>, false] The keys to dig, or false for any other expression
+        def json_path_keys(json_path)
+          JSON_PATH_KEYS.fetch(json_path) do
+            JSON_PATH_KEYS[json_path] = DOTTED_JSON_PATH.match?(json_path) && json_path.split('.').drop(1).map(&:to_sym)
+          end
+        end
+
+        # Compiles a JSONPath expression once, as parsing it costs more than evaluating it
+        #
+        # @param json_path [String] JSONPath expression
+        # @return [JsonPath] The compiled expression
+        def compiled_json_path(json_path)
+          COMPILED_JSON_PATHS[json_path] ||= JsonPath.new(json_path, use_symbols: true)
         end
 
         # Get identity key from context

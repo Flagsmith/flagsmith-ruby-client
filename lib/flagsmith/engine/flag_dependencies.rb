@@ -6,21 +6,22 @@ module Flagsmith
   module Engine
     # The `$.flags` mapping of an evaluation context, resolving a flag when a segment condition first reads it.
     class LazyFlags < Hash
-      # Names of the flags found to be in a dependency cycle.
-      attr_reader :cyclic_feature_names
-
       # Incremented whenever a cycle is cut, so a segment evaluated meanwhile is known to rest on an unresolved flag.
       attr_accessor :cycle_hits
 
       def initialize
         super() { |_, feature_name| resolve(feature_name) }
-        @cyclic_feature_names = Set.new
         @cycle_hits = 0
         @used = false
       end
 
       def bind(context)
         @context = context
+      end
+
+      # Names of the flags found to be in a dependency cycle.
+      def cyclic_feature_names
+        @cyclic_feature_names ||= Set.new
       end
 
       # Whether a segment condition has read a flag.

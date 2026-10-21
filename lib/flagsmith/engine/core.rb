@@ -124,14 +124,16 @@ module Flagsmith
 
     # Returns the names of the features overridden by at least one segment
     def get_targeted_feature_names(evaluation_context)
-      (evaluation_context[:segments] || {}).each_value.with_object(Set.new) do |segment, names|
-        Array(segment[:overrides]).each { |override| names << override[:name] }
+      names = {}
+      evaluation_context[:segments]&.each_value do |segment|
+        segment[:overrides]&.each { |override| names[override[:name]] = true }
       end
+      names
     end
 
     # Returns DEFAULT for a feature whose segment overrides did not match, STATIC for a feature without any
     def get_fallback_reason(feature_name, targeted_feature_names)
-      targeted_feature_names.include?(feature_name) ? TARGETING_REASON_DEFAULT : TARGETING_REASON_STATIC
+      targeted_feature_names.key?(feature_name) ? TARGETING_REASON_DEFAULT : TARGETING_REASON_STATIC
     end
 
     def get_targeting_match_reason(segment_override)
@@ -156,9 +158,10 @@ module Flagsmith
 
       evaluation_context[:segments].values.select do |segment|
         matches = context_in_segment?(evaluation_context, segment)
-        sound = resolved_flags.cycle_hits == cycle_hits
+        next matches if resolved_flags.cycle_hits == cycle_hits
+
         cycle_hits = resolved_flags.cycle_hits
-        sound && matches
+        false
       end
     end
 
