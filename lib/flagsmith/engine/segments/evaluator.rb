@@ -29,19 +29,25 @@ module Flagsmith
         end
 
         # Context-based segment evaluation
-        # Returns all segments that the identity belongs to based on segment rules evaluation
+        # Returns all segments that the context belongs to based on segment rules evaluation
         #
-        # @param context [Hash] Evaluation context containing identity and segment definitions
-        # @return [Array<Hash>] Array of segments that the identity matches
+        # @param context [Hash] Evaluation context containing segment definitions
+        # @return [Array<Hash>] Array of segments that the context matches
         def get_segments_from_context(context)
-          return [] unless context[:identity] && context[:segments]
+          return [] unless context[:segments]
 
-          context[:segments].values.select do |segment|
-            next false if segment[:rules].nil? || segment[:rules].empty?
+          context[:segments].values.select { |segment| context_in_segment?(context, segment) }
+        end
 
-            matches = segment[:rules].all? { |rule| traits_match_segment_rule_from_context(rule, segment[:key], context) }
-            matches
-          end
+        # Evaluates whether the context belongs to a segment
+        #
+        # @param context [Hash] The evaluation context
+        # @param segment [Hash] The segment definition
+        # @return [Boolean] True if every rule of the segment matches
+        def context_in_segment?(context, segment)
+          return false if segment[:rules].nil? || segment[:rules].empty?
+
+          segment[:rules].all? { |rule| traits_match_segment_rule_from_context(rule, segment[:key], context) }
         end
 
         def traits_match_segment_condition(identity_traits, condition, segment_id, identity_id)
