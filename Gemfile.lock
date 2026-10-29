@@ -11,6 +11,7 @@ GEM
   remote: https://rubygems.org/
   specs:
     ast (2.4.2)
+    benchmark (0.5.0)
     byebug (11.1.3)
     coderay (1.1.3)
     diff-lcs (1.5.0)
@@ -32,6 +33,7 @@ GEM
     multi_json (1.17.0)
     net-http (0.9.1)
       uri (>= 0.11.1)
+    ostruct (0.6.3)
     parallel (1.24.0)
     parser (3.3.0.4)
       ast (~> 2.4.1)
@@ -82,9 +84,11 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  benchmark
   bundler
   flagsmith!
   gem-release
+  ostruct
   pry
   pry-byebug
   rake
