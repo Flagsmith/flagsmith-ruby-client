@@ -3,6 +3,25 @@
 require 'set'
 
 module Flagsmith
+  # Started event processors, stopped together at exit. A stopped processor leaves, so it is not kept in memory.
+  module RunningEventProcessors
+    @processors = Set.new
+    @mutex = Mutex.new
+    at_exit { to_a.each(&:stop) }
+
+    def self.add(processor)
+      @mutex.synchronize { @processors.add(processor) }
+    end
+
+    def self.delete(processor)
+      @mutex.synchronize { @processors.delete(processor) }
+    end
+
+    def self.to_a
+      @mutex.synchronize { @processors.to_a }
+    end
+  end
+
   # Buffers tracking and exposure events, and sends them to the Flagsmith events API in batches.
   #
   # Events are sent every +flush_interval_seconds+, as soon as +max_buffer_items+ are buffered,
@@ -58,12 +77,13 @@ module Flagsmith
       return if @interval
 
       @interval = set_interval(@flush_interval_seconds) { flush }
-      at_exit { stop }
+      RunningEventProcessors.add(self)
     end
 
     def stop
       @flush_mutex.synchronize { clear_interval(@interval) } if @interval # never interrupts a batch being sent
       @interval = nil
+      RunningEventProcessors.delete(self)
       flush
     end
 
@@ -122,7 +142,7 @@ module Flagsmith
       return false unless event[:event] == FLAG_EXPOSURE_EVENT
       return false if @buffered_exposures.add?(event.values_at(:feature_name, :identifier, :value))
 
-      @logger.debug "Skipping duplicate #{FLAG_EXPOSURE_EVENT} event for feature #{event[:feature_name]}, identifier #{event[:identifier]}"
+      @logger.debug "Skipping duplicate #{FLAG_EXPOSURE_EVENT} event for feature #{event[:feature_name]}"
       true
     end
 

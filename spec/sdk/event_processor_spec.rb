@@ -99,7 +99,7 @@ RSpec.describe Flagsmith::EventProcessor do
     # Then
     expect(sent_batches[0][:body]['events'].map { |event| event['identifier'] }).to eq(%w[user_123 user_456])
     expect(logger).to have_received(:debug)
-      .with('Skipping duplicate $flag_exposure event for feature banner, identifier user_123').once
+      .with('Skipping duplicate $flag_exposure event for feature banner').once
   end
 
   it 'sends an exposure again in a later flush interval' do
@@ -207,5 +207,25 @@ RSpec.describe Flagsmith::EventProcessor do
 
     # Then
     expect(sent_batches.length).to eq(1)
+  end
+
+  it 'is stopped at exit while it is running' do
+    # Given / When
+    subject.start
+
+    # Then
+    expect(Flagsmith::RunningEventProcessors.to_a).to include(subject)
+    subject.stop
+  end
+
+  it 'is not kept for exit once stopped' do
+    # Given
+    subject.start
+
+    # When
+    subject.stop
+
+    # Then
+    expect(Flagsmith::RunningEventProcessors.to_a).not_to include(subject)
   end
 end
