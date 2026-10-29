@@ -2,3 +2,7 @@
 	path = spec/engine-test-data
 	url = git@github.com:Flagsmith/engine-test-data.git
 	branch = v3.7.0
+[submodule "spec/sdk-benchmarks"]
+	path = spec/sdk-benchmarks
+	url = https://github.com/Flagsmith/sdk-benchmarks.git
+	branch = 0.0.2
