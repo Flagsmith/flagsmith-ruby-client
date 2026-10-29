@@ -152,6 +152,20 @@ RSpec.describe Flagsmith::EventProcessor do
       Timeout.timeout(5) { sleep 0.01 while sent_batches.empty? }
       expect(sent_batches[0][:body]['events'].map { |event| event['event'] }).to eq(%w[first second])
     end
+
+    it 'schedules one flush at a time while a batch is being sent' do
+      # Given
+      allow(Thread).to receive(:new).and_return(nil)
+      subject.track_event('first')
+
+      # When
+      subject.track_event('second')
+      subject.track_event('third')
+      subject.track_event('fourth')
+
+      # Then
+      expect(Thread).to have_received(:new).once
+    end
   end
 
   it 'drops events the events API rejects, without raising' do
