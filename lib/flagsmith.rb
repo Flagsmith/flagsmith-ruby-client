@@ -14,6 +14,7 @@ require 'flagsmith/sdk/api_client'
 require 'flagsmith/sdk/config'
 require 'flagsmith/sdk/errors'
 require 'flagsmith/sdk/intervals'
+require 'flagsmith/sdk/event_processor'
 require 'flagsmith/sdk/utils'
 require 'flagsmith/sdk/pooling_manager'
 require 'flagsmith/sdk/models/flags'
@@ -44,13 +45,18 @@ module Flagsmith
     # feature_value_for_identity = identity_flags.get_feature_value('foo')
     #
     # identity_segments = flagsmith.get_identity_segments('identifier', {'foo': 'bar'})
+    #
+    # With enable_events: true, experiment flags record exposures, and events can be tracked:
+    #
+    # flag = flagsmith.get_experiment_flag('foo', 'identifier', plan: 'premium')
+    # flagsmith.track_event('purchase', identifier: 'identifier', value: 42)
 
     # Available Configs.
     #
     # :environment_key, :api_url, :custom_headers, :request_timeout_seconds, :enable_local_evaluation,
     # :environment_refresh_interval_seconds, :retries, :enable_analytics, :default_flag_handler,
     # :offline_mode, :offline_handler, :polling_manager_failure_limit
-    # :realtime_api_url, :enable_realtime_updates, :logger
+    # :realtime_api_url, :enable_realtime_updates, :logger, :enable_events, :events_api_url
     #
     # You can see full description in the Flagsmith::Config
 
@@ -68,6 +74,7 @@ module Flagsmith
 
       api_client
       analytics_processor
+      event_processor
       environment_data_polling_manager
       load_offline_handler
     end
@@ -107,6 +114,12 @@ module Flagsmith
           timeout: request_timeout_seconds,
           logger: @config.logger
         )
+    end
+
+    def event_processor
+      return nil unless @config.enable_events?
+
+      @event_processor ||= Flagsmith::EventProcessor.new(@config).tap(&:start)
     end
 
     def load_offline_handler
@@ -205,6 +218,47 @@ module Flagsmith
       flag.value
     end
 
+    # Get a flag for an identity, taking the same traits as get_identity_flags, and record the
+    # identity's exposure to the variant it was served when it is in the feature's running experiment.
+    # Requires enable_events. Exposure needs remote evaluation: the environment document used by local
+    # evaluation and offline mode carries no experiment data, so no exposure is recorded in those modes.
+    def get_experiment_flag(feature_name, identifier, **traits)
+      require_events!
+      flag = get_identity_flags(identifier, **traits)[feature_name]
+      skip_reason = exposure_skip_reason(flag)
+      if skip_reason
+        @config.logger.debug "Not sending #{Flagsmith::EventProcessor::FLAG_EXPOSURE_EVENT} for feature #{feature_name}: #{skip_reason}."
+      else
+        track_exposure_event(feature_name, identifier: identifier, value: flag.variant, traits: traits,
+                                           metadata: { experiment_id: flag.experiment.id })
+      end
+      flag
+    end
+
+    # Send an application event, e.g. a conversion, to Flagsmith. Requires enable_events.
+    def track_event(event, identifier: nil, value: nil, traits: nil, metadata: nil)
+      require_events!
+      if event.start_with?('$')
+        raise Flagsmith::ClientError,
+              "Event name \"#{event}\" uses the \"$\" prefix, which is reserved for events sent by the SDK."
+      end
+
+      event_processor.track_event(event, identifier: identifier, value: value, traits: traits, metadata: metadata)
+    end
+
+    # Record that an identity was shown a variant of a feature. Requires enable_events.
+    def track_exposure_event(feature_name, identifier:, value: nil, traits: nil, metadata: nil)
+      require_events!
+      if identifier.to_s.empty?
+        @config.logger.warn "Not sending #{Flagsmith::EventProcessor::FLAG_EXPOSURE_EVENT} for feature #{feature_name}: " \
+                            'an exposure requires an identifier to reconcile with conversion events.'
+        return
+      end
+
+      event_processor.track_exposure_event(feature_name, identifier: identifier, value: value, traits: traits,
+                                                         metadata: metadata)
+    end
+
     def get_identity_segments(identifier, traits = {})
       raise Flagsmith::ClientError, 'Local evaluation or offline handler is required to obtain identity segments.' unless environment
 
@@ -220,6 +274,19 @@ module Flagsmith
     end
 
     private
+
+    def require_events!
+      raise Flagsmith::ClientError, 'The enable_events config param is required to send events.' unless event_processor
+    end
+
+    def exposure_skip_reason(flag)
+      return 'feature not found' unless flag.is_a?(Flagsmith::Flags::Flag)
+      return 'feature is disabled' unless flag.enabled?
+      return 'experiments need remote evaluation, not local evaluation or offline mode' if environment
+      return 'identity is not in a running experiment' unless flag.experiment&.in_experiment?
+
+      'flag has no variant' if flag.variant.nil?
+    end
 
     def environment_flags_from_document # rubocop:disable Metrics/MethodLength
       context = Flagsmith::Engine::Mappers.get_evaluation_context(environment)

@@ -5,12 +5,13 @@ module Flagsmith
   class Config
     DEFAULT_API_URL = 'https://edge.api.flagsmith.com/api/v1/'
     DEFAULT_REALTIME_API_URL = 'https://realtime.flagsmith.com/'
+    DEFAULT_EVENTS_API_URL = 'https://events.api.flagsmith.com/'
 
     OPTIONS = %i[
       environment_key api_url custom_headers request_timeout_seconds enable_local_evaluation
       environment_refresh_interval_seconds retries enable_analytics default_flag_handler
       offline_mode offline_handler polling_manager_failure_limit
-      realtime_api_url enable_realtime_updates logger
+      realtime_api_url enable_realtime_updates logger enable_events events_api_url
     ].freeze
 
     # Available Configs
@@ -47,6 +48,9 @@ module Flagsmith
     #                                            non-standard realtime endpoint.
     #   +enable_realtime_updates+              - A boolean to enable realtime updates.
     #   +logger+                               - Pass your logger, default is Logger.new($stdout)
+    #   +enable_events+                        - if enabled, sends tracking and exposure events to the
+    #                                            Flagsmith events API to power experiments
+    #   +events_api_url+                       - Override the URL of the Flagsmith events API
     #
     attr_reader(*OPTIONS)
 
@@ -70,6 +74,10 @@ module Flagsmith
 
     def realtime_mode?
       @enable_realtime_updates
+    end
+
+    def enable_events?
+      @enable_events
     end
 
     def environment_flags_url
@@ -106,8 +114,14 @@ module Flagsmith
       @realtime_api_url << '/' unless @realtime_api_url.end_with? '/'
       @enable_realtime_updates = opts.fetch(:enable_realtime_updates, false)
       @logger = options.fetch(:logger, Logger.new($stdout).tap { |l| l.level = :debug })
+      @enable_events = opts.fetch(:enable_events, false)
+      @events_api_url = with_trailing_slash(opts.fetch(:events_api_url, Flagsmith::Config::DEFAULT_EVENTS_API_URL))
     end
     # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
+
+    def with_trailing_slash(url)
+      url.end_with?('/') ? url : "#{url}/"
+    end
 
     class << self
       def environment_key
