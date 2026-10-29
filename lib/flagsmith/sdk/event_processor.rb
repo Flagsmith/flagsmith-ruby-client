@@ -26,6 +26,7 @@ module Flagsmith
       @buffered_exposures = Set.new
       @mutex = Mutex.new
       @flush_mutex = Mutex.new
+      @flush_pending = false
     end
 
     def track_event(event, identifier: nil, value: nil, traits: nil, metadata: nil)
@@ -38,12 +39,15 @@ module Flagsmith
                      identifier: identifier, value: value, traits: traits, metadata: metadata))
     end
 
-    def flush
+    # +scheduled+ is internal: only the flush scheduled by a full buffer clears +@flush_pending+, once it holds
+    # the buffer, so at most one such flush is waiting at a time.
+    def flush(scheduled: false)
       @flush_mutex.synchronize do
         batch = @mutex.synchronize do
           buffered = @events
           @events = []
           @buffered_exposures.clear
+          @flush_pending = false if scheduled
           buffered
         end
         send_events(batch) unless batch.empty?
@@ -103,13 +107,15 @@ module Flagsmith
     end
 
     def buffer(event)
-      full = @mutex.synchronize do
+      schedule_flush = @mutex.synchronize do
         next false if duplicate_exposure?(event)
 
         @events << event
-        @events.length >= @max_buffer_items
+        next false if @flush_pending || @events.length < @max_buffer_items
+
+        @flush_pending = true
       end
-      Thread.new { flush } if full
+      Thread.new { flush(scheduled: true) } if schedule_flush
     end
 
     def duplicate_exposure?(event)
