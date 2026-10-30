@@ -15,4 +15,4 @@ install-codspeed: $(SDK_BENCHMARKS)/environments
 
 .PHONY: benchmark
 benchmark: install-codspeed
-	SDK_BENCHMARKS=$(SDK_BENCHMARKS) codspeed run --mode walltime --config codspeed.yml
+	SDK_BENCHMARKS=$(SDK_BENCHMARKS) codspeed run --mode simulation --config codspeed.yml

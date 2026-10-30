@@ -3,7 +3,7 @@
 require 'bundler/setup'
 require_relative 'sdk_benchmark'
 
-REVOLUTIONS = 1000
+REVOLUTIONS = 10
 
 benchmark, environment = ARGV
 sdk_benchmarks_dir = ENV.fetch('SDK_BENCHMARKS', '')
