@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'uri'
+
 require 'faraday'
 require 'faraday/retry'
 
@@ -148,7 +150,10 @@ module Flagsmith
     end
 
     def environment_from_api
-      environment_data = api_client.get(@config.environment_url).body
+      started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      environment_data = fetch_environment_document
+      warn_of_slow_environment_fetch(started_at)
+
       Flagsmith::Engine::Environment.build(environment_data)
     end
 
@@ -220,6 +225,36 @@ module Flagsmith
     end
 
     private
+
+    def fetch_environment_document
+      response = api_client.get(@config.environment_url)
+      environment_data = response.body
+
+      while (page_id = next_page_id(response))
+        response = api_client.get(@config.environment_url, page_id: page_id)
+        environment_data[:identity_overrides] = Array(environment_data[:identity_overrides]) +
+                                                Array(response.body[:identity_overrides])
+      end
+
+      environment_data
+    end
+
+    def next_page_id(response)
+      url = response.headers&.[]('link').to_s[/<([^>]+)>;\s*rel="next"/, 1]
+      return unless url
+
+      URI.decode_www_form(URI(url).query.to_s).to_h['page_id']
+    end
+
+    def warn_of_slow_environment_fetch(started_at)
+      elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at
+      interval = environment_refresh_interval_seconds
+      return unless elapsed > interval
+
+      @config.logger.warn "Fetching the environment document took #{format('%.1f', elapsed)}s, longer than the " \
+                          "environment refresh interval of #{format('%.1f', interval)}s; raise the " \
+                          'refresh interval or reduce the environment size.'
+    end
 
     def environment_flags_from_document # rubocop:disable Metrics/MethodLength
       context = Flagsmith::Engine::Mappers.get_evaluation_context(environment)
