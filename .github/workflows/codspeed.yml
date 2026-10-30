@@ -14,7 +14,7 @@ permissions:
 jobs:
   benchmarks:
     name: Run benchmarks
-    runs-on: ubuntu-latest
+    runs-on: codspeed-macro
 
     steps:
       - name: Checkout repository
@@ -27,12 +27,5 @@ jobs:
         with:
           ruby-version: '3.3'
 
-      - name: Install benchmark dependencies
-        run: make benchmark-deps
-
       - name: Run benchmarks
-        uses: CodSpeedHQ/action@61efe07e57e55bedeab750c434504de272a56e8c  # v5.6.1
-        env:
-          SDK_BENCHMARKS: spec/sdk-benchmarks
-        with:
-          mode: simulation
+        run: make benchmark
