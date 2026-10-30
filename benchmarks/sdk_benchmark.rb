@@ -33,7 +33,7 @@ class SdkBenchmark
     environment_document = File.read(File.join(sdk_benchmarks_dir, 'environments', "#{environment}.json"))
     Faraday.default_adapter = serve_environment_document(environment_document)
     @client = Flagsmith::Client.new(
-      environment_key: 'ser.benchmark',
+      environment_key: JSON.parse(environment_document).fetch('api_key'),
       api_url: 'http://flagsmith.benchmark/api/v1/',
       enable_local_evaluation: true,
       environment_refresh_interval_seconds: 86_400, # Refreshed by benchmarks only
