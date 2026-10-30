@@ -273,4 +273,23 @@ RSpec.describe Flagsmith::Engine::Mappers do
       })
     end
   end
+
+  describe '.select_identity_free_segments' do
+    it 'keeps only the segments that can be evaluated without an identity' do
+      # Given
+      segments = {
+        'on_environment' => { rules: [{ type: 'ALL', conditions: [{ property: '$.environment.name', operator: 'EQUAL', value: 'Production' }], rules: [] }] },
+        'on_flag' => { rules: [{ type: 'ANY', conditions: [{ property: '$.flags["payments"].enabled', operator: 'NOT_EQUAL', value: 'true' }], rules: [] }] },
+        'on_nested_trait' => { rules: [{ type: 'ALL', conditions: [], rules: [{ type: 'ANY', conditions: [{ property: 'plan', operator: 'IS_NOT_SET', value: nil }], rules: [] }] }] },
+        'on_identifier' => { rules: [{ type: 'ALL', conditions: [{ property: '$.identity.identifier', operator: 'IN', value: ['user-1'] }], rules: [] }] },
+        'on_identity_split' => { rules: [{ type: 'ALL', conditions: [{ property: nil, operator: 'PERCENTAGE_SPLIT', value: '50' }], rules: [] }] }
+      }
+
+      # When
+      identity_free_segments = described_class.select_identity_free_segments(segments)
+
+      # Then
+      expect(identity_free_segments.keys).to eq(%w[on_environment on_flag])
+    end
+  end
 end

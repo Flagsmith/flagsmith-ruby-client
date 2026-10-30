@@ -11,6 +11,9 @@ module Flagsmith
       STRONGEST_PRIORITY = Float::INFINITY
       WEAKEST_PRIORITY = -Float::INFINITY
 
+      # Condition properties resolvable without an identity
+      IDENTITY_FREE_PROPERTY_PREFIXES = ['$.environment.', '$.environment[', '$.flags.', '$.flags['].freeze
+
       # @param environment [Flagsmith::Engine::Environment] The environment model
       # @param identity [Flagsmith::Engine::Identity, nil] Optional identity model
       # @param override_traits [Array<Flagsmith::Engine::Identities::Trait>, nil] Optional override traits
@@ -36,6 +39,34 @@ module Flagsmith
 
         context
       end
+
+      # Maps environment model to an evaluation context for flags served without an identity
+      #
+      # @param environment [Flagsmith::Engine::Environment] The environment model
+      # @return [Hash] Context with :environment, :features, and the :segments not needing an identity
+      def self.get_environment_flags_evaluation_context(environment)
+        {
+          environment: Environment.build_environment_context(environment),
+          features: Environment.build_features_context(environment.feature_states),
+          segments: select_identity_free_segments(Segments.build_segments_context(environment.project.segments))
+        }
+      end
+
+      # Selects the segments that can be evaluated without an identity, i.e. reading neither identity nor traits
+      #
+      # @param segments [Hash] Segments context, keyed by segment key
+      # @return [Hash] Segments context without the segments needing an identity
+      def self.select_identity_free_segments(segments)
+        segments.select { |_, segment| identity_free_rules?(segment[:rules]) }
+      end
+
+      def self.identity_free_rules?(rules)
+        Array(rules).all? do |rule|
+          Array(rule[:conditions]).all? { |condition| condition[:property].to_s.start_with?(*IDENTITY_FREE_PROPERTY_PREFIXES) } &&
+            identity_free_rules?(rule[:rules])
+        end
+      end
+      private_class_method :identity_free_rules?
 
       # Maps identity model to identity context
       #
