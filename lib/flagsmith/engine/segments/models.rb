@@ -42,9 +42,9 @@ module Flagsmith
           LESS_THAN => ->(other_value, self_value) { (other_value || false) && other_value < self_value },
           LESS_THAN_INCLUSIVE => ->(other_value, self_value) { (other_value || false) && other_value <= self_value },
           NOT_EQUAL => ->(other_value, self_value) { other_value != self_value },
-          CONTAINS => ->(other_value, self_value) { (other_value || false) && other_value.include?(self_value) },
+          CONTAINS => ->(other_value, self_value) { other_value.is_a?(String) && other_value.include?(self_value) },
 
-          NOT_CONTAINS => ->(other_value, self_value) { (other_value || false) && !other_value.include?(self_value) },
+          NOT_CONTAINS => ->(other_value, self_value) { other_value.is_a?(String) && !other_value.include?(self_value) },
           REGEX => ->(other_value, self_value) { (other_value || false) && other_value.to_s.match?(self_value) }
         }.freeze
 
@@ -86,11 +86,8 @@ module Flagsmith
           'Semantic::Version' => ->(v) { Semantic::Version.new(v.to_s.gsub(/:semver$/, '')) },
           'TrueClass' => ->(v) { ['True', 'true', 'TRUE', true, 1, '1'].include?(v) },
           'FalseClass' => ->(v) { !['False', 'false', 'FALSE', false].include?(v) },
-          'Integer' => lambda { |v|
-            i = v.to_i
-            i.to_s == v.to_s ? i : v
-          },
-          'Float' => ->(v) { Float(v, exception: false) || v }
+          'Integer' => ->(v) { Integer(v.to_s, 10) },
+          'Float' => ->(v) { Float(v.to_s) }
         }.freeze
 
         def format_to_type_of(input)
