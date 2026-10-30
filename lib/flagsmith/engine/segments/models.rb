@@ -77,6 +77,8 @@ module Flagsmith
           type_as_trait_value = format_to_type_of(trait_value)
           formatted_value = type_as_trait_value ? type_as_trait_value.call(@value) : @value
           MATCHING_FUNCTIONS[operator]&.call(trait_value, formatted_value)
+        rescue ArgumentError # Rule value not coercible to the trait value's type, e.g. 2 > '1.5'
+          false
         end
 
         TYPE_CONVERTERS = {
@@ -88,10 +90,7 @@ module Flagsmith
             i = v.to_i
             i.to_s == v.to_s ? i : v
           },
-          'Float' => lambda { |v|
-            f = v.to_f
-            f.to_s == v.to_s ? f : v
-          }
+          'Float' => ->(v) { Float(v, exception: false) || v }
         }.freeze
 
         def format_to_type_of(input)
