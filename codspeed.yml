@@ -1,33 +1,5 @@
 $schema: https://raw.githubusercontent.com/CodSpeedHQ/codspeed/refs/heads/main/schemas/codspeed.schema.json
 
 benchmarks:
-  - name: getEnvironmentFlags[small]
-    exec: ruby benchmarks/run.rb getEnvironmentFlags small
-  - name: getEnvironmentFlags[medium]
-    exec: ruby benchmarks/run.rb getEnvironmentFlags medium
-  - name: getEnvironmentFlags[large]
-    exec: ruby benchmarks/run.rb getEnvironmentFlags large
-  - name: getIdentityFlagsWithIdentityOverrides[small]
-    exec: ruby benchmarks/run.rb getIdentityFlagsWithIdentityOverrides small
-  - name: getIdentityFlagsWithIdentityOverrides[medium]
-    exec: ruby benchmarks/run.rb getIdentityFlagsWithIdentityOverrides medium
-  - name: getIdentityFlagsWithIdentityOverrides[large]
-    exec: ruby benchmarks/run.rb getIdentityFlagsWithIdentityOverrides large
-  - name: getIdentityFlagsNoTraits[small]
-    exec: ruby benchmarks/run.rb getIdentityFlagsNoTraits small
-  - name: getIdentityFlagsNoTraits[medium]
-    exec: ruby benchmarks/run.rb getIdentityFlagsNoTraits medium
-  - name: getIdentityFlagsNoTraits[large]
-    exec: ruby benchmarks/run.rb getIdentityFlagsNoTraits large
-  - name: getIdentityFlagsWithTraits[small]
-    exec: ruby benchmarks/run.rb getIdentityFlagsWithTraits small
-  - name: getIdentityFlagsWithTraits[medium]
-    exec: ruby benchmarks/run.rb getIdentityFlagsWithTraits medium
-  - name: getIdentityFlagsWithTraits[large]
-    exec: ruby benchmarks/run.rb getIdentityFlagsWithTraits large
-  - name: getIdentitySegmentsWithTraits[small]
-    exec: ruby benchmarks/run.rb getIdentitySegmentsWithTraits small
-  - name: getIdentitySegmentsWithTraits[medium]
-    exec: ruby benchmarks/run.rb getIdentitySegmentsWithTraits medium
-  - name: getIdentitySegmentsWithTraits[large]
-    exec: ruby benchmarks/run.rb getIdentitySegmentsWithTraits large
+  - name: SDK benchmarks
+    entrypoint: ruby benchmarks/run.rb

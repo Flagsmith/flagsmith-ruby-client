@@ -6,3 +6,6 @@
 	path = spec/sdk-benchmarks
 	url = https://github.com/Flagsmith/sdk-benchmarks.git
 	branch = 0.0.2
+[submodule "benchmarks/codspeed/instrument-hooks"]
+	path = benchmarks/codspeed/instrument-hooks
+	url = https://github.com/CodSpeedHQ/instrument-hooks.git
