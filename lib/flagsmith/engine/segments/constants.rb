@@ -11,6 +11,9 @@ module Flagsmith
 
         RULE_TYPES = [ALL_RULE, ANY_RULE, NONE_RULE].freeze
 
+        # Segment override and variant priority: the lowest wins
+        DEFAULT_PRIORITY = Float::INFINITY
+
         # Segment Condition Operators
         EQUAL = 'EQUAL'
         GREATER_THAN = 'GREATER_THAN'

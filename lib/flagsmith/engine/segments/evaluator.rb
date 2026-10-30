@@ -14,6 +14,9 @@ module Flagsmith
         include Flagsmith::Engine::Segments::Constants
         include Flagsmith::Engine::Utils::HashFunc
 
+        # Compiled JSONPath queries, keyed by condition property
+        JSON_PATHS = Hash.new { |json_paths, json_path| json_paths[json_path] = JsonPath.new(json_path, use_symbols: true) }
+
         module_function
 
         def get_enriched_context(context)
@@ -36,12 +39,19 @@ module Flagsmith
         def get_segments_from_context(context)
           return [] unless context[:identity] && context[:segments]
 
-          context[:segments].values.select do |segment|
-            next false if segment[:rules].nil? || segment[:rules].empty?
+          context[:segments].values.select { |segment| context_in_segment?(context, segment) }
+        end
 
-            matches = segment[:rules].all? { |rule| traits_match_segment_rule_from_context(rule, segment[:key], context) }
-            matches
-          end
+        # Whether the context belongs to a segment, i.e. matches all of its rules
+        #
+        # @param context [Hash] The evaluation context
+        # @param segment [Hash] The segment context
+        # @return [Boolean] False for a segment without rules
+        def context_in_segment?(context, segment)
+          rules = segment[:rules]
+          return false if rules.nil? || rules.empty?
+
+          rules.all? { |rule| traits_match_segment_rule_from_context(rule, segment[:key], context) }
         end
 
         def traits_match_segment_condition(identity_traits, condition, segment_id, identity_id)
@@ -227,8 +237,7 @@ module Flagsmith
         def get_context_value(json_path, context)
           return nil unless context && json_path&.start_with?('$.')
 
-          results = JsonPath.new(json_path, use_symbols: true).on(context)
-          results.first
+          JSON_PATHS[json_path].first(context)
         rescue StandardError
           nil
         end

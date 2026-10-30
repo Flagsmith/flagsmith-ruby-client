@@ -222,13 +222,12 @@ module Flagsmith
     private
 
     def environment_flags_from_document # rubocop:disable Metrics/MethodLength
-      context = Flagsmith::Engine::Mappers.get_evaluation_context(environment)
-
-      unless context
+      unless environment
         raise Flagsmith::ClientError,
               'Unable to get flags. No environment present.'
       end
 
+      context = Flagsmith::Engine::Mappers.get_environment_flags_evaluation_context(environment)
       evaluation_result = Flagsmith::Engine.get_evaluation_result(context)
 
       Flagsmith::Flags::Collection.from_evaluation_result(
