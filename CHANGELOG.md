@@ -1,5 +1,26 @@
 # Changelog
 
+## [5.1.0](https://github.com/Flagsmith/flagsmith-ruby-client/compare/v5.0.1...v5.1.0) (2026-10-30)
+
+
+### Features
+
+* Evaluate flags that depend on other flags ([#120](https://github.com/Flagsmith/flagsmith-ruby-client/issues/120)) ([e4efc8f](https://github.com/Flagsmith/flagsmith-ruby-client/commit/e4efc8f36b7edc647bcd696b199775d7e22ddc63))
+* Ruby 4 support ([#116](https://github.com/Flagsmith/flagsmith-ruby-client/issues/116)) ([51544ab](https://github.com/Flagsmith/flagsmith-ruby-client/commit/51544abcfc593efc5d0bb8043744013526a8e488))
+
+
+### Bug Fixes
+
+* Align numeric trait conditions with flagsmith-engine ([#118](https://github.com/Flagsmith/flagsmith-ruby-client/issues/118)) ([5b154ca](https://github.com/Flagsmith/flagsmith-ruby-client/commit/5b154caab68f746d62dbfa05280b6a19b9277223))
+
+
+### CI
+
+* Benchmark the SDK with CodSpeed ([#117](https://github.com/Flagsmith/flagsmith-ruby-client/issues/117)) ([a95445c](https://github.com/Flagsmith/flagsmith-ruby-client/commit/a95445c3a6580153c49ef19bcb5f58807ddaa624))
+* Label Renovate's SDK spec bump PRs ([#111](https://github.com/Flagsmith/flagsmith-ruby-client/issues/111)) ([ef6c84e](https://github.com/Flagsmith/flagsmith-ruby-client/commit/ef6c84e88e953e2b7d1c2139baa5764a59b3ec25))
+* Pin test runner to ubuntu-24.04 for Ruby 3.0 support ([#115](https://github.com/Flagsmith/flagsmith-ruby-client/issues/115)) ([f10b360](https://github.com/Flagsmith/flagsmith-ruby-client/commit/f10b360da6940c037ffb02c7b8e1d01f1d2385c3))
+* Run the Flagsmith SDK behavioural spec ([#110](https://github.com/Flagsmith/flagsmith-ruby-client/issues/110)) ([74be985](https://github.com/Flagsmith/flagsmith-ruby-client/commit/74be98598292b2c4dad634412c4ad7ad0465b268))
+
 ## [5.0.1](https://github.com/Flagsmith/flagsmith-ruby-client/compare/v5.0.0...v5.0.1) (2026-08-26)
 
 
