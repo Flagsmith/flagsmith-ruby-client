@@ -14,7 +14,7 @@ permissions:
 jobs:
   benchmarks:
     name: Run benchmarks
-    runs-on: codspeed-macro
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
