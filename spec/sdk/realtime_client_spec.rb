@@ -61,6 +61,7 @@ RSpec.describe Flagsmith::Client do
       # Mock the methods to avoid initialization interferring.
       allow_any_instance_of(Flagsmith::Client).to receive(:api_client)
       allow_any_instance_of(Flagsmith::Client).to receive(:analytics_processor)
+      allow_any_instance_of(Flagsmith::Client).to receive(:event_processor)
       allow_any_instance_of(Flagsmith::Client).to receive(:environment_data_polling_manager)
       allow_any_instance_of(Flagsmith::Client).to receive(:engine)
       allow_any_instance_of(Flagsmith::Client).to receive(:load_offline_handler)
