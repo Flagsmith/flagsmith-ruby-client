@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.1.1](https://github.com/Flagsmith/flagsmith-ruby-client/compare/v5.1.0...v5.1.1) (2026-11-05)
+
+
+### Other
+
+* Let Renovate keep updating spec bumps the webhook handler commits to ([#123](https://github.com/Flagsmith/flagsmith-ruby-client/issues/123)) ([a6ccd7f](https://github.com/Flagsmith/flagsmith-ruby-client/commit/a6ccd7f236ebf6804545dab265175cfc38d8a547))
+
 ## [5.1.0](https://github.com/Flagsmith/flagsmith-ruby-client/compare/v5.0.1...v5.1.0) (2026-10-30)
 
 
