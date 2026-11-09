@@ -1,5 +1,22 @@
 # Changelog
 
+## [5.2.0](https://github.com/Flagsmith/flagsmith-ruby-client/compare/v5.1.0...v5.2.0) (2026-11-09)
+
+
+### Features
+
+* Support `getExperimentFlag`, `trackEvent` and `trackExposure` methods ([#127](https://github.com/Flagsmith/flagsmith-ruby-client/issues/127)) ([670b413](https://github.com/Flagsmith/flagsmith-ruby-client/commit/670b4136f3f198ee7a4ee3c7914f9d44997b919d))
+
+
+### Bug Fixes
+
+* Serve multivariate segment overrides their variant under local evaluation ([#128](https://github.com/Flagsmith/flagsmith-ruby-client/issues/128)) ([dbb7a83](https://github.com/Flagsmith/flagsmith-ruby-client/commit/dbb7a839168f5155d38aa3d0f018f59f82982a93))
+
+
+### Other
+
+* Let Renovate keep updating spec bumps the webhook handler commits to ([#123](https://github.com/Flagsmith/flagsmith-ruby-client/issues/123)) ([a6ccd7f](https://github.com/Flagsmith/flagsmith-ruby-client/commit/a6ccd7f236ebf6804545dab265175cfc38d8a547))
+
 ## [5.1.0](https://github.com/Flagsmith/flagsmith-ruby-client/compare/v5.0.1...v5.1.0) (2026-10-30)
 
 
