@@ -84,6 +84,7 @@ module Flagsmith
         raise Flagsmith::ClientError,
               'The offline_mode config param requires a matching offline_handler.'
       end
+      raise Flagsmith::ClientError, 'The enable_events config param cannot be used with offline_mode.' if @config.offline_mode? && @config.enable_events?
       return unless @config.offline_handler && @config.default_flag_handler
 
       raise Flagsmith::ClientError,
@@ -221,7 +222,7 @@ module Flagsmith
     # Get a flag for an identity, taking the same traits as get_identity_flags, and record the
     # identity's exposure to the variant it was served when it is in the feature's running experiment.
     # Requires enable_events. Exposure needs remote evaluation: the environment document used by local
-    # evaluation and offline mode carries no experiment data, so no exposure is recorded in those modes.
+    # evaluation and offline handlers carries no experiment data, so no exposure is recorded from it.
     def get_experiment_flag(feature_name, identifier, **traits)
       require_events!
       flag = get_identity_flags(identifier, **traits)[feature_name]
@@ -282,7 +283,7 @@ module Flagsmith
     def exposure_skip_reason(flag)
       return 'feature not found' unless flag.is_a?(Flagsmith::Flags::Flag)
       return 'feature is disabled' unless flag.enabled?
-      return 'experiments need remote evaluation, not local evaluation or offline mode' if environment
+      return 'flags come from the environment document, which carries no experiment data' if environment
       return 'identity is not in a running experiment' unless flag.experiment&.in_experiment?
 
       'flag has no variant' if flag.variant.nil?

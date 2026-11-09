@@ -137,7 +137,7 @@ RSpec.describe Flagsmith::Client do
     context 'when the flags come from the environment document' do
       subject do
         described_class.new(
-          environment_key: 'ser.environment-key', enable_events: true, logger: logger, offline_mode: true,
+          environment_key: 'ser.environment-key', enable_events: true, logger: logger,
           offline_handler: Flagsmith::OfflineHandlers::LocalFileHandler.new('spec/sdk/fixtures/environment.json')
         )
       end
@@ -151,7 +151,7 @@ RSpec.describe Flagsmith::Client do
         expect(subject.event_processor).not_to have_received(:track_exposure_event)
         expect(logger).to have_received(:debug).with(
           'Not sending $flag_exposure for feature some_feature: ' \
-          'experiments need remote evaluation, not local evaluation or offline mode.'
+          'flags come from the environment document, which carries no experiment data.'
         )
       end
     end
