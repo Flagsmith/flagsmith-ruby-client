@@ -40,6 +40,20 @@ RSpec.describe Flagsmith::Client do
          )
   end
 
+  it "raises an error if events are enabled in offline_mode" do
+    # Given
+    offline_handler = \
+    Flagsmith::OfflineHandlers::LocalFileHandler.new("spec/sdk/fixtures/environment.json")
+
+    # When / Then
+    expect {
+      Flagsmith::Client.new(offline_mode: true, offline_handler: offline_handler, enable_events: true)
+    }.to raise_error(
+           Flagsmith::ClientError,
+           "The enable_events config param cannot be used with offline_mode."
+         )
+  end
+
   it "raises an error if both the default_flag_handler and offline_handler are used" do
     default_flag_handler = lambda { |feature_name|
       Flagsmith::Flags::DefaultFlag.new(enabled: false, value: {}.to_json)

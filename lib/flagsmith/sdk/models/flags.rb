@@ -30,15 +30,29 @@ module Flagsmith
       end
     end
 
+    # The running experiment an identity's flag was evaluated in, as returned by the API
+    Experiment = Struct.new(:id, :name, :in_experiment, keyword_init: true) do
+      alias_method :in_experiment?, :in_experiment
+
+      def self.from_api(metadata)
+        experiment = metadata&.dig(:experiment)
+        return nil unless experiment
+
+        new(id: experiment[:id], name: experiment[:name], in_experiment: experiment[:in_experiment])
+      end
+    end
+
     # 'live' Flag class as returned by API or local evaluation
     class Flag < BaseFlag
-      attr_reader :feature_name, :feature_id, :reason
+      attr_reader :feature_name, :feature_id, :reason, :variant, :experiment
 
-      def initialize(feature_name:, enabled:, value:, feature_id:, reason: nil)
+      def initialize(feature_name:, enabled:, value:, feature_id:, reason: nil, variant: nil, experiment: nil) # rubocop:disable Metrics/ParameterLists
         super(enabled: enabled, value: value, default: false)
         @feature_name = feature_name
         @feature_id = feature_id
         @reason = reason
+        @variant = variant
+        @experiment = experiment
       end
 
       def <=>(other)
@@ -56,7 +70,9 @@ module Flagsmith
           value: value,
           enabled: enabled,
           default: default,
-          reason: reason
+          reason: reason,
+          variant: variant,
+          experiment: experiment&.to_h
         }
       end
 
@@ -75,7 +91,9 @@ module Flagsmith
             enabled: json_flag_data[:enabled],
             value: json_flag_data.fetch(:feature_state_value) { json_flag_data[:value] },
             feature_name: json_flag_data.dig(:feature, :name),
-            feature_id: json_flag_data.dig(:feature, :id)
+            feature_id: json_flag_data.dig(:feature, :id),
+            variant: json_flag_data[:variant],
+            experiment: Experiment.from_api(json_flag_data[:metadata])
           )
         end
       end
