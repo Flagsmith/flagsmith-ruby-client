@@ -207,6 +207,31 @@ RSpec.describe Flagsmith::Engine::Mappers do
       expect(feature_context[:variants][0][:priority]).not_to eq(feature_context[:variants][1][:priority])
     end
 
+    it 'serves a multivariate segment override its variant' do
+      # Given
+      segment_override = environment_json[:project][:segments][0][:feature_states][0]
+      segment_override[:multivariate_feature_state_values] = [{
+        id: 7,
+        percentage_allocation: 100,
+        multivariate_feature_option: { id: 7, value: 'segment_variant' }
+      }]
+      identity = Flagsmith::Engine::Identity.new(
+        identifier: 'test_user',
+        environment_api_key: 'B62qaMZNwfiqT76p38ggrQ',
+        identity_traits: [Flagsmith::Engine::Identities::Trait.new(trait_key: 'age', trait_value: 25)]
+      )
+
+      # When
+      context = described_class.get_evaluation_context(environment, identity)
+      result = Flagsmith::Engine.get_evaluation_result(context)
+
+      # Then
+      expect(context[:segments]['1'][:overrides][0][:variants]).to eq(
+        [{ value: 'segment_variant', weight: 100, priority: 7 }]
+      )
+      expect(result[:flags][:some_feature][:value]).to eq('segment_variant')
+    end
+
     it 'handles environment with no features' do
       # Given
       empty_env = Flagsmith::Engine::Environment.new(

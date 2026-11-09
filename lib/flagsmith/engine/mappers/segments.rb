@@ -26,24 +26,8 @@ module Flagsmith
           }
         end
 
-        def self.build_overrides(feature_states) # rubocop:disable Metrics/MethodLength
-          feature_states.map do |feature_state|
-            override_hash = {
-              key: feature_state.django_id&.to_s || feature_state.uuid,
-              name: feature_state.feature.name,
-              enabled: feature_state.enabled,
-              value: feature_state.get_value,
-              metadata: { id: feature_state.feature.id }
-            }
-            add_priority_to_override(override_hash, feature_state)
-            override_hash
-          end
-        end
-
-        def self.add_priority_to_override(override_hash, feature_state)
-          return unless feature_state.feature_segment&.priority
-
-          override_hash[:priority] = feature_state.feature_segment.priority
+        def self.build_overrides(feature_states)
+          feature_states.map { |feature_state| Environment.build_feature_hash(feature_state) }
         end
 
         def self.map_rule(rule)
