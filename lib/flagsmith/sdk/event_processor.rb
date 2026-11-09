@@ -26,7 +26,7 @@ module Flagsmith
   #
   # Events are sent every +flush_interval_seconds+, as soon as +max_buffer_items+ are buffered,
   # or on #flush. Sending events never raises into the application: failures are logged.
-  class EventProcessor
+  class EventProcessor # rubocop:disable Metrics/ClassLength
     include Flagsmith::SDK::Intervals
 
     FLAG_EXPOSURE_EVENT = '$flag_exposure'
@@ -58,19 +58,8 @@ module Flagsmith
                      identifier: identifier, value: value, traits: traits, metadata: metadata))
     end
 
-    # +scheduled+ is internal: only the flush scheduled by a full buffer clears +@flush_pending+, once it holds
-    # the buffer, so at most one such flush is waiting at a time.
-    def flush(scheduled: false)
-      @flush_mutex.synchronize do
-        batch = @mutex.synchronize do
-          buffered = @events
-          @events = []
-          @buffered_exposures.clear
-          @flush_pending = false if scheduled
-          buffered
-        end
-        send_events(batch) unless batch.empty?
-      end
+    def flush
+      drain
     end
 
     def start
@@ -88,6 +77,25 @@ module Flagsmith
     end
 
     private
+
+    # Only the flush scheduled by a full buffer clears +@flush_pending+, once it holds the buffer, so at most one
+    # such flush is waiting at a time.
+    def scheduled_flush
+      drain { @flush_pending = false }
+    end
+
+    def drain
+      @flush_mutex.synchronize do
+        batch = @mutex.synchronize do
+          buffered = @events
+          @events = []
+          @buffered_exposures.clear
+          yield if block_given?
+          buffered
+        end
+        send_events(batch) unless batch.empty?
+      end
+    end
 
     def build_connection(config)
       Faraday.new(url: config.events_api_url, headers: headers(config)) do |f|
@@ -135,7 +143,7 @@ module Flagsmith
 
         @flush_pending = true
       end
-      Thread.new { flush(scheduled: true) } if schedule_flush
+      Thread.new { scheduled_flush } if schedule_flush
     end
 
     def duplicate_exposure?(event)
