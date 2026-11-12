@@ -139,6 +139,20 @@ RSpec.describe Flagsmith::EventProcessor do
     expect(sent_batches[0][:body]['events'].length).to eq(2)
   end
 
+  it 'sends a kept batch with the next flush, even with no events tracked since' do
+    # Given
+    3.times { respond_to_events_with(503) }
+    respond_to_events_with(202)
+    subject.track_event('checkout')
+    subject.flush
+
+    # When
+    subject.flush
+
+    # Then
+    expect(sent_events).to eq([%w[checkout]] * 4)
+  end
+
   it 'sends nothing when no events were tracked' do
     # Given / When
     subject.flush
@@ -325,6 +339,82 @@ RSpec.describe Flagsmith::EventProcessor do
       expect(sent_events.last).to eq(%w[second third])
       expect(sent_events.flatten.count('first')).to eq(3)
       expect(logger).to have_received(:warn).with('Event buffer is full, dropping the oldest first event')
+    end
+
+    it 'waits for the next flush rather than attempting the kept batch again' do
+      # Given
+      3.times { respond_to_events_with(503) }
+      subject.track_event('first')
+      subject.track_event('second')
+      subject.flush
+      allow(Thread).to receive(:new).and_call_original
+
+      # When
+      subject.track_event('third')
+      subject.track_event('fourth')
+
+      # Then
+      expect(Thread).not_to have_received(:new)
+      expect(sent_events.length).to eq(3)
+    end
+
+    it 'sends a full buffer without waiting again once the kept batch is sent' do
+      # Given
+      3.times { respond_to_events_with(503) }
+      2.times { respond_to_events_with(202) }
+      subject.track_event('first')
+      subject.track_event('second')
+      subject.flush
+      Timeout.timeout(5) { sleep 0.01 while subject.instance_variable_get(:@flush_pending) }
+      subject.flush
+      allow(Thread).to receive(:new).and_call_original
+
+      # When
+      subject.track_event('third')
+      subject.track_event('fourth')
+
+      # Then
+      expect(Thread).to have_received(:new).once
+      Timeout.timeout(5) { sleep 0.01 until sent_events.last == %w[third fourth] }
+      expect(sent_events).to eq([%w[first second]] * 4 + [%w[third fourth]])
+    end
+  end
+
+  context 'when stopped' do
+    before do
+      respond_to_events_with(202)
+      subject.start
+      subject.stop
+    end
+
+    it 'tracks no more events' do
+      # Given / When
+      subject.track_event('checkout')
+      subject.send(:send_batch)
+
+      # Then
+      expect(sent_batches).to be_empty
+      expect(logger).to have_received(:debug).with('Not tracking checkout event: the client is closed')
+    end
+
+    it 'flushes nothing' do
+      # Given
+      subject.instance_variable_get(:@events) << { event: 'checkout' }
+
+      # When
+      subject.flush
+
+      # Then
+      expect(sent_batches).to be_empty
+      expect(logger).to have_received(:debug).with('Not flushing events: the client is closed')
+    end
+
+    it 'does not start again' do
+      # Given / When
+      subject.start
+
+      # Then
+      expect(Flagsmith::RunningEventProcessors.to_a).not_to include(subject)
     end
   end
 

@@ -30,7 +30,10 @@ module Flagsmith
   # A batch is sent up to +MAX_ATTEMPTS+ times, one batch at a time, backing off with full jitter between
   # attempts. A batch whose last attempt fails transiently is kept for the next flush, unless that attempt got
   # a 500. A batch the events API rejects is dropped, and an events API refusing the environment key stops
-  # event tracking. When the buffer is full, the oldest event is dropped.
+  # event tracking. When the buffer is full, the oldest event is dropped. While a failed batch is kept, a full
+  # buffer waits for the next flush rather than starting another round of attempts.
+  #
+  # Once stopped, tracking and flushing do nothing.
   class EventProcessor # rubocop:disable Metrics/ClassLength
     FLAG_EXPOSURE_EVENT = '$flag_exposure'
     ENDPOINT = 'v1/events'
@@ -68,11 +71,12 @@ module Flagsmith
     # Sends the events tracked so far, and returns once each of them has been delivered, dropped, or kept for
     # the next flush, retries included. Events another flush sent while this one waited are not sent again.
     def flush
-      send_batch(@mutex.synchronize { @tracked_count })
+      request = @mutex.synchronize { flush_request unless stopping?('flushing events') }
+      send_batch(request) if request
     end
 
     def start
-      return if @interval
+      return if @interval || @stopping
 
       @interval = Thread.new { send_batch until wait(@flush_interval_seconds) { @stopping } }
       RunningEventProcessors.add(self)
@@ -94,10 +98,13 @@ module Flagsmith
     def initialize_buffer
       @events = []
       @buffered_exposures = Set.new
-      # Events tracked so far, and how many of them were in a batch once sent
+      # Events tracked so far, how many of them were in a batch once sent, and the batches taken to send
       @tracked_count = 0
       @attempted_count = 0
+      @batch_count = 0
       @flush_pending = false
+      # Whether the buffer holds a batch whose attempts all failed
+      @holding_failed_batch = false
     end
 
     def initialize_state
@@ -112,12 +119,17 @@ module Flagsmith
 
     # Only the flush scheduled by a full buffer clears +@flush_pending+, once it holds the buffer, so at most one
     # such flush is waiting at a time.
-    def scheduled_flush(tracked_count)
-      send_batch(tracked_count) { @flush_pending = false }
+    def scheduled_flush(request)
+      send_batch(request) { @flush_pending = false }
     end
 
-    # Sends the buffered events as one batch. Given +tracked_count+, does nothing if every event tracked up to it
-    # was in a batch sent already.
+    # What a flush requested now asks for: the events tracked so far, as long as no batch taken since sent them
+    def flush_request
+      [@tracked_count, @batch_count]
+    end
+
+    # Sends the buffered events as one batch. Given a +flush_request+, does nothing if a batch taken since the
+    # request sent every event tracked up to it.
     def send_batch(...)
       @flush_mutex.synchronize do
         batch, attempted_count = take_batch(...)
@@ -127,13 +139,22 @@ module Flagsmith
       @logger.error "Unable to send events to the Flagsmith events API: #{e}"
     end
 
-    def take_batch(tracked_count = nil)
+    def take_batch(request = nil)
       @mutex.synchronize do
         yield if block_given?
-        next if @events.empty? || (tracked_count && @attempted_count >= tracked_count)
+        next if @events.empty? || sent_since?(request)
 
+        @holding_failed_batch = false
+        @batch_count += 1
         [clear_buffer, @tracked_count]
       end
+    end
+
+    def sent_since?(request)
+      return false unless request
+
+      tracked_count, batch_count = request
+      @batch_count > batch_count && @attempted_count >= tracked_count
     end
 
     # Returns the events the buffer held
@@ -147,12 +168,17 @@ module Flagsmith
     def settle(batch, outcome, attempted_count)
       @mutex.synchronize do
         @attempted_count = attempted_count
-        @events = (batch + @events).last(@max_buffer_items) if outcome == :kept
+        hold_failed_batch(batch) if outcome == :kept
         next unless outcome == :refused
 
         @refused = true
         clear_buffer
       end
+    end
+
+    def hold_failed_batch(batch)
+      @events = (batch + @events).last(@max_buffer_items)
+      @holding_failed_batch = true
     end
 
     # Returns :delivered, :dropped, :kept or :refused
@@ -268,18 +294,31 @@ module Flagsmith
     end
 
     def buffer(event)
-      tracked_count = @mutex.synchronize do
-        next if refused?(event) || duplicate_exposure?(event)
+      request = @mutex.synchronize do
+        next if stopping?("tracking #{event[:event]} event") || refused?(event) || duplicate_exposure?(event)
 
         drop_oldest if @events.length >= @max_buffer_items
         @events << event
         @tracked_count += 1
-        next if @flush_pending || @events.length < @max_buffer_items
+        next unless full_buffer_flush_due?
 
         @flush_pending = true
-        @tracked_count
+        flush_request
       end
-      Thread.new { scheduled_flush(tracked_count) } if tracked_count
+      Thread.new { scheduled_flush(request) } if request
+    end
+
+    # A full buffer is flushed at once, unless such a flush is already waiting, or it holds a failed batch,
+    # which waits for the next flush.
+    def full_buffer_flush_due?
+      !@flush_pending && !@holding_failed_batch && @events.length >= @max_buffer_items
+    end
+
+    def stopping?(action)
+      return false unless @stopping
+
+      @logger.debug "Not #{action}: the client is closed"
+      true
     end
 
     def refused?(event)
