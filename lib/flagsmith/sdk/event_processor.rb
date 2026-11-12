@@ -98,10 +98,10 @@ module Flagsmith
     def initialize_buffer
       @events = []
       @buffered_exposures = Set.new
-      # Events tracked so far, how many of them were in a batch once sent, and the batches taken to send
+      # Events tracked so far, how many of them were in a batch once sent, and the batches sent
       @tracked_count = 0
       @attempted_count = 0
-      @batch_count = 0
+      @settled_count = 0
       @flush_pending = false
       # Whether the buffer holds a batch whose attempts all failed
       @holding_failed_batch = false
@@ -123,12 +123,13 @@ module Flagsmith
       send_batch(request) { @flush_pending = false }
     end
 
-    # What a flush requested now asks for: the events tracked so far, as long as no batch taken since sent them
+    # What a flush requested now asks for: the events tracked so far, unless a batch settled since, including
+    # one in flight now, sent them
     def flush_request
-      [@tracked_count, @batch_count]
+      [@tracked_count, @settled_count]
     end
 
-    # Sends the buffered events as one batch. Given a +flush_request+, does nothing if a batch taken since the
+    # Sends the buffered events as one batch. Given a +flush_request+, does nothing if a batch settled since the
     # request sent every event tracked up to it.
     def send_batch(...)
       @flush_mutex.synchronize do
@@ -145,7 +146,6 @@ module Flagsmith
         next if @events.empty? || sent_since?(request)
 
         @holding_failed_batch = false
-        @batch_count += 1
         [clear_buffer, @tracked_count]
       end
     end
@@ -153,8 +153,8 @@ module Flagsmith
     def sent_since?(request)
       return false unless request
 
-      tracked_count, batch_count = request
-      @batch_count > batch_count && @attempted_count >= tracked_count
+      tracked_count, settled_count = request
+      @settled_count > settled_count && @attempted_count >= tracked_count
     end
 
     # Returns the events the buffer held
@@ -168,6 +168,7 @@ module Flagsmith
     def settle(batch, outcome, attempted_count)
       @mutex.synchronize do
         @attempted_count = attempted_count
+        @settled_count += 1
         hold_failed_batch(batch) if outcome == :kept
         next unless outcome == :refused
 

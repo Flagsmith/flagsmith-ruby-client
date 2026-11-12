@@ -358,6 +358,24 @@ RSpec.describe Flagsmith::EventProcessor do
       expect(sent_events.length).to eq(3)
     end
 
+    it 'does not send again a batch in flight when the flush was requested' do
+      # Given
+      stubs.post('/v1/events') do |env|
+        sent_batches << { body: JSON.parse(env.body) }
+        sleep 0.05
+        [sent_batches.length > 3 ? 202 : 503, {}, '']
+      end
+      subject.track_event('first')
+      subject.track_event('second')
+      Timeout.timeout(5) { sleep 0.01 while sent_batches.empty? }
+
+      # When
+      subject.flush
+
+      # Then
+      expect(sent_events).to eq([%w[first second]] * 3)
+    end
+
     it 'sends a full buffer without waiting again once the kept batch is sent' do
       # Given
       3.times { respond_to_events_with(503) }
