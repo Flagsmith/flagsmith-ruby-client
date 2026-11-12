@@ -50,6 +50,10 @@ module Flagsmith
     #
     # flag = flagsmith.get_experiment_flag('foo', 'identifier', plan: 'premium')
     # flagsmith.track_event('purchase', identifier: 'identifier', value: 42)
+    #
+    # Close the client before the application stops, so that its buffered events are sent:
+    #
+    # flagsmith.close
 
     # Available Configs.
     #
@@ -221,8 +225,7 @@ module Flagsmith
 
     # Get a flag for an identity, taking the same traits as get_identity_flags, and record the
     # identity's exposure to the variant it was served when it is in the feature's running experiment.
-    # Requires enable_events. Exposure needs remote evaluation: the environment document used by local
-    # evaluation and offline handlers carries no experiment data, so no exposure is recorded from it.
+    # Requires enable_events.
     def get_experiment_flag(feature_name, identifier, **traits)
       require_events!
       flag = get_identity_flags(identifier, **traits)[feature_name]
@@ -260,6 +263,21 @@ module Flagsmith
                                                          metadata: metadata)
     end
 
+    # Send the events tracked so far, and return once each of them has been delivered, dropped, or kept for the
+    # next flush, retries included. Requires enable_events.
+    def flush_events
+      require_events!
+      event_processor.flush
+    end
+
+    # Stop the client's background work, and send the buffered events, waiting for at most +timeout_seconds+.
+    # Events not sent by then are lost.
+    def close(timeout_seconds: Flagsmith::EventProcessor::CLOSE_TIMEOUT_SECONDS)
+      @environment_data_polling_manager&.stop
+      @realtime_client&.running = false
+      @event_processor&.stop(timeout_seconds)
+    end
+
     def get_identity_segments(identifier, traits = {})
       raise Flagsmith::ClientError, 'Local evaluation or offline handler is required to obtain identity segments.' unless environment
 
@@ -283,7 +301,6 @@ module Flagsmith
     def exposure_skip_reason(flag)
       return 'feature not found' unless flag.is_a?(Flagsmith::Flags::Flag)
       return 'feature is disabled' unless flag.enabled?
-      return 'flags come from the environment document, which carries no experiment data' if environment
       return 'identity is not in a running experiment' unless flag.experiment&.in_experiment?
 
       'flag has no variant' if flag.variant.nil?
@@ -300,6 +317,7 @@ module Flagsmith
 
       Flagsmith::Flags::Collection.from_evaluation_result(
         evaluation_result,
+        identity: false,
         analytics_processor: analytics_processor,
         default_flag_handler: default_flag_handler,
         offline_handler: offline_handler

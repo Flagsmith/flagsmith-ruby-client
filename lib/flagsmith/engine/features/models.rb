@@ -8,7 +8,7 @@ module Flagsmith
     class FeatureState
       include Flagsmith::Engine::Utils::HashFunc
 
-      attr_reader :feature, :enabled, :django_id, :uuid, :feature_segment
+      attr_reader :feature, :enabled, :django_id, :uuid, :feature_segment, :experiment
       attr_accessor :multivariate_feature_state_values
 
       def initialize(params = {})
@@ -19,6 +19,7 @@ module Flagsmith
         @feature_state_value = params.fetch(:feature_state_value, nil)
         @uuid = params.fetch(:uuid, SecureRandom.uuid)
         @multivariate_feature_state_values = params.fetch(:multivariate_feature_state_values, [])
+        @experiment = params.fetch(:experiment, nil)
       end
 
       attr_writer :feature_state_value
@@ -66,14 +67,12 @@ module Flagsmith
       class << self
         def build(json)
           multivariate_feature_state_values = build_multivariate_values(json[:multivariate_feature_state_values])
-          attributes = json.slice(:uuid, :enabled, :django_id, :feature_state_value)
-                           .merge(feature: Flagsmith::Engine::Feature.build(json[:feature]))
-                           .merge(multivariate_feature_state_values: multivariate_feature_state_values)
-          if json.key?(:feature_segment) && !json[:feature_segment].nil?
-            attributes = attributes.merge(
-              feature_segment: Flagsmith::Engine::Features::Segment.new(json[:feature_segment])
-            )
-          end
+          attributes = json.slice(:uuid, :enabled, :django_id, :feature_state_value).merge(
+            feature: Flagsmith::Engine::Feature.build(json[:feature]),
+            multivariate_feature_state_values: multivariate_feature_state_values,
+            experiment: json.dig(:metadata, :experiment)
+          )
+          attributes[:feature_segment] = Flagsmith::Engine::Features::Segment.new(json[:feature_segment]) unless json[:feature_segment].nil?
           new(**attributes)
         end
 
@@ -113,16 +112,17 @@ module Flagsmith
     module Features
       # MultivariateFeatureOptionModel
       class MultivariateOption
-        attr_reader :value, :id
+        attr_reader :value, :id, :key
 
-        def initialize(value:, id: nil)
+        def initialize(value:, id: nil, key: nil)
           @value = value
           @id = id
+          @key = key
         end
 
         class << self
           def build(json)
-            new(**json.slice(:id, :value))
+            new(**json.slice(:id, :value, :key))
           end
         end
       end

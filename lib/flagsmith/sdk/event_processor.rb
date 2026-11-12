@@ -26,26 +26,33 @@ module Flagsmith
   #
   # Events are sent every +flush_interval_seconds+, as soon as +max_buffer_items+ are buffered,
   # or on #flush. Sending events never raises into the application: failures are logged.
+  #
+  # A batch is sent up to +MAX_ATTEMPTS+ times, one batch at a time, backing off with full jitter between
+  # attempts. A batch whose last attempt fails transiently is kept for the next flush, unless that attempt got
+  # a 500. A batch the events API rejects is dropped, and an events API refusing the environment key stops
+  # event tracking. When the buffer is full, the oldest event is dropped.
   class EventProcessor # rubocop:disable Metrics/ClassLength
-    include Flagsmith::SDK::Intervals
-
     FLAG_EXPOSURE_EVENT = '$flag_exposure'
     ENDPOINT = 'v1/events'
     FLUSH_INTERVAL_SECONDS = 10
     MAX_BUFFER_ITEMS = 1000
     REQUEST_TIMEOUT_SECONDS = 3
-    RETRIABLE_STATUSES = [500, 502, 503, 504].freeze
+    MAX_ATTEMPTS = 3
+    RETRY_BASE_SECONDS = 1
+    CLOSE_TIMEOUT_SECONDS = 5
+    # Retried along with every server error
+    RETRIED_STATUSES = [408, 429].freeze
+    REFUSED_STATUSES = [401, 403].freeze
 
-    def initialize(config, flush_interval_seconds: FLUSH_INTERVAL_SECONDS, max_buffer_items: MAX_BUFFER_ITEMS)
+    def initialize(config, flush_interval_seconds: FLUSH_INTERVAL_SECONDS, max_buffer_items: MAX_BUFFER_ITEMS,
+                   retry_base_seconds: RETRY_BASE_SECONDS)
       @logger = config.logger
       @flush_interval_seconds = flush_interval_seconds
       @max_buffer_items = max_buffer_items
+      @retry_base_seconds = retry_base_seconds
       @connection = build_connection(config)
-      @events = []
-      @buffered_exposures = Set.new
-      @mutex = Mutex.new
-      @flush_mutex = Mutex.new
-      @flush_pending = false
+      initialize_buffer
+      initialize_state
     end
 
     def track_event(event, identifier: nil, value: nil, traits: nil, metadata: nil)
@@ -58,51 +65,177 @@ module Flagsmith
                      identifier: identifier, value: value, traits: traits, metadata: metadata))
     end
 
+    # Sends the events tracked so far, and returns once each of them has been delivered, dropped, or kept for
+    # the next flush, retries included. Events another flush sent while this one waited are not sent again.
     def flush
-      drain
+      send_batch(@mutex.synchronize { @tracked_count })
     end
 
     def start
       return if @interval
 
-      @interval = set_interval(@flush_interval_seconds) { flush }
+      @interval = Thread.new { send_batch until wait(@flush_interval_seconds) { @stopping } }
       RunningEventProcessors.add(self)
     end
 
-    def stop
-      @flush_mutex.synchronize { clear_interval(@interval) } if @interval # never interrupts a batch being sent
-      @interval = nil
+    # Stops flushing every interval, and sends the buffered events, waiting for at most +timeout_seconds+.
+    # Events not sent by then are not retried.
+    def stop(timeout_seconds = CLOSE_TIMEOUT_SECONDS)
       RunningEventProcessors.delete(self)
-      flush
+      change_state { @stopping = true }
+      @interval = nil
+      final_flush = Thread.new { send_batch }
+      @logger.warn "Gave up sending events after #{timeout_seconds} seconds while closing" unless final_flush.join(timeout_seconds)
+      change_state { @closed = true }
     end
 
     private
 
-    # Only the flush scheduled by a full buffer clears +@flush_pending+, once it holds the buffer, so at most one
-    # such flush is waiting at a time.
-    def scheduled_flush
-      drain { @flush_pending = false }
+    def initialize_buffer
+      @events = []
+      @buffered_exposures = Set.new
+      # Events tracked so far, and how many of them were in a batch once sent
+      @tracked_count = 0
+      @attempted_count = 0
+      @flush_pending = false
     end
 
-    def drain
+    def initialize_state
+      @mutex = Mutex.new
+      # Held while a batch is in flight, so that one batch is sent at a time
+      @flush_mutex = Mutex.new
+      @state_changed = ConditionVariable.new
+      @refused = false
+      @stopping = false
+      @closed = false
+    end
+
+    # Only the flush scheduled by a full buffer clears +@flush_pending+, once it holds the buffer, so at most one
+    # such flush is waiting at a time.
+    def scheduled_flush(tracked_count)
+      send_batch(tracked_count) { @flush_pending = false }
+    end
+
+    # Sends the buffered events as one batch. Given +tracked_count+, does nothing if every event tracked up to it
+    # was in a batch sent already.
+    def send_batch(...)
       @flush_mutex.synchronize do
-        batch = @mutex.synchronize do
-          buffered = @events
-          @events = []
-          @buffered_exposures.clear
-          yield if block_given?
-          buffered
+        batch, attempted_count = take_batch(...)
+        settle(batch, deliver(batch), attempted_count) if batch
+      end
+    rescue StandardError => e
+      @logger.error "Unable to send events to the Flagsmith events API: #{e}"
+    end
+
+    def take_batch(tracked_count = nil)
+      @mutex.synchronize do
+        yield if block_given?
+        next if @events.empty? || (tracked_count && @attempted_count >= tracked_count)
+
+        [clear_buffer, @tracked_count]
+      end
+    end
+
+    # Returns the events the buffer held
+    def clear_buffer
+      events = @events
+      @events = []
+      @buffered_exposures.clear
+      events
+    end
+
+    def settle(batch, outcome, attempted_count)
+      @mutex.synchronize do
+        @attempted_count = attempted_count
+        @events = (batch + @events).last(@max_buffer_items) if outcome == :kept
+        next unless outcome == :refused
+
+        @refused = true
+        clear_buffer
+      end
+    end
+
+    # Returns :delivered, :dropped, :kept or :refused
+    def deliver(batch)
+      body = { events: batch }.to_json
+      status = nil
+      (1..MAX_ATTEMPTS).each do |attempt|
+        return keep(batch, 'the client is closed') if attempt > 1 && wait(backoff(attempt)) { @closed }
+
+        status = post(body, batch, attempt)
+        outcome = outcome_of(status, batch)
+        return outcome if outcome
+
+        log_failed_attempt(batch, attempt, "status #{status}") if status
+      end
+      status == 500 ? drop(batch, 'its last attempt got 500') : keep(batch, 'its last attempt failed')
+    end
+
+    # Full jitter: any wait up to the backoff, which doubles from +@retry_base_seconds+
+    def backoff(attempt)
+      rand * @retry_base_seconds * (2**(attempt - 2))
+    end
+
+    # Returns the response status, or nil when the request got none
+    def post(body, batch, attempt)
+      @connection.post(ENDPOINT, body).status
+    rescue Faraday::Error => e
+      log_failed_attempt(batch, attempt, e)
+      nil
+    end
+
+    def log_failed_attempt(batch, attempt, failure)
+      @logger.warn "Unable to send #{batch.length} events to the Flagsmith events API, " \
+                   "attempt #{attempt} of #{MAX_ATTEMPTS}: #{failure}"
+    end
+
+    # Returns the outcome of a batch given its response status, or nil to try again
+    def outcome_of(status, batch)
+      return nil if status.nil? || status >= 500 || RETRIED_STATUSES.include?(status)
+      return :delivered if (200..299).cover?(status)
+
+      if REFUSED_STATUSES.include?(status)
+        @logger.error "The Flagsmith events API refused the environment key with #{status}, stopping event tracking"
+        return :refused
+      end
+
+      drop(batch, "the events API rejected it with #{status}")
+    end
+
+    def drop(batch, reason)
+      @logger.warn "Dropping #{batch.length} events: #{reason}"
+      :dropped
+    end
+
+    def keep(batch, reason)
+      @logger.warn "Keeping #{batch.length} events for the next flush: #{reason}"
+      :kept
+    end
+
+    def change_state
+      @mutex.synchronize do
+        yield
+        @state_changed.broadcast
+      end
+    end
+
+    # Waits for at most +seconds+, until the block is true. Returns the block's value.
+    def wait(seconds)
+      deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + seconds
+      @mutex.synchronize do
+        until yield
+          remaining = deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
+          break if remaining <= 0
+
+          @state_changed.wait(@mutex, remaining)
         end
-        send_events(batch) unless batch.empty?
+        yield
       end
     end
 
     def build_connection(config)
       Faraday.new(url: config.events_api_url, headers: headers(config)) do |f|
         f.options.timeout = REQUEST_TIMEOUT_SECONDS
-        f.response :raise_error
-        f.request :retry, max: 1, interval: 1, methods: %i[post], retry_statuses: RETRIABLE_STATUSES,
-                          exceptions: [*Faraday::Retry::Middleware::DEFAULT_EXCEPTIONS, Faraday::ConnectionFailed]
       end
     end
 
@@ -135,29 +268,43 @@ module Flagsmith
     end
 
     def buffer(event)
-      schedule_flush = @mutex.synchronize do
-        next false if duplicate_exposure?(event)
+      tracked_count = @mutex.synchronize do
+        next if refused?(event) || duplicate_exposure?(event)
 
+        drop_oldest if @events.length >= @max_buffer_items
         @events << event
-        next false if @flush_pending || @events.length < @max_buffer_items
+        @tracked_count += 1
+        next if @flush_pending || @events.length < @max_buffer_items
 
         @flush_pending = true
+        @tracked_count
       end
-      Thread.new { scheduled_flush } if schedule_flush
+      Thread.new { scheduled_flush(tracked_count) } if tracked_count
+    end
+
+    def refused?(event)
+      return false unless @refused
+
+      @logger.debug "Not tracking #{event[:event]} event: the Flagsmith events API refused the environment key"
+      true
+    end
+
+    def drop_oldest
+      dropped = @events.shift
+      @buffered_exposures.delete(exposure_key(dropped)) if dropped[:event] == FLAG_EXPOSURE_EVENT
+      @logger.warn "Event buffer is full, dropping the oldest #{dropped[:event]} event"
+    end
+
+    def exposure_key(event)
+      event.values_at(:feature_name, :identifier, :value)
     end
 
     def duplicate_exposure?(event)
       return false unless event[:event] == FLAG_EXPOSURE_EVENT
-      return false if @buffered_exposures.add?(event.values_at(:feature_name, :identifier, :value))
+      return false if @buffered_exposures.add?(exposure_key(event))
 
       @logger.debug "Skipping duplicate #{FLAG_EXPOSURE_EVENT} event for feature #{event[:feature_name]}"
       true
-    end
-
-    def send_events(events)
-      @connection.post(ENDPOINT, { events: events }.to_json)
-    rescue StandardError => e
-      @logger.warn "Unable to send #{events.length} events to the Flagsmith events API, dropping them: #{e}"
     end
   end
 end

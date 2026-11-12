@@ -30,7 +30,7 @@ module Flagsmith
       end
     end
 
-    # The running experiment an identity's flag was evaluated in, as returned by the API
+    # The running experiment an identity's flag was evaluated in, as returned by the API or the environment document
     Experiment = Struct.new(:id, :name, :in_experiment, keyword_init: true) do
       alias_method :in_experiment?, :in_experiment
 
@@ -192,7 +192,9 @@ module Flagsmith
           )
         end
 
-        def from_evaluation_result(evaluation_result, **args)
+        # Only an identity is enrolled in an experiment, as with remote evaluation: environment flags,
+        # evaluated without one, are built with +identity: false+ and carry no experiment.
+        def from_evaluation_result(evaluation_result, identity: true, **args)
           to_flag_object = lambda { |flag_result, acc|
             id = flag_result.dig(:metadata, :id)
             if id.nil?
@@ -200,19 +202,21 @@ module Flagsmith
                     "FlagResult metadata.id is missing for feature \"#{flag_result[:name]}\". This indicates a bug in the SDK, please report it."
             end
 
-            acc[flag_result[:name]] = Collection.map_evaluated_flag_to_flag_result(flag_result, id)
+            acc[flag_result[:name]] = Collection.map_evaluated_flag_to_flag_result(flag_result, id, identity: identity)
           }
 
           new(evaluation_result[:flags].each_value.each_with_object({}, &to_flag_object), **args)
         end
 
-        def map_evaluated_flag_to_flag_result(flag_result, id)
+        def map_evaluated_flag_to_flag_result(flag_result, id, identity: true)
           Flagsmith::Flags::Flag.new(
             feature_name: flag_result[:name],
             enabled: flag_result[:enabled],
             value: flag_result[:value],
             feature_id: id,
-            reason: flag_result[:reason]
+            reason: flag_result[:reason],
+            variant: flag_result[:variant],
+            experiment: (Experiment.from_api(flag_result[:metadata]) if identity)
           )
         end
 

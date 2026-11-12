@@ -14,7 +14,7 @@ RSpec.describe Flagsmith::EventProcessor do
   let(:sent_batches) { [] }
   let(:max_buffer_items) { 1000 }
 
-  subject { described_class.new(config, max_buffer_items: max_buffer_items) }
+  subject { described_class.new(config, max_buffer_items: max_buffer_items, retry_base_seconds: 0) }
 
   before do
     allow(Faraday).to receive(:new).and_wrap_original do |original, *args, **options, &block|
@@ -30,6 +30,17 @@ RSpec.describe Flagsmith::EventProcessor do
       sent_batches << { headers: env.request_headers, body: JSON.parse(env.body) }
       [status, {}, '']
     end
+  end
+
+  def reset_connection_to_events
+    stubs.post('/v1/events') do |env|
+      sent_batches << { headers: env.request_headers, body: JSON.parse(env.body) }
+      raise Faraday::ConnectionFailed, 'Connection reset by peer'
+    end
+  end
+
+  def sent_events
+    sent_batches.map { |batch| batch[:body]['events'].map { |event| event['event'] } }
   end
 
   it 'sends a tracked event to the events API with its details' do
@@ -171,29 +182,150 @@ RSpec.describe Flagsmith::EventProcessor do
   it 'drops events the events API rejects, without raising' do
     # Given
     respond_to_events_with(400)
-    subject.track_event('checkout_completed')
-
-    # When
-    expect { subject.flush }.not_to raise_error
-
-    # Then
-    expect(sent_batches.length).to eq(1)
-    expect(logger).to have_received(:warn).with(/\AUnable to send 1 events to the Flagsmith events API, dropping them: /)
-  end
-
-  it 'sends events again once when the events API fails' do
-    # Given
-    respond_to_events_with(503)
     respond_to_events_with(202)
-    subject.track_event('checkout_completed')
+    subject.track_event('add_to_cart')
+    expect { subject.flush }.not_to raise_error
+    subject.track_event('checkout')
 
     # When
     subject.flush
 
     # Then
-    expect(sent_batches.length).to eq(2)
-    expect(sent_batches[1][:body]).to eq(sent_batches[0][:body])
-    expect(logger).not_to have_received(:warn)
+    expect(sent_events).to eq([%w[add_to_cart], %w[checkout]])
+    expect(logger).to have_received(:warn).with('Dropping 1 events: the events API rejected it with 400')
+  end
+
+  it 'sends a batch again until the events API accepts it' do
+    # Given
+    respond_to_events_with(503)
+    reset_connection_to_events
+    respond_to_events_with(202)
+    subject.track_event('checkout')
+
+    # When
+    subject.flush
+
+    # Then
+    expect(sent_events).to eq([%w[checkout], %w[checkout], %w[checkout]])
+    expect(logger).to have_received(:warn).with(
+      'Unable to send 1 events to the Flagsmith events API, attempt 1 of 3: status 503'
+    )
+    expect(logger).to have_received(:warn).with(
+      'Unable to send 1 events to the Flagsmith events API, attempt 2 of 3: Connection reset by peer'
+    )
+  end
+
+  it 'sends a batch again when the events API is throttling' do
+    # Given
+    respond_to_events_with(429)
+    respond_to_events_with(202)
+    subject.track_event('checkout')
+
+    # When
+    subject.flush
+
+    # Then
+    expect(sent_events).to eq([%w[checkout], %w[checkout]])
+  end
+
+  it 'backs off with full jitter, doubling from the retry base' do
+    # Given
+    processor = described_class.new(config, retry_base_seconds: 1)
+    allow(processor).to receive(:rand).and_return(1.0, 0.5)
+
+    # When / Then
+    expect(processor.send(:backoff, 2)).to eq(1.0)
+    expect(processor.send(:backoff, 3)).to eq(1.0)
+  end
+
+  it 'keeps a batch that keeps failing for the next flush, ahead of events tracked since' do
+    # Given
+    3.times { respond_to_events_with(503) }
+    respond_to_events_with(202)
+    subject.track_event('add_to_cart')
+    subject.flush
+    subject.track_event('checkout')
+
+    # When
+    subject.flush
+
+    # Then
+    expect(sent_events).to eq([%w[add_to_cart]] * 3 + [%w[add_to_cart checkout]])
+    expect(logger).to have_received(:warn).with('Keeping 1 events for the next flush: its last attempt failed')
+  end
+
+  it 'drops a batch whose last attempt gets a server error' do
+    # Given
+    2.times { respond_to_events_with(503) }
+    respond_to_events_with(500)
+    respond_to_events_with(202)
+    subject.track_event('add_to_cart')
+    subject.flush
+    subject.track_event('checkout')
+
+    # When
+    subject.flush
+
+    # Then
+    expect(sent_events).to eq([%w[add_to_cart]] * 3 + [%w[checkout]])
+    expect(logger).to have_received(:warn).with('Dropping 1 events: its last attempt got 500')
+  end
+
+  it 'keeps a batch whose last attempt fails otherwise, after server errors' do
+    # Given
+    2.times { respond_to_events_with(500) }
+    respond_to_events_with(503)
+    respond_to_events_with(202)
+    subject.track_event('add_to_cart')
+    subject.flush
+    subject.track_event('checkout')
+
+    # When
+    subject.flush
+
+    # Then
+    expect(sent_events).to eq([%w[add_to_cart]] * 3 + [%w[add_to_cart checkout]])
+  end
+
+  [401, 403].each do |status|
+    it "stops tracking events once the events API refuses the environment key with #{status}" do
+      # Given
+      respond_to_events_with(status)
+      subject.track_event('add_to_cart')
+      subject.flush
+
+      # When
+      subject.track_event('checkout')
+      subject.flush
+
+      # Then
+      expect(sent_events).to eq([%w[add_to_cart]])
+      expect(logger).to have_received(:error).with(
+        "The Flagsmith events API refused the environment key with #{status}, stopping event tracking"
+      )
+    end
+  end
+
+  context 'when the buffer is full of events the events API failed' do
+    let(:max_buffer_items) { 2 }
+
+    it 'drops the oldest event' do
+      # Given
+      3.times { respond_to_events_with(503) }
+      respond_to_events_with(202)
+      subject.track_event('first')
+      subject.track_event('second')
+      subject.flush
+
+      # When
+      subject.track_event('third')
+      subject.flush
+
+      # Then
+      expect(sent_events.last).to eq(%w[second third])
+      expect(sent_events.flatten.count('first')).to eq(3)
+      expect(logger).to have_received(:warn).with('Event buffer is full, dropping the oldest first event')
+    end
   end
 
   it 'sends the remaining events when stopped' do
@@ -207,6 +339,26 @@ RSpec.describe Flagsmith::EventProcessor do
 
     # Then
     expect(sent_batches.length).to eq(1)
+  end
+
+  it 'returns from stopping within its timeout while the events API does not answer, and retries no more' do
+    # Given
+    stubs.post('/v1/events') do |env|
+      sent_batches << { body: JSON.parse(env.body) }
+      sleep 0.5
+      [503, {}, '']
+    end
+    subject.track_event('checkout')
+
+    # When
+    started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    subject.stop(0.1)
+
+    # Then
+    expect(Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at).to be < 0.4
+    sleep 0.6
+    expect(sent_batches.length).to eq(1)
+    expect(logger).to have_received(:warn).with('Gave up sending events after 0.1 seconds while closing')
   end
 
   it 'is stopped at exit while it is running' do

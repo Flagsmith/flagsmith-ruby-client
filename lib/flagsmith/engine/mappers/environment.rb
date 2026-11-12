@@ -26,11 +26,18 @@ module Flagsmith
             name: feature_state.feature.name,
             enabled: feature_state.enabled,
             value: feature_state.get_value,
-            metadata: { id: feature_state.feature.id }
+            metadata: build_feature_metadata(feature_state)
           }
           add_variants_to_feature(feature_hash, feature_state)
           add_priority_to_feature(feature_hash, feature_state)
           feature_hash
+        end
+
+        # The running experiment a feature state belongs to, if any, is passed through to its flag
+        def self.build_feature_metadata(feature_state)
+          metadata = { id: feature_state.feature.id }
+          metadata[:experiment] = feature_state.experiment if feature_state.experiment
+          metadata
         end
 
         def self.add_variants_to_feature(feature_hash, feature_state)
@@ -39,9 +46,10 @@ module Flagsmith
           feature_hash[:variants] = feature_state.multivariate_feature_state_values.map do |mv|
             {
               value: mv.multivariate_feature_option.value,
+              key: mv.multivariate_feature_option.key,
               weight: mv.percentage_allocation,
               priority: mv.id || uuid_to_big_int(mv.mv_fs_value_uuid)
-            }
+            }.compact
           end
         end
 
