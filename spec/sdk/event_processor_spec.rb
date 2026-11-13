@@ -153,6 +153,41 @@ RSpec.describe Flagsmith::EventProcessor do
     expect(sent_events).to eq([%w[checkout]] * 4)
   end
 
+  it 'sends an exposure once when tracked again while its batch is kept' do
+    # Given
+    3.times { respond_to_events_with(503) }
+    respond_to_events_with(202)
+    subject.track_exposure_event('banner', identifier: 'user_123', value: 'treatment')
+    subject.flush
+
+    # When
+    subject.track_exposure_event('banner', identifier: 'user_123', value: 'treatment')
+    subject.flush
+
+    # Then
+    expect(sent_events.last).to eq(%w[$flag_exposure])
+  end
+
+  it 'sends an exposure once when tracked again while its batch was in flight, then kept' do
+    # Given
+    stubs.post('/v1/events') do |env|
+      sent_batches << { body: JSON.parse(env.body) }
+      sleep 0.05
+      [sent_batches.length > 3 ? 202 : 503, {}, '']
+    end
+    subject.track_exposure_event('banner', identifier: 'user_123', value: 'treatment')
+    first_flush = Thread.new { subject.flush }
+    Timeout.timeout(5) { sleep 0.01 while sent_batches.empty? }
+    subject.track_exposure_event('banner', identifier: 'user_123', value: 'treatment')
+    first_flush.join
+
+    # When
+    subject.flush
+
+    # Then
+    expect(sent_events.last).to eq(%w[$flag_exposure])
+  end
+
   it 'sends nothing when no events were tracked' do
     # Given / When
     subject.flush
@@ -467,6 +502,26 @@ RSpec.describe Flagsmith::EventProcessor do
     sleep 0.6
     expect(sent_batches.length).to eq(1)
     expect(logger).to have_received(:warn).with('Gave up sending events after 0.1 seconds while closing')
+  end
+
+  it 'takes no batch to send once stopping has returned' do
+    # Given
+    stubs.post('/v1/events') do |env|
+      sent_batches << { body: JSON.parse(env.body) }
+      sleep 0.3
+      [202, {}, '']
+    end
+    subject.track_event('first')
+    Thread.new { subject.flush }
+    Timeout.timeout(5) { sleep 0.01 while sent_batches.empty? }
+    subject.track_event('second')
+
+    # When
+    subject.stop(0.05)
+
+    # Then
+    sleep 0.5
+    expect(sent_events).to eq([%w[first]])
   end
 
   it 'is stopped at exit while it is running' do

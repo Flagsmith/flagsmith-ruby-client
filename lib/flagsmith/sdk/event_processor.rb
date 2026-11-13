@@ -83,7 +83,7 @@ module Flagsmith
     end
 
     # Stops flushing every interval, and sends the buffered events, waiting for at most +timeout_seconds+.
-    # Events not sent by then are not retried.
+    # Events not sent by then are not retried, and no batch is taken to send once it returns.
     def stop(timeout_seconds = CLOSE_TIMEOUT_SECONDS)
       RunningEventProcessors.delete(self)
       change_state { @stopping = true }
@@ -143,7 +143,7 @@ module Flagsmith
     def take_batch(request = nil)
       @mutex.synchronize do
         yield if block_given?
-        next if @events.empty? || sent_since?(request)
+        next if @closed || @events.empty? || sent_since?(request)
 
         @holding_failed_batch = false
         [clear_buffer, @tracked_count]
@@ -177,8 +177,10 @@ module Flagsmith
       end
     end
 
+    # Keeps a failed batch ahead of the events tracked since, with one of each exposure
     def hold_failed_batch(batch)
-      @events = (batch + @events).last(@max_buffer_items)
+      @buffered_exposures.clear
+      @events = (batch + @events).last(@max_buffer_items).reject { |event| duplicate_exposure?(event) }
       @holding_failed_batch = true
     end
 
