@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'strscan'
 require_relative 'constants'
 
 module Flagsmith
@@ -45,7 +46,9 @@ module Flagsmith
           CONTAINS => ->(other_value, self_value) { other_value.is_a?(String) && other_value.include?(self_value) },
 
           NOT_CONTAINS => ->(other_value, self_value) { other_value.is_a?(String) && !other_value.include?(self_value) },
-          REGEX => ->(other_value, self_value) { (other_value || false) && other_value.to_s.match?(self_value) }
+          REGEX => lambda { |other_value, self_value|
+            (other_value || false) && !StringScanner.new(other_value.to_s).match?(Regexp.new(self_value)).nil?
+          }
         }.freeze
 
         def initialize(operator:, value:, property: nil)
