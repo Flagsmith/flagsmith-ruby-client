@@ -135,24 +135,72 @@ RSpec.describe Flagsmith::Client do
     end
 
     context 'when the flags come from the environment document' do
+      let(:environment_document) do
+        JSON.parse(File.read('spec/sdk/fixtures/experiment_environment.json'), symbolize_names: true)
+      end
+
       subject do
+        allow(api_client).to receive(:get).with('environment-document/')
+                                          .and_return(OpenStruct.new(body: environment_document))
         described_class.new(
-          environment_key: 'ser.environment-key', enable_events: true, logger: logger,
-          offline_handler: Flagsmith::OfflineHandlers::LocalFileHandler.new('spec/sdk/fixtures/environment.json')
+          environment_key: 'ser.environment-key', enable_events: true, enable_local_evaluation: true, logger: logger
         )
       end
 
-      it 'returns the identity flag and records no exposure' do
+      it 'records the exposure of an identity the running experiment enrolls to its variant' do
         # Given / When
-        flag = subject.get_experiment_flag('some_feature', 'user_123')
+        flag = subject.get_experiment_flag('checkout', 'user_123', plan: 'premium')
 
         # Then
-        expect(flag.value).to eq('some-value')
-        expect(subject.event_processor).not_to have_received(:track_exposure_event)
-        expect(logger).to have_received(:debug).with(
-          'Not sending $flag_exposure for feature some_feature: ' \
-          'flags come from the environment document, which carries no experiment data.'
+        expect(flag.value).to eq('new checkout')
+        expect(flag.variant).to eq('treatment')
+        expect(flag.experiment).to eq(
+          Flagsmith::Flags::Experiment.new(id: 42, name: 'Checkout experiment', in_experiment: true)
         )
+        expect(subject.event_processor).to have_received(:track_exposure_event).with(
+          'checkout', identifier: 'user_123', value: 'treatment', traits: { plan: 'premium' }, metadata: { experiment_id: 42 }
+        )
+      end
+
+      it 'records no exposure of an identity the running experiment does not enroll' do
+        # Given / When
+        flag = subject.get_experiment_flag('checkout', 'user_123', plan: 'free')
+
+        # Then
+        expect(flag.value).to eq('control')
+        expect(flag.experiment).to eq(
+          Flagsmith::Flags::Experiment.new(id: 42, name: 'Checkout experiment', in_experiment: false)
+        )
+        expect(subject.event_processor).not_to have_received(:track_exposure_event)
+      end
+
+      it 'records no exposure of an identity with an identity override' do
+        # Given / When
+        flag = subject.get_experiment_flag('checkout', 'user_overridden')
+
+        # Then
+        expect(flag.value).to eq('override')
+        expect(flag.experiment).to be_nil
+        expect(subject.event_processor).not_to have_received(:track_exposure_event)
+      end
+
+      it 'records no exposure for a feature without a running experiment' do
+        # Given / When
+        flag = subject.get_experiment_flag('plain', 'user_123', plan: 'premium')
+
+        # Then
+        expect(flag.value).to eq('hello')
+        expect(flag.experiment).to be_nil
+        expect(subject.event_processor).not_to have_received(:track_exposure_event)
+      end
+
+      it 'serves environment flags without an experiment' do
+        # Given / When
+        flag = subject.get_environment_flags.get_flag('checkout')
+
+        # Then
+        expect(flag.value).to eq('control')
+        expect(flag.experiment).to be_nil
       end
     end
 
@@ -220,6 +268,62 @@ RSpec.describe Flagsmith::Client do
       expect(logger).to have_received(:warn).with(
         'Not sending $flag_exposure for feature banner: an exposure requires an identifier to reconcile with conversion events.'
       )
+    end
+  end
+
+  describe '#flush_events' do
+    it 'flushes the tracked events' do
+      # Given
+      allow(subject.event_processor).to receive(:flush)
+
+      # When
+      subject.flush_events
+
+      # Then
+      expect(subject.event_processor).to have_received(:flush)
+    end
+
+    context 'when events are not enabled' do
+      let(:enable_events) { false }
+
+      it 'raises an error' do
+        # Given / When / Then
+        expect { subject.flush_events }
+          .to raise_error(Flagsmith::ClientError, 'The enable_events config param is required to send events.')
+      end
+    end
+  end
+
+  describe '#close' do
+    it 'stops the event processor within the timeout' do
+      # Given
+      allow(subject.event_processor).to receive(:stop)
+
+      # When
+      subject.close(timeout_seconds: 2)
+
+      # Then
+      expect(subject.event_processor).to have_received(:stop).with(2)
+    end
+
+    it 'stops the event processor within 5 seconds by default' do
+      # Given
+      allow(subject.event_processor).to receive(:stop)
+
+      # When
+      subject.close
+
+      # Then
+      expect(subject.event_processor).to have_received(:stop).with(5)
+    end
+
+    context 'when events are not enabled' do
+      let(:enable_events) { false }
+
+      it 'closes without error' do
+        # Given / When / Then
+        expect { subject.close }.not_to raise_error
+      end
     end
   end
 

@@ -1,0 +1,84 @@
+{
+  "api_key": "B62qaMZNwfiqT76p38ggrQ",
+  "name": "Test environment",
+  "project": {
+    "name": "Test project",
+    "organisation": {
+      "feature_analytics": false,
+      "name": "Test Org",
+      "id": 1,
+      "persist_trait_data": true,
+      "stop_serving_flags": false
+    },
+    "id": 1,
+    "hide_disabled_flags": false,
+    "segments": [
+      {
+        "name": "Checkout experiment rollout",
+        "id": 7,
+        "rules": [
+          {
+            "type": "ALL",
+            "conditions": [{ "property_": "plan", "operator": "EQUAL", "value": "premium" }],
+            "rules": []
+          }
+        ],
+        "feature_states": [
+          {
+            "django_id": 2,
+            "featurestate_uuid": "c2c2c2c2-c2c2-c2c2-c2c2-c2c2c2c2c2c2",
+            "feature": { "id": 10, "name": "checkout", "type": "MULTIVARIATE" },
+            "feature_segment": { "priority": 0 },
+            "enabled": true,
+            "feature_state_value": "control",
+            "multivariate_feature_state_values": [
+              {
+                "id": 3,
+                "multivariate_feature_option": { "id": 3, "value": "new checkout", "key": "treatment" },
+                "percentage_allocation": 100,
+                "mv_fs_value_uuid": "3e3e3e3e-3e3e-3e3e-3e3e-3e3e3e3e3e3e"
+              }
+            ],
+            "metadata": { "experiment": { "id": 42, "name": "Checkout experiment", "in_experiment": true } }
+          }
+        ]
+      }
+    ]
+  },
+  "id": 1,
+  "feature_states": [
+    {
+      "django_id": 1,
+      "featurestate_uuid": "c1c1c1c1-c1c1-c1c1-c1c1-c1c1c1c1c1c1",
+      "feature": { "id": 10, "name": "checkout", "type": "MULTIVARIATE" },
+      "enabled": true,
+      "feature_state_value": "control",
+      "multivariate_feature_state_values": [],
+      "metadata": { "experiment": { "id": 42, "name": "Checkout experiment", "in_experiment": false } }
+    },
+    {
+      "django_id": 4,
+      "featurestate_uuid": "c4c4c4c4-c4c4-c4c4-c4c4-c4c4c4c4c4c4",
+      "feature": { "id": 11, "name": "plain", "type": "STANDARD" },
+      "enabled": true,
+      "feature_state_value": "hello",
+      "multivariate_feature_state_values": []
+    }
+  ],
+  "identity_overrides": [
+    {
+      "identifier": "user_overridden",
+      "identity_uuid": "0f21cde8-63c5-4e50-baca-87897fa6cd01",
+      "environment_api_key": "B62qaMZNwfiqT76p38ggrQ",
+      "identity_features": [
+        {
+          "featurestate_uuid": "c5c5c5c5-c5c5-c5c5-c5c5-c5c5c5c5c5c5",
+          "feature": { "id": 10, "name": "checkout", "type": "MULTIVARIATE" },
+          "enabled": true,
+          "feature_state_value": "override",
+          "multivariate_feature_state_values": []
+        }
+      ]
+    }
+  ]
+}
