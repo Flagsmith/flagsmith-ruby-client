@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.3.0](https://github.com/Flagsmith/flagsmith-ruby-client/compare/v5.2.0...v5.3.0) (2026-11-13)
+
+
+### Features
+
+* Retry event delivery and flush on close ([#129](https://github.com/Flagsmith/flagsmith-ruby-client/issues/129)) ([5abcc8e](https://github.com/Flagsmith/flagsmith-ruby-client/commit/5abcc8e5bc6a7b7fed6483e5731bc21cae1e3b25))
+
 ## [5.2.0](https://github.com/Flagsmith/flagsmith-ruby-client/compare/v5.1.0...v5.2.0) (2026-11-09)
 
 
