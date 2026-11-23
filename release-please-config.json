@@ -3,6 +3,8 @@
     "packages": {
         ".": {
             "release-type": "ruby",
+            "package-name": "flagsmith",
+            "version-file": "lib/flagsmith/version.rb",
             "changelog-path": "CHANGELOG.md",
             "bump-minor-pre-major": false,
             "bump-patch-for-minor-pre-major": false,
