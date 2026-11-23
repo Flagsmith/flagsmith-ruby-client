@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    flagsmith (5.4.0)
+    flagsmith (5.4.1)
       faraday (>= 2.0.1)
       faraday-retry
       jsonpath (~> 1.1)
