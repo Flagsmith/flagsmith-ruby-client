@@ -40,12 +40,15 @@ jobs:
             tag="$RELEASE_TAG"
           elif [ "$REF_TYPE" = tag ]; then
             tag="$REF_NAME"
-          else
+          elif [ "$REF_NAME" = main ]; then
             tag="v$version"
             if ! git ls-remote --exit-code --tags origin "refs/tags/$tag" > /dev/null; then
               echo "::error::Version $version from lib/flagsmith/version.rb has no $tag tag; refusing to publish an unreleased version."
               exit 1
             fi
+          else
+            echo "::error::Manual runs must start from main or a release tag, not $REF_NAME."
+            exit 1
           fi
           if [ "$tag" != "v$version" ]; then
             echo "::error::Tag $tag does not match version $version in lib/flagsmith/version.rb."
