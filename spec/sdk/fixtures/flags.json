@@ -15,7 +15,8 @@
     "enabled": false,
     "environment": 2310,
     "identity": null,
-    "feature_segment": null
+    "feature_segment": null,
+    "reason": "STATIC"
   },
   {
     "id": 8712,
@@ -33,7 +34,8 @@
     "enabled": true,
     "environment": 2310,
     "identity": null,
-    "feature_segment": null
+    "feature_segment": null,
+    "reason": "STATIC"
   },
   {
     "id": 8724,
@@ -51,7 +53,8 @@
     "enabled": false,
     "environment": 2310,
     "identity": null,
-    "feature_segment": null
+    "feature_segment": null,
+    "reason": "STATIC"
   },
   {
     "id": 8766,
@@ -69,6 +72,7 @@
     "enabled": true,
     "environment": 2310,
     "identity": null,
-    "feature_segment": 335
+    "feature_segment": 335,
+    "reason": "STATIC"
   }
 ]

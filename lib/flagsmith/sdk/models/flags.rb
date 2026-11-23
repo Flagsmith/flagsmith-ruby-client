@@ -92,6 +92,7 @@ module Flagsmith
             value: json_flag_data.fetch(:feature_state_value) { json_flag_data[:value] },
             feature_name: json_flag_data.dig(:feature, :name),
             feature_id: json_flag_data.dig(:feature, :id),
+            reason: json_flag_data[:reason],
             variant: json_flag_data[:variant],
             experiment: Experiment.from_api(json_flag_data[:metadata])
           )

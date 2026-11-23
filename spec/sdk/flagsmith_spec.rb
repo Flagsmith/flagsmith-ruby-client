@@ -26,6 +26,37 @@ RSpec.describe Flagsmith do
     end
   end
 
+  describe 'flag reasons' do
+    it 'returns the reason Flagsmith evaluated each environment flag to' do
+      # Given / When
+      flags = subject.get_environment_flags
+
+      # Then
+      expect(flags.get_flag(:feature_one).reason).to eq('STATIC')
+      expect(flags.get_flag(:feature_two).reason).to eq('STATIC')
+    end
+
+    it 'returns the reason Flagsmith evaluated each identity flag to' do
+      # Given / When
+      flags = subject.get_identity_flags(user_id)
+
+      # Then
+      expect(flags.get_flag(:feature_two).reason).to eq('STATIC')
+      expect(flags.get_flag(:feature_three).reason).to eq('TARGETING_MATCH; segment=admins')
+    end
+
+    it 'returns a nil reason when Flagsmith does not send one' do
+      # Given
+      json_flag_data = { feature: { id: 1, name: 'banner' }, feature_state_value: 'hello', enabled: true }
+
+      # When
+      flag = Flagsmith::Flags::Flag.from_api(json_flag_data)
+
+      # Then
+      expect(flag.reason).to be_nil
+    end
+  end
+
   describe '#feature_enabled?' do
     it 'checks a specific feature' do
       flags = subject.get_environment_flags

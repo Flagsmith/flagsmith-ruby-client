@@ -7,7 +7,7 @@
 require 'flagsmith'
 
 def as_spec_flag(flag)
-  { feature: flag.feature_name, enabled: flag.enabled, value: flag.value }
+  { feature: flag.feature_name, enabled: flag.enabled, value: flag.value, reason: flag.reason }
 end
 
 def as_spec_flags(flags)
