@@ -1,8 +1,7 @@
 # Builds the gem and publishes it to RubyGems.org using trusted publishing (OIDC).
 #
 # Runs automatically when release-please publishes a GitHub release. It can also be
-# triggered manually (e.g. to backfill a release) from either the release tag or from
-# main, in which case the version in lib/flagsmith/version.rb must already be tagged.
+# triggered manually from a release tag, e.g. to retry a failed publish.
 
 name: Push Ruby Gem
 
@@ -16,6 +15,8 @@ permissions: {}
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Only ever publish tagged code: release events run on the release tag, and manual runs must pick one too.
+    if: github.ref_type == 'tag'
 
     permissions:
       contents: read
@@ -28,33 +29,6 @@ jobs:
       - uses: ruby/setup-ruby@be3c7df29b3349ec6bcfc6b4792f1cf9f5237d18 # v1.343.0
         with:
           ruby-version: .ruby-version
-
-      - name: Check gem version matches release tag
-        env:
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
-          REF_NAME: ${{ github.ref_name }}
-          REF_TYPE: ${{ github.ref_type }}
-        run: |
-          version=$(ruby -r ./lib/flagsmith/version -e 'print Flagsmith::VERSION')
-          if [ -n "$RELEASE_TAG" ]; then
-            tag="$RELEASE_TAG"
-          elif [ "$REF_TYPE" = tag ]; then
-            tag="$REF_NAME"
-          elif [ "$REF_NAME" = main ]; then
-            tag="v$version"
-            if ! git ls-remote --exit-code --tags origin "refs/tags/$tag" > /dev/null; then
-              echo "::error::Version $version from lib/flagsmith/version.rb has no $tag tag; refusing to publish an unreleased version."
-              exit 1
-            fi
-          else
-            echo "::error::Manual runs must start from main or a release tag, not $REF_NAME."
-            exit 1
-          fi
-          if [ "$tag" != "v$version" ]; then
-            echo "::error::Tag $tag does not match version $version in lib/flagsmith/version.rb."
-            exit 1
-          fi
-          echo "Building flagsmith $version for tag $tag"
 
       - name: Build gem
         run: gem build flagsmith.gemspec
