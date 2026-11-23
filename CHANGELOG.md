@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.4.0](https://github.com/Flagsmith/flagsmith-ruby-client/compare/v5.3.0...v5.4.0) (2026-11-23)
+
+
+### Features
+
+* Every SDK includes `reason` in responses for identity and environment flags ([#133](https://github.com/Flagsmith/flagsmith-ruby-client/issues/133)) ([9c98a01](https://github.com/Flagsmith/flagsmith-ruby-client/commit/9c98a01139ebcf4f2d5fb05257314c83d57d9bec))
+
 ## [5.3.0](https://github.com/Flagsmith/flagsmith-ruby-client/compare/v5.2.0...v5.3.0) (2026-11-13)
 
 
