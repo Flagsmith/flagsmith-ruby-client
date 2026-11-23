@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.4.1](https://github.com/Flagsmith/flagsmith-ruby-client/compare/v5.4.0...v5.4.1) (2026-11-23)
+
+
+### Bug Fixes
+
+* publish gem to RubyGems on release via trusted publishing ([#135](https://github.com/Flagsmith/flagsmith-ruby-client/issues/135)) ([144765d](https://github.com/Flagsmith/flagsmith-ruby-client/commit/144765ddb996b95b2532c7b11046abbbc42a5810))
+
 ## [5.4.0](https://github.com/Flagsmith/flagsmith-ruby-client/compare/v5.3.0...v5.4.0) (2026-11-23)
 
 
